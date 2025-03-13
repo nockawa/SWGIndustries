@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "qhWValpr0eg=",
+  "success": true,
+  "projectFilePath": "C:\\Dev\\github\\SWGIndustries\\src\\Tools\\ResourceTreeExporter\\ResourceTreeExporter.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\loicb\\.nuget\\packages\\csvhelper\\33.0.1\\csvhelper.33.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}

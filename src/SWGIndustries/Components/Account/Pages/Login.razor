@@ -1,0 +1,17 @@
+﻿@page "/Account/Login"
+
+<h3>Login</h3>
+
+<form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
+    <div>
+        <AntiforgeryToken/>
+        <input type="hidden" name="ReturnUrl" value="@ReturnUrl"/>
+        <p>
+            <button type="submit" class="btn btn-primary" name="provider" value="Discord" title="Log in using your Discord account">Discord</button>
+        </p>
+    </div>
+</form>
+
+@code {
+    [SupplyParameterFromQuery] private string ReturnUrl { get; set; }
+}
