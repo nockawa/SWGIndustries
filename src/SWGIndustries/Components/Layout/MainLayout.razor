@@ -1,5 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using SWGIndustries.Services
+@inherits LayoutComponentBase
 @inject NavigationManager NavMgr
+@inject UserManager UserManager
 
 <div class="page">
     <div class="sidebar">
@@ -7,12 +9,17 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-1">
             <a href="https://docs.microsoft.com/en-us/aspnet/" target="_blank">About</a>
             <AuthorizeView>
                 <Authorized>
-                    <!--Greet the user with their identity name (in this case discord name)-->
-                    <a href="Account/Manage">Hello, @context.User.Identity?.Name</a>
+                    <a href="Account/Manage">
+                        @context.User.Identity?.Name
+                        @if (UserManager.ExternalUserInfo != null && UserManager.ExternalUserInfo.AvatarUrl != null)
+                        {
+                            <img src="@UserManager.ExternalUserInfo.AvatarUrl" referrerPolicy="no-referrer" width="40" height="40" alt="Avatar Picture" style="border-radius: 50%; margin-left: 0.5rem"/>
+                        }
+                    </a>
                     <a href="Account/Logout">LogOut</a>
                 </Authorized>
                 <NotAuthorized>
@@ -43,7 +50,7 @@
         {
             ReturnUrl = "/";
         }
-        
+
         return Task.CompletedTask;
     }
 }

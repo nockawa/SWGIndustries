@@ -1,7 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Http
-@using SWGIndustries.data
-@inject IHttpContextAccessor httpContextAccessor
-@inject UserService usrSvc
+@using SWGIndustries.Services
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserManager UserManager
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -27,16 +27,16 @@
 
 @code {
 
-    private UserService.DiscordUserClaim claim;
-    private string token;
+    private ExternalUserInfo _info;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         //Don't attempt to query if the user isn't authenticated.
-        if (httpContextAccessor.HttpContext.User.Identity!.IsAuthenticated)
+        if (HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            claim = usrSvc.GetInfo(httpContextAccessor.HttpContext);
-            token = await usrSvc.GetTokenAsync(httpContextAccessor.HttpContext);
+            _info = UserManager.ExternalUserInfo;
         }
+
+        return Task.CompletedTask;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using SWGIndustries.Services;
 
 namespace SWGIndustries.Components.Account;
 
@@ -13,13 +14,29 @@ public static class AccountExtensions
 
         accountGroup.MapPost("/PerformExternalLogin", (
             [FromForm] string provider,
-            [FromForm] string returnUrl) => TypedResults.Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, [provider]));
+            [FromForm] string returnUrl) =>
+        {
+            var redirectUri = $"/Account/ExternalLoginCallback?returnUrl={returnUrl}";
+            return TypedResults.Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, [provider]);
+        });
 
         accountGroup.MapGet("/Logout", async (
-            HttpContext context) =>
+            HttpContext context, 
+            [FromServices] UserManager userManager) =>
         {
             await context.SignOutAsync();
+            userManager.UserLoggedOut();
             return TypedResults.LocalRedirect("~/");
+        });
+
+        accountGroup.MapGet("/ExternalLoginCallback", async (
+            HttpContext context,
+            [FromServices] UserManager userManager,
+            string returnUrl) =>
+        {
+            
+            await userManager.UserLoggedIn(context);
+            return Results.Redirect(returnUrl);
         });
 
         return accountGroup;
