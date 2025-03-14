@@ -1,0 +1,20 @@
+﻿@page "/Account/Manage"
+@using SWGIndustries.Services
+
+@inject UserManager UserManager
+
+<h3>Manage Account: @_info.Name</h3>
+
+<p>
+    <img src="@_info.AvatarUrl" width="100" height="100" alt="Avatar Picture" style="border-radius: 50%;"/>    
+</p>
+
+@code {
+    private ExternalUserInfo _info;
+
+    protected override Task OnInitializedAsync()
+    {
+        _info = UserManager.ExternalUserInfo;
+        return Task.CompletedTask;
+    }
+}
