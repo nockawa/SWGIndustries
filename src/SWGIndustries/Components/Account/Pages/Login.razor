@@ -2,13 +2,21 @@
 
 <h3>Login</h3>
 
+<br/>
+
 <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
     <div>
         <AntiforgeryToken/>
         <input type="hidden" name="ReturnUrl" value="@ReturnUrl"/>
         <p>
-            <button type="submit" class="btn btn-primary" name="provider" value="Discord" title="Log in using your Discord account">Discord</button>
-            <button type="submit" class="btn btn-primary" name="provider" value="Google" title="Log in using your Google account">Google</button>
+            <MudButton StartIcon="@Icons.Custom.Brands.Discord" ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                       Color="Color.Primary" name="provider" value="Discord" title="Log in using your Discord account">
+                Discord
+            </MudButton>
+            <MudButton StartIcon="@Icons.Custom.Brands.Google" ButtonType="ButtonType.Submit" Variant="Variant.Filled"
+                       Color="Color.Primary" name="provider" value="Google" title="Log in using your Google account">
+                Google
+            </MudButton>
         </p>
     </div>
 </form>

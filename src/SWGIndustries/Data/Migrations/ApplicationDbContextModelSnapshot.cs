@@ -23,11 +23,61 @@ namespace SWGIndustries.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CorrelationId")
+                        .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.SWGAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SWGAccounts");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("SWGCharacters");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
+                {
+                    b.HasOne("SWGIndustries.Data.SWGAccount", "Account")
+                        .WithMany("SWGCharacters")
+                        .HasForeignKey("AccountId");
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.SWGAccount", b =>
+                {
+                    b.Navigation("SWGCharacters");
                 });
 #pragma warning restore 612, 618
         }

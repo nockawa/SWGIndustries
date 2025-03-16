@@ -1,6 +1,7 @@
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 using SWGIndustries.Components;
 using SWGIndustries.Components.Account;
 using SWGIndustries.Data;
@@ -16,6 +17,10 @@ public class Program
 
         // Add services to the container.
         var services = builder.Services;
+
+        // MudBlazor services
+        services.AddMudServices();
+
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
 
@@ -23,7 +28,7 @@ public class Program
         services.AddRazorPages();
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
-
+        
         services.AddSingleton<UserManager>();
 
         //Configure authentication for the user using Discord OAuth2
@@ -36,8 +41,8 @@ public class Program
             .AddDiscord(options =>
             {
                 var section  = builder.Configuration.GetSection("Authentication:Discord");
-                options.ClientId = section["ClientId"];
-                options.ClientSecret = section["ClientSecret"];
+                options.ClientId = section["ClientId"]!;
+                options.ClientSecret = section["ClientSecret"]!;
                 
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -50,8 +55,8 @@ public class Program
             .AddGoogle(options =>
             {
                 var section  = builder.Configuration.GetSection("Authentication:Google");
-                options.ClientId = section["ClientId"];
-                options.ClientSecret = section["ClientSecret"];
+                options.ClientId = section["ClientId"]!;
+                options.ClientSecret = section["ClientSecret"]!;
 
                 options.SaveTokens = true;
                 options.Scope.Add("profile");
@@ -72,8 +77,10 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.UseDeveloperExceptionPage();
+            // app.UseDeveloperExceptionPage();
+            app.UseExceptionHandler("/Error", createScopeForErrors: true);
             app.UseMigrationsEndPoint();
+            app.UseHsts();
         }
         else
         {
@@ -83,7 +90,11 @@ public class Program
         }
 
         //app.UseHttpsRedirection();
+
+        app.UseRouting();
         
+        app.UseAntiforgery();
+
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
@@ -91,11 +102,6 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        //app.UseRouting();
-        app.UseAntiforgery();
-
-        //app.MapBlazorHub();
-        //app.MapDefaultControllerRoute();
 
         app.MapAdditionalAccountEndpoints();
         
