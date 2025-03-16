@@ -3,7 +3,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject UserManager UserManager
 
-<div class="top-row ps-3 navbar navbar-dark">
+@*<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SWGIndustries</a>
     </div>
@@ -19,24 +19,28 @@
         <AuthorizeView>
             <!--Ensure the user can actually access guilds before showing the view-->
             <Authorized>
-                <!-- Nav to pages that required auth -->
+                <li class="nav-item px-1">
+                    <NavLink class="nav-link" href="SWGAccounts">
+                        <span class="bi" aria-hidden="true"></span> SWG Accounts
+                    </NavLink>
+                </li>
             </Authorized>
         </AuthorizeView>
     </ul>
-</div>
+</div>*@
+
+<MudNavLink Href="SWGAccounts">SWG Accounts</MudNavLink>
 
 @code {
 
     private ExternalUserInfo _info;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         //Don't attempt to query if the user isn't authenticated.
         if (HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            _info = UserManager.ExternalUserInfo;
+            _info = await UserManager.GetExternalUserInfo();
         }
-
-        return Task.CompletedTask;
     }
 }

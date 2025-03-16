@@ -4,17 +4,18 @@
 @inject UserManager UserManager
 
 <h3>Manage Account: @_info.Name</h3>
-
+<br/>
 <p>
-    <img src="@_info.AvatarUrl" width="100" height="100" alt="Avatar Picture" style="border-radius: 50%;"/>    
+    <MudAvatar Style="width: 150px; height: 150px;">
+        <MudImage Src="@_info.AvatarUrl"></MudImage>
+    </MudAvatar>
 </p>
 
 @code {
     private ExternalUserInfo _info;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        _info = UserManager.ExternalUserInfo;
-        return Task.CompletedTask;
+        _info = await UserManager.GetExternalUserInfo();
     }
 }

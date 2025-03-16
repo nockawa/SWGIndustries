@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -9,14 +10,21 @@ namespace SWGIndustries.Services;
 public class UserManager
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private ExternalUserInfo _externalUserInfo;
+    private bool _profileFetched;
 
-    public UserManager(IServiceProvider serviceProvider)
+    public UserManager(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor)
     {
         _serviceProvider = serviceProvider;
+        _httpContextAccessor = httpContextAccessor;
     }
     
     internal async Task<ExternalUserInfo> UserLoggedIn(HttpContext httpContext)
     {
+        // Whether the user is logged or not, we won't attempt to load the profile again, until the user logs in again
+        _profileFetched = true;
+
         if (!httpContext.User.Identity!.IsAuthenticated)
         {
             return null;
@@ -41,10 +49,17 @@ public class UserManager
             var properties = authResult.Properties;
             if (properties != null && properties.Items.TryGetValue(".Token.access_token", out var token))
             {
-                var httpClient = new HttpClient();
-                var response = await httpClient.GetStringAsync($"https://www.googleapis.com/oauth2/v1/userinfo?access_token={token}");
-                var userInfo = System.Text.Json.JsonDocument.Parse(response);
-                eui.AvatarUrl = userInfo.RootElement.GetProperty("picture").GetString();
+                try
+                {
+                    var httpClient = new HttpClient();
+                    var response = await httpClient.GetStringAsync($"https://www.googleapis.com/oauth2/v1/userinfo?access_token={token}");
+                    var userInfo = JsonDocument.Parse(response);
+                    eui.AvatarUrl = userInfo.RootElement.GetProperty("picture").GetString();
+                }
+                catch (Exception)
+                {
+                    // TODO, cookie expired to solve
+                }
             }
         }
 
@@ -68,16 +83,24 @@ public class UserManager
             }
         }
         
-        ExternalUserInfo = eui;
+        _externalUserInfo = eui;
         return eui;
     }
 
     internal void UserLoggedOut()
     {
-        ExternalUserInfo = null;
+        _profileFetched = false;
+        _externalUserInfo = null;
     }
 
-    public ExternalUserInfo ExternalUserInfo { get; private set; }
+    public async Task<ExternalUserInfo> GetExternalUserInfo()
+    {
+        if (_profileFetched == false)
+        {
+            _externalUserInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
+        }
+        return _externalUserInfo;
+    }
 }
 
 public class ExternalUserInfo
