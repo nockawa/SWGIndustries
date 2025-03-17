@@ -15,5 +15,14 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
         
-    }   
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<SWGAccount>()
+            .HasMany(a => a.SWGCharacters)
+            .WithOne(c => c.Account)
+            .OnDelete(DeleteBehavior.Cascade);        
+    }
 }

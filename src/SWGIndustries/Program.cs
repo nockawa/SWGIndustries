@@ -1,6 +1,7 @@
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
 using MudBlazor.Services;
 using SWGIndustries.Components;
 using SWGIndustries.Components.Account;
@@ -19,7 +20,14 @@ public class Program
         var services = builder.Services;
 
         // MudBlazor services
-        services.AddMudServices();
+        services.AddMudServices(config =>
+        {
+            config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            config.SnackbarConfiguration.PreventDuplicates = true;
+            config.SnackbarConfiguration.NewestOnTop = true;
+            config.SnackbarConfiguration.ShowCloseIcon = true;
+            config.SnackbarConfiguration.VisibleStateDuration = 5000;
+        });
 
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
