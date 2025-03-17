@@ -5,7 +5,7 @@
 
 
 @* Required *@
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" @ref="@_themeProvider"/>
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -33,14 +33,14 @@
                         </MudAvatar>
                     </MudLink>
                 }
-                <MudLink Class="ml-3" Href="Account/Logout">LogOut</MudLink>
+                <MudLink Class="mx-3" Href="Account/Logout">LogOut</MudLink>
             </Authorized>
             <NotAuthorized>
                 <MudLink Href="@($"Account/Login?ReturnUrl={ReturnUrl}")">Login</MudLink>
             </NotAuthorized>
         </AuthorizeView>
 
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@DarkLightModeButtonIcon()" Color="Color.Inherit" OnClick="@ThemeModeCycle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -58,56 +58,44 @@
     <span class="dismiss">🗙</span>
 </div>
 
-@*
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
-
-    <main>
-        <div class="top-row px-1">
-            <a href="https://docs.microsoft.com/en-us/aspnet/" target="_blank">About</a>
-            <AuthorizeView>
-                <Authorized>
-                    <a href="Account/Manage">
-                        @context.User.Identity?.Name
-                        @if (ExternalUserInfo != null && ExternalUserInfo.AvatarUrl != null)
-                        {
-                            <img src="@ExternalUserInfo.AvatarUrl" referrerPolicy="no-referrer" width="40" height="40" alt="Avatar Picture" style="border-radius: 50%; margin-left: 0.5rem"/>
-                        }
-                    </a>
-                    <a href="Account/Logout">LogOut</a>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="nav-link" href="Account/Login?ReturnUrl=@ReturnUrl">Login</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
-        <div class="content px-4">
-            @Body
-        </div>
-    </main>
-</div>
-
-
-*@
-
 @code
 {
+    enum ThemeMode
+    {
+        Auto,
+        Light,
+        Dark
+    }
+    private MudThemeProvider _themeProvider;
+    private ThemeMode _themeMode = ThemeMode.Auto;
+    private MudTheme _theme = null;
+    private bool _isDarkMode = true;
+    private bool _systemDarkMode = true;
+
     private string ReturnUrl { get; set; }
     private ExternalUserInfo ExternalUserInfo { get; set; }
     bool _drawerOpen = true;
-    private bool _isDarkMode = true;
-    private MudTheme _theme = null;
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
     
-    private void DarkModeToggle()
+    private void ThemeModeCycle()
     {
-        _isDarkMode = !_isDarkMode;
+        _themeMode = (ThemeMode)(((int)_themeMode + 1) % 3);
+        switch (_themeMode)
+        {
+            case ThemeMode.Auto:
+                _isDarkMode = _systemDarkMode;
+                break;
+            case ThemeMode.Dark:
+                _isDarkMode = true;
+                break;
+            case ThemeMode.Light:
+                _isDarkMode = false;
+                break;
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -129,6 +117,22 @@
 
         ExternalUserInfo = await UserManager.GetExternalUserInfo();
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _systemDarkMode = await _themeProvider.GetSystemPreference();
+            await _themeProvider.WatchSystemPreference(dark =>
+            {
+                _systemDarkMode = dark;
+                StateHasChanged();
+                return Task.CompletedTask;
+            });
+            StateHasChanged();
+        }
+    }
+
     private readonly PaletteLight _lightPalette = new()
     {
         Black = "#110e2d",
@@ -168,9 +172,17 @@
         OverlayLight = "#1e1e2d80",
     };
 
-    public string DarkLightModeButtonIcon => _isDarkMode switch
+    private string? DarkLightModeButtonIcon()
     {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
+        switch (_themeMode)
+        {
+            case ThemeMode.Auto:
+                return Icons.Material.Outlined.LightMode;
+            case ThemeMode.Light:
+                return Icons.Material.Outlined.DarkMode;
+            case ThemeMode.Dark:
+                return Icons.Material.Outlined.AutoMode;
+        }
+        return null;
+    }
 }
