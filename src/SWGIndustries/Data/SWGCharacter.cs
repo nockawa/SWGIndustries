@@ -10,5 +10,5 @@ public class SWGCharacter
     [MaxLength(30)]
     public string Name { get; set; }
     
-    public SWGAccount Account { get; set; }
+    public SWGAccount SWGAccount { get; set; }
 }

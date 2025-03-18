@@ -8,7 +8,7 @@
 <br/>
 
 <div class="ma-4">
-    <MudTooltip Text="Create SWG Account" OpenDelay="500" Placement="Placement.Top" Arrow="true">
+    <MudTooltip Text="Create SWG Account" openDelay="500" Placement="Placement.Top" Arrow="true">
         <MudFab Class="mb-4" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleAccountForm"/>
     </MudTooltip>
 
@@ -180,7 +180,7 @@
 
     private async Task CreateSWGCharacter(Data.SWGAccount account)
     {
-        newCharacter.Account = account;
+        newCharacter.SWGAccount = account;
         DbContext.SWGCharacters.Add(newCharacter);
         var rowAdded = await DbContext.SaveChangesAsync();
         if (rowAdded > 0)

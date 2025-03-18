@@ -10,8 +10,8 @@ using SWGIndustries.Data;
 namespace SWGIndustries.data.migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250314225432_SWGAccount")]
-    partial class SWGAccount
+    [Migration("20250318004311_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,6 +28,9 @@ namespace SWGIndustries.data.migrations
                     b.Property<string>("CorrelationId")
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("ThemeMode")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -55,27 +58,28 @@ namespace SWGIndustries.data.migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AccountId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("SWGAccountId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("SWGAccountId");
 
                     b.ToTable("SWGCharacters");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
                 {
-                    b.HasOne("SWGIndustries.Data.SWGAccount", "Account")
+                    b.HasOne("SWGIndustries.Data.SWGAccount", "SWGAccount")
                         .WithMany("SWGCharacters")
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("SWGAccountId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Account");
+                    b.Navigation("SWGAccount");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.SWGAccount", b =>

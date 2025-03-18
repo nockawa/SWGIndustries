@@ -1,8 +1,8 @@
-﻿@using SWGIndustries.Services
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
 @inherits LayoutComponentBase
 @inject NavigationManager NavMgr
 @inject UserManager UserManager
-
 
 @* Required *@
 <MudThemeProvider Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" @ref="@_themeProvider"/>
@@ -25,11 +25,11 @@
                 <MudLink Href="Account/Manage">
                     @context.User.Identity?.Name
                 </MudLink>
-                @if (ExternalUserInfo != null && ExternalUserInfo.AvatarUrl != null)
+                @if (UserInfo != null && UserInfo.AvatarUrl != null)
                 {
-                    <MudLink Href="Account/Manage">
-                        <MudAvatar Href="Account/Manage" Class="ml-3">
-                            <MudImage Src="@ExternalUserInfo.AvatarUrl" referrerPolicy="no-referrer"></MudImage>
+                    <MudLink href="Account/Manage">
+                        <MudAvatar href="Account/Manage" Class="ml-3">
+                            <MudImage Src="@UserInfo.AvatarUrl" referrerPolicy="no-referrer"></MudImage>
                         </MudAvatar>
                     </MudLink>
                 }
@@ -60,12 +60,6 @@
 
 @code
 {
-    enum ThemeMode
-    {
-        Auto,
-        Light,
-        Dark
-    }
     private MudThemeProvider _themeProvider;
     private ThemeMode _themeMode = ThemeMode.Auto;
     private MudTheme _theme = null;
@@ -73,7 +67,7 @@
     private bool _systemDarkMode = true;
 
     private string ReturnUrl { get; set; }
-    private ExternalUserInfo ExternalUserInfo { get; set; }
+    private UserInfo UserInfo { get; set; }
     bool _drawerOpen = true;
 
     void DrawerToggle()
@@ -96,6 +90,8 @@
                 _isDarkMode = false;
                 break;
         }
+
+        UserInfo.ThemeMode = _themeMode;
     }
 
     protected override async Task OnInitializedAsync()
@@ -115,7 +111,7 @@
             ReturnUrl = "/";
         }
 
-        ExternalUserInfo = await UserManager.GetExternalUserInfo();
+        UserInfo = await UserManager.GetUserInfo();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -123,6 +119,10 @@
         if (firstRender)
         {
             _systemDarkMode = await _themeProvider.GetSystemPreference();
+
+            var userInfo = await UserManager.GetUserInfo();
+            _themeMode = userInfo.ThemeMode;
+            _isDarkMode = (_themeMode == ThemeMode.Auto) ? _systemDarkMode : _themeMode == ThemeMode.Dark;
             await _themeProvider.WatchSystemPreference(dark =>
             {
                 _systemDarkMode = dark;
@@ -172,7 +172,7 @@
         OverlayLight = "#1e1e2d80",
     };
 
-    private string? DarkLightModeButtonIcon()
+    private string DarkLightModeButtonIcon()
     {
         switch (_themeMode)
         {
