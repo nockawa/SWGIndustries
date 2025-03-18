@@ -33,14 +33,14 @@
 
 @code {
 
-    private ExternalUserInfo _info;
+    private UserInfo _info;
 
     protected override async Task OnInitializedAsync()
     {
         //Don't attempt to query if the user isn't authenticated.
         if (HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            _info = await UserManager.GetExternalUserInfo();
+            _info = await UserManager.GetUserInfo();
         }
     }
 }

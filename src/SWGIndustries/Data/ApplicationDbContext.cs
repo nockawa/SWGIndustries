@@ -22,7 +22,7 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<SWGAccount>()
             .HasMany(a => a.SWGCharacters)
-            .WithOne(c => c.Account)
+            .WithOne(c => c.SWGAccount)
             .OnDelete(DeleteBehavior.Cascade);        
     }
 }

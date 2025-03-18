@@ -12,10 +12,10 @@
 </p>
 
 @code {
-    private ExternalUserInfo _info;
+    private UserInfo _info;
 
     protected override async Task OnInitializedAsync()
     {
-        _info = await UserManager.GetExternalUserInfo();
+        _info = await UserManager.GetUserInfo();
     }
 }

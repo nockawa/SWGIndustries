@@ -11,7 +11,7 @@ public class UserManager
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private ExternalUserInfo _externalUserInfo;
+    private UserInfo _userInfo;
     private bool _profileFetched;
 
     public UserManager(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor)
@@ -20,7 +20,7 @@ public class UserManager
         _httpContextAccessor = httpContextAccessor;
     }
     
-    internal async Task<ExternalUserInfo> UserLoggedIn(HttpContext httpContext)
+    internal async Task<UserInfo> UserLoggedIn(HttpContext httpContext)
     {
         // Whether the user is logged or not, we won't attempt to load the profile again, until the user logs in again
         _profileFetched = true;
@@ -30,89 +30,125 @@ public class UserManager
             return null;
         }
 
-        var eui = new ExternalUserInfo();
-        var claims = httpContext.User.Claims.ToList();
-
-        eui.UserId = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
-        eui.Name = claims.First(c => c.Type == ClaimTypes.Name).Value;
-        eui.Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-
-        if (httpContext.User.Identity.AuthenticationType == "Discord")
-        {
-            eui.Discriminator = claims.First(x => x.Type == DiscordAuthenticationConstants.Claims.Discriminator).Value;
-            var avatar= claims.First(x => x.Type == DiscordAuthenticationConstants.Claims.AvatarHash).Value;
-            eui.AvatarUrl = $"https://cdn.discordapp.com/avatars/{eui.UserId}/{avatar}.{(avatar.StartsWith("a_") ? "gif" : "png")}";
-        } 
-        else if (httpContext.User.Identity.AuthenticationType == "Google")
-        {
-            var authResult = await httpContext.AuthenticateAsync(httpContext.User.Identity.AuthenticationType);
-            var properties = authResult.Properties;
-            if (properties != null && properties.Items.TryGetValue(".Token.access_token", out var token))
-            {
-                try
-                {
-                    var httpClient = new HttpClient();
-                    var response = await httpClient.GetStringAsync($"https://www.googleapis.com/oauth2/v1/userinfo?access_token={token}");
-                    var userInfo = JsonDocument.Parse(response);
-                    eui.AvatarUrl = userInfo.RootElement.GetProperty("picture").GetString();
-                }
-                catch (Exception)
-                {
-                    // TODO, cookie expired to solve
-                }
-            }
-        }
-
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var user = await context.Users.FirstOrDefaultAsync(x => x.CorrelationId == eui.UserId);
-            if (user == null)
-            {
-                user = new ApplicationUser
-                {
-                    CorrelationId = eui.UserId,
-                };
-                context.Users.Add(user);
-                await context.SaveChangesAsync();
-                eui.UserDbId = user.Id;
-            }
-            else
-            {
-                eui.UserDbId = user.Id;
-            }
-        }
-        
-        _externalUserInfo = eui;
-        return eui;
+        _userInfo = await UserInfo.Create(_serviceProvider, httpContext);
+        return _userInfo;
     }
 
     internal void UserLoggedOut()
     {
         _profileFetched = false;
-        _externalUserInfo = null;
+        _userInfo = null;
     }
 
-    public async Task<ExternalUserInfo> GetExternalUserInfo()
+    public async Task<UserInfo> GetUserInfo()
     {
         if (_profileFetched == false)
         {
-            _externalUserInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
+            _userInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
         }
-        return _externalUserInfo;
+        return _userInfo ?? UserInfo.Unauthenticated;
     }
 }
 
-public class ExternalUserInfo
+public class UserInfo
 {
-    public int UserDbId { get; set; }
-    public string UserId { get; set; }
-    public string Name { get; set; }
-    public string Discriminator { get; set; }
-    public string AvatarUrl { get; set; }
+    private IServiceProvider _serviceProvider;
+    private ApplicationUser _applicationUser;
 
-    /// <summary>
-    /// Will be null if the email scope is not provided
-    /// </summary>
-    public string Email { get; set; } = null;
+    internal static async Task<UserInfo> Create(IServiceProvider serviceProvider, HttpContext httpContext)
+    {
+        var userInfo = new UserInfo();
+        await userInfo.Setup(httpContext, serviceProvider);
+        return userInfo;
+    }
+    
+    private async Task Setup(HttpContext httpContext, IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+        var httpContextUser = httpContext.User;
+        var claims = httpContextUser.Claims.ToList();
+
+        if (httpContextUser.Identity == null)
+        {
+            return;
+        }
+
+        UserExternalId = claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        Name = claims.First(c => c.Type == ClaimTypes.Name).Value;
+        Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
+
+        switch (httpContextUser.Identity.AuthenticationType)
+        {
+            case "Discord":
+            {
+                var avatar= claims.First(x => x.Type == DiscordAuthenticationConstants.Claims.AvatarHash).Value;
+                AvatarUrl = $"https://cdn.discordapp.com/avatars/{UserExternalId}/{avatar}.{(avatar.StartsWith("a_") ? "gif" : "png")}";
+                break;
+            }
+            case "Google":
+            {
+                var authResult = await httpContext.AuthenticateAsync(httpContextUser.Identity.AuthenticationType);
+                var properties = authResult.Properties;
+                if (properties != null && properties.Items.TryGetValue(".Token.access_token", out var token))
+                {
+                    try
+                    {
+                        var httpClient = new HttpClient();
+                        var response = await httpClient.GetStringAsync($"https://www.googleapis.com/oauth2/v1/userinfo?access_token={token}");
+                        var googleUserInfo = JsonDocument.Parse(response);
+                        AvatarUrl = googleUserInfo.RootElement.GetProperty("picture").GetString();
+                    }
+                    catch (Exception)
+                    {
+                        // TODO, cookie expired to solve
+                    }
+                }
+                break;
+            }
+        }
+        
+        // Create a new user in database if it doesn't exist, or load its settings
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var user = await context.Users.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                CorrelationId = UserExternalId,
+            };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+        _applicationUser = user;
+    }
+
+    public bool IsAuthenticatedUser => _applicationUser != null;
+
+    public ThemeMode ThemeMode
+    {
+        get => _applicationUser?.ThemeMode ?? ThemeMode.Auto;
+        set
+        {
+            if (_applicationUser == null || _applicationUser.ThemeMode == value)
+            {
+                return;
+            }
+            
+            _applicationUser.ThemeMode = value;
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            context.Users.Update(_applicationUser);
+            context.SaveChanges();
+        }
+    }
+
+    public string UserExternalId { get; private set; }
+    public string Name { get; private set; }
+    public string AvatarUrl { get; private set; }
+    public string Email { get; private set; }
+    public static UserInfo Unauthenticated { get; } = new()
+    {
+        Name = "Guest"
+    };
 }
