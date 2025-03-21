@@ -1,0 +1,59 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Style="width: 50%">
+    <MudText Typo="Typo.h6">Add a new SWG Account</MudText>
+    <MudForm @ref="_accountForm" @bind-IsValid="@_formSuccess" Model="@_newAccount">
+        <MudTextField T="string" Label="Name" Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
+                      Validation="@(new Func<string, string>(ValidateAccountName))" @bind-Value="@_newAccount.Name"></MudTextField>
+        <div class="d-flex justify-end mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                       OnClick="@(() => OnAccountAdded?.Invoke(null))">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
+                       OnClick="CreateSWGAccount">Create</MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    
+    [Parameter] 
+    public Action<SWGAccount> OnAccountAdded { get; set; }
+    
+    private SWGAccount _newAccount = new();
+    private MudForm _accountForm;
+    private bool _formSuccess;
+    
+    private async Task CreateSWGAccount()
+    {
+        if (await DataAccessService.AddSWGAccount(_newAccount, true))
+        {
+            Snackbar.Add($"SWG Account '{_newAccount.Name}' added successfully.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to add SWG Account.", Severity.Error);
+        }
+        
+        OnAccountAdded?.Invoke(_newAccount);
+        _newAccount = new SWGAccount();
+    }
+
+    private string ValidateAccountName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Name is required.";
+        }
+
+        if (DataAccessService.DbContext.SWGAccounts.Any(c => c.Name == name))
+        {
+            return "Name already exists.";
+        }
+            
+        return null;
+    }
+}

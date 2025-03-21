@@ -23,7 +23,7 @@ public class Program
         services.AddMudServices(config =>
         {
             config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
-            config.SnackbarConfiguration.PreventDuplicates = true;
+            config.SnackbarConfiguration.PreventDuplicates = false;
             config.SnackbarConfiguration.NewestOnTop = true;
             config.SnackbarConfiguration.ShowCloseIcon = true;
             config.SnackbarConfiguration.VisibleStateDuration = 5000;
@@ -37,7 +37,8 @@ public class Program
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
         
-        services.AddSingleton<UserManager>();
+        services.AddSingleton<UserService>();
+        services.AddScoped<DataAccessService>();
 
         //Configure authentication for the user using Discord OAuth2
         services.AddAuthentication(opt =>
@@ -76,7 +77,11 @@ public class Program
                                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionString));
+        {
+            options.UseSqlite(connectionString, sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            options.UseSeeding((context, _) => { GenTestData(context); });
+        });
+        
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
         
         // Build the application
@@ -114,5 +119,65 @@ public class Program
         app.MapAdditionalAccountEndpoints();
         
         app.Run();
+    }
+
+    private static readonly string[] AccountTestNames =
+    [
+        "Luke Skywalker", "Darth Vader", "Leia Organa", "Han Solo", "Obi-Wan Kenobi", "Yoda", "Anakin Skywalker", "Padmé Amidala", 
+        "Palpatine", "Chewbacca", "R2-D2", "C-3PO", "Lando Calrissian", "Boba Fett", "Jabba the Hutt", "Qui-Gon Jinn", "Mace Windu", 
+        "Count Dooku", "Rey", "Kylo Ren", "Finn", "Poe Dameron", "Maz Kanata", "Snoke", "Jyn Erso", "Cassian Andor", "K-2SO", 
+        "Chirrut Îmwe", "Baze Malbus", "Orson Krennic", "Saw Gerrera", "Galen Erso", "Bodhi Rook", "Mon Mothma", "Admiral Ackbar", 
+        "Wedge Antilles", "Biggs Darklighter", "Greedo", "Nien Nunb", "Admiral Thrawn", "Ahsoka Tano", "Ezra Bridger", "Kanan Jarrus", 
+        "Hera Syndulla", "Sabine Wren", "Garazeb Orrelios", "Agent Kallus", "Grand Inquisitor", "Asajj Ventress", "Savage Opress", 
+        "Mother Talzin", "Cad Bane", "Hondo Ohnaka", "Bo-Katan Kryze", "Pre Vizsla", "Satine Kryze", "Plo Koon", "Kit Fisto", 
+        "Shaak Ti", "Aayla Secura", "Barriss Offee", "Luminara Unduli", "Ki-Adi-Mundi", "Saesee Tiin", "Eeth Koth", "Adi Gallia", 
+        "Depa Billaba", "Quinlan Vos", "Jocasta Nu", "Bail Organa", "Wicket W. Warrick", "Nute Gunray", "Wat Tambor", "Poggle the Lesser", 
+        "San Hill", "Shmi Skywalker", "Cliegg Lars", "Owen Lars", "Beru Whitesun Lars", "Dexter Jettster", "Zam Wesell", "Jango Fett", 
+        "Bossk", "Dengar", "IG-88", "4-LOM", "Zuckuss", "Embo", "Aurra Sing", "Rex", "Fives", "Echo", "Jesse", "Gregor", "Wolffe", 
+        "Cody", "Fox", "Gree", "Bly"
+    ];
+
+    private static void GenTestData(DbContext context)
+    {
+        /*
+        var testAppUser = context.Set<ApplicationUser>().FirstOrDefault(a => a.CorrelationId == "This is test data");
+        if (testAppUser != null)
+        {
+            var testAccounts = context.Set<SWGAccount>().Where(a => a.OwnerApplicationUser == testAppUser).ToList();
+            context.Set<SWGAccount>().RemoveRange(testAccounts);
+            context.SaveChanges();
+                    
+            context.Set<ApplicationUser>().Remove(testAppUser);
+            context.SaveChanges();
+        }
+        foreach (var applicationUser in context.Set<ApplicationUser>().Where(a => a.CorrelationId == "This is test data").ToList())
+        {
+            context.Set<ApplicationUser>().Remove(applicationUser);
+        }
+        context.SaveChanges();
+                
+        var appUser = new ApplicationUser
+        {
+            CorrelationId = "This is test data"
+        };
+        context.Set<ApplicationUser>().Add(appUser);
+
+        foreach (var name in AccountTestNames)
+        {
+            var account = new SWGAccount
+            {
+                Name = name,
+                OwnerApplicationUser = appUser
+            };
+            context.Set<SWGAccount>().Add (account);
+                    
+            context.Set<SWGCharacter>().Add(new SWGCharacter
+            {
+                Name = name,
+                SWGAccount = account,
+            });
+        }
+        context.SaveChanges();
+    */
     }
 }

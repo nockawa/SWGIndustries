@@ -2,7 +2,7 @@
 @using SWGIndustries.Services
 @inherits LayoutComponentBase
 @inject NavigationManager NavMgr
-@inject UserManager UserManager
+@inject UserService UserService
 
 @* Required *@
 <MudThemeProvider Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" @ref="@_themeProvider"/>
@@ -43,7 +43,8 @@
         <MudIconButton Icon="@DarkLightModeButtonIcon()" Color="Color.Inherit" OnClick="@ThemeModeCycle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer id="nav-drawer" Variant="DrawerVariant.Persistent" @bind-Open="_drawerOpen" Color="Color.Primary" 
+               ClipMode="DrawerClipMode.Always" Elevation="2" Class="py-4">
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mt-16 pa-4">
@@ -63,8 +64,8 @@
     private MudThemeProvider _themeProvider;
     private ThemeMode _themeMode = ThemeMode.Auto;
     private MudTheme _theme = null;
-    private bool _isDarkMode = true;
-    private bool _systemDarkMode = true;
+    private bool _isDarkMode;
+    private bool _systemDarkMode;
 
     private string ReturnUrl { get; set; }
     private UserInfo UserInfo { get; set; }
@@ -105,13 +106,17 @@
             LayoutProperties = new LayoutProperties()
         };
         
+        var userInfo = await UserService.GetUserInfo();
+        _themeMode = userInfo.ThemeMode;
+        _isDarkMode = (_themeMode == ThemeMode.Auto) ? _systemDarkMode : _themeMode == ThemeMode.Dark;
+
         ReturnUrl = NavMgr.ToBaseRelativePath(NavMgr.Uri);
         if (ReturnUrl == "") 
         {
             ReturnUrl = "/";
         }
 
-        UserInfo = await UserManager.GetUserInfo();
+        UserInfo = await UserService.GetUserInfo();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -119,9 +124,6 @@
         if (firstRender)
         {
             _systemDarkMode = await _themeProvider.GetSystemPreference();
-
-            var userInfo = await UserManager.GetUserInfo();
-            _themeMode = userInfo.ThemeMode;
             _isDarkMode = (_themeMode == ThemeMode.Auto) ? _systemDarkMode : _themeMode == ThemeMode.Dark;
             await _themeProvider.WatchSystemPreference(dark =>
             {

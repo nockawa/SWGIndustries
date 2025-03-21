@@ -1,0 +1,80 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+@inject ISnackbar Snackbar
+
+<MudPaper Elevation="2" Class="ma-4 pa-4">
+    <MudText Typo="Typo.body1" Class="mb-4" >@($"{_crewLeader.Name} is the crew leader")</MudText>
+
+    <ul>
+        @foreach (var character in _crewLeader.Crew.Members)
+        {
+            <li>
+                <MudText Typo="Typo.body1">@($"{character.Name}")</MudText>
+            </li>
+        }
+    </ul>
+</MudPaper>
+    
+@if (_crewInvitationsForLeader is { Count: > 0 })
+{
+    <MudPaper Class="ma-4 pa-4" Elevation="16">
+        <MudText Typo="Typo.h6" Class="mb-4">Invitations to join your crew</MudText>
+        <MudSimpleTable Dense="true" Striped="true" Class="mb-8">
+            <thead>
+            <tr>
+                <th>From</th>
+                <th>Status</th>
+                <th Style="width: 160px; text-align: center">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var invitation in _crewInvitationsForLeader)
+            {
+                if (invitation.InviteOrRequestToJoin == false)
+                {
+                    <tr>
+                        <td>@invitation.FromUser.Name</td>
+                        <td>@invitation.Status.ToString()</td>
+                        <td Style="text-align: center;">
+                            <MudTooltip Text="Reject this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Block" Color="Color.Error"
+                                               OnClick="@(async () => await ActionOnInvitationRequest(invitation, false))"/>
+                            </MudTooltip>
+                            <MudTooltip Text="Accept this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
+                                <MudIconButton Icon="@Icons.Material.Outlined.PersonAdd" Color="Color.Primary"
+                                               OnClick="@(async () => await ActionOnInvitationRequest(invitation, true))"/>
+                            </MudTooltip>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+}
+
+@code {
+    private IList<CrewInvitation> _crewInvitationsForLeader;
+
+    [Parameter]
+    public Crew Crew { get; set; }
+    
+    private ApplicationUser _crewLeader;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _crewLeader = Crew.CrewLeader;
+        _crewInvitationsForLeader = await DataAccessService.GetCrewInvitationForLeader(_crewLeader);
+       
+        
+    }
+    
+    private async Task ActionOnInvitationRequest(CrewInvitation invitation, bool grant)
+    {
+        var (res, info) = await DataAccessService.ProcessRequestToJoinCrew(invitation, grant);
+        Snackbar.Add(info, res ? Severity.Success : Severity.Error);
+        _crewInvitationsForLeader = await DataAccessService.GetCrewInvitationForLeader(_crewLeader);
+    }
+}

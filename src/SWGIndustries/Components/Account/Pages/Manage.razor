@@ -1,21 +1,21 @@
 ﻿@page "/Account/Manage"
 @using SWGIndustries.Services
 
-@inject UserManager UserManager
+@inject UserService UserService
 
-<h3>Manage Account: @_info.Name</h3>
+<h3>Manage Account: @_user.Name</h3>
 <br/>
 <p>
     <MudAvatar Style="width: 150px; height: 150px;">
-        <MudImage Src="@_info.AvatarUrl"></MudImage>
+        <MudImage Src="@_user.AvatarUrl"></MudImage>
     </MudAvatar>
 </p>
 
 @code {
-    private UserInfo _info;
+    private UserInfo _user;
 
     protected override async Task OnInitializedAsync()
     {
-        _info = await UserManager.GetUserInfo();
+        _user = await UserService.GetUserInfo();
     }
 }

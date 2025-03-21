@@ -1,0 +1,71 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject UserService UserService
+@inject ISnackbar Snackbar
+@inject DataAccessService DataAccessService
+
+<MudPaper Class="pa-4" Style="width: 50%">
+    <MudText Typo="Typo.h6" Class="mb-4">Create a crew</MudText>
+    <MudForm @bind-IsValid="@_formSuccess">
+        
+        <MudTextField T="string" @bind-Value="_crewName" Label="Name of the crew" Variant="Variant.Outlined"
+                      Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
+                      Validation="@(async (string t) => await ValidateCrewName(t))" />
+        
+        <div class="d-flex justify-end mt-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                       OnClick="@(() => OnCrewCreated?.Invoke(null))">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
+                       OnClick="OnCreateCrew">Create</MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private bool _formSuccess;
+    private ApplicationUser _applicationUser;
+    private string _crewName;
+    
+    [Parameter] public Action<Crew> OnCrewCreated { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _applicationUser = await DataAccessService.GetApplicationUserAsync();
+    }
+
+    private async Task<string> ValidateCrewName(string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.StartsWith(" ") || text.EndsWith(" ") || text.Length >= Crew.CrewNameMaxLength)
+        {
+            return "Invalid name or empty name.";
+        }
+        
+        if (text.Length < 5)
+        {
+            return "Crew name must be at least 5 characters long.";
+        }
+        
+        if (text.Length >= Crew.CrewNameMaxLength)
+        {
+            return $"Crew name length is exceeding the limit of {Crew.CrewNameMaxLength} characters.";
+        }
+
+        if (await DataAccessService.GetCrewByName(text, true) != null)
+        {
+            return "A crew with this name already exists.";
+        }
+
+        return null;
+    }
+
+    private async Task OnCreateCrew()
+    {
+        var (res, info) = await DataAccessService.CreateCrew(_applicationUser, _crewName);
+        Snackbar.Add(info, res != null ? Severity.Success : Severity.Error);
+
+        OnCrewCreated?.Invoke(res);
+        _crewName = null;
+    }
+
+}
