@@ -1,0 +1,62 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+@inject ISnackbar Snackbar
+
+// Form to add a new SWG Character
+<MudPaper Class="pa-4" Style="width: 50%" MinWidth="50%">
+    <MudText Typo="Typo.h6">Add a new SWG Character</MudText>
+    <MudForm @ref="_characterForm" @bind-IsValid="@_formSuccess" Model="@_newCharacter">
+        <MudTextField T="string" Label="Name" Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
+                      Validation="@(new Func<string, string>(ValidateCharacterName))" @bind-Value="@_newCharacter.Name"></MudTextField>
+        <div class="d-flex justify-end mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                       OnClick="@(() => OnCharacterAdded?.Invoke(null))">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
+                       OnClick="@(() => CreateSWGCharacter(AddCharacterFor))">Create</MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    
+    [Parameter] 
+    public SWGAccount AddCharacterFor { get; set; }
+    
+    [Parameter] 
+    public Action<SWGCharacter> OnCharacterAdded { get; set; }
+
+    private SWGCharacter _newCharacter = new();
+    private MudForm _characterForm;
+    private bool _formSuccess;
+ 
+    private string ValidateCharacterName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Name is required.";
+        }
+
+        if (AddCharacterFor.SWGCharacters.Any(c => c.Name == name))
+        {
+            return "Name already exists.";
+        }
+            
+        return null;
+    }
+
+    private async Task CreateSWGCharacter(SWGAccount account)
+    {
+        if (await DataAccessService.AddSWGCharacter(account, _newCharacter, true))
+        {
+            Snackbar.Add($"SWG Character '{_newCharacter.Name}' added successfully.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to add SWG Character.", Severity.Error);
+        }
+        OnCharacterAdded?.Invoke(_newCharacter);
+        _newCharacter = new SWGCharacter();
+    }
+}

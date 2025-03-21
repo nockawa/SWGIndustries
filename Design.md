@@ -11,28 +11,58 @@ Core features:
 - Notify when a given resource is depleted, when a harvester is full, no longer powered, no longer with maintenance
 
 ## Terminology
-- `Account`, a SWGIndustry account, related to the user who use the webapp, not related with the game.
+- `Account` or `ApplicationUser`, a SWGIndustry account, related to the user who use the webapp, not related with the game.
 - `SWGAccount`, the SWG Restoration III game account, for info purpose, we are not connected to it, we don't know/ask the password.
 - `SWGCharacter`, each account can have up to four playable character.
 - `SWGBuilding`, a lot based structure (house, harvester or factory).
 - `Resource Category`, in game resources are each belonging to a given category, there's a tree of category which is fix defined.
 - `PutDown` / `Redeed`, any lot based entity are represented by an item (a deed), which can be "consume" when we install it somewhere in a planet. The action of installing it is called "putdown". The action of getting back the entity to its deed (and storing it in the character's inventory) is called "redeed".
 - `Lot`, in the game, each character has 10 lots to his/her disposal to put-down buildings.
+- `Crew`, a logical team of people sharing the same harvesting activity.
 
 ## Data Models
+
+### ApplicationUser
+Represent a registered account in SWG Industries
+
+- `ID` (int, PK)
+- `CorrelationId` (int), ID of the external identity provider (Discord or Google)
+- `Name` (string), taken from the external authenticator
+- App Settings, ThemeMode, ...
+- `SWGAccounts` (Nav List of `SWGAccount.OwnerAppUser`)
+- `Crew` (int, FK to `Crew` table)
 
 ### SWGAccount
 Represents an account of SWG Restoration III.
 
-- ID (int, PK)
-- Name (string), of the account
+- `ID` (int, PK)
+- `AppUserOwner` (int, FK of `ApplicationUser`), which SWG Industries account owns that SWG Account
+- `Name` (string), of the account
 
 ### SWGCharacter
 Represents an in-game character
 
-- ID (int, PK)
-- SWGAccountId (int, FK), owner of the character
-- Name (string), of the in-game character
+- `ID` (int, PK)
+- `SWGAccount` (int, FK of `SWGAccount`), owner of the character
+- `Name` (string), of the in-game character
+- `IsCrewMember` (bool), true if the character of this account is a member of the crew (only meaningful if `SWGAccount.CrewLeader` is not `0`)
+
+### Crew
+Represent a crew of characters
+
+- `ID` (int, PK)
+- `Name` (string, unique)
+- `CrewOwner` (ApplicationUser, FK)
+- `CrewMembers` (Nav List of `ApplicationUser`)
+
+### CrewInvitation
+Handle crew invitation.
+
+- `ID` (int, PK), a new invitation initiated
+- `FromSWGAccount` (int FK of `SWGAccount`), account of the crew leader that initiated the invitation.
+- `ToSWGAccount` (int, FK of `SWGAccount`), account that received the invitation.
+- `InviteOrRequestToJoin` (bool), `true` if the leader invite a member, `false` if a user requests to join.
+- `Status` (enum, Pending, Accepted, Rejected) curren status of the invitation.
 
 ### SWGResource
 Represents a given resource.
@@ -81,11 +111,36 @@ Represent an in-game building (house, harvester or factory).
 
 ## Site navigation, pages
 
+### /
+Home page.
+
 ### / Account
 SWGIndustries account info and operations, subtree to be defined.
 
 ### / SWGAccount
 Page listing the accounts, their characters (up to four per account) with summary info for each character. With CRUD operations.
+
+### / Crew
+Manage a crew of SWGAccounts to share some features/info (e.g. Harvester Clusters).
+
+**TO DO: rewrite**
+ - Start a crew (if the ApplicationUser doesn't have a SWGAccount which is crew leader or member).
+   - Select the Account that is the leader, pick the Characters that will be members.
+ - Crew Info (either for leader or members), one section per SWGAccount involve in a crew.
+   - List SWGAccount that are members, the characters involved.
+   - Leader views/operations
+     - Invites
+       - List invitations, their status
+       - Revoke a pending invitation.
+       - Clear an invitation accepted/rejected.
+       - Invite a SWGAccount to join the crew.
+     - Remove a SWGAccount from the crew (can't be Crew Leader)
+     - Disband crew
+   - Member operations
+     - Select which SWGCharacter are part of the crew
+     - Leave crew
+
+**TO DO: rewrite**
 
 ### / SWGHouse
 List houses, with CRUD.

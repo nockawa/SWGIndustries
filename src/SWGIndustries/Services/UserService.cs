@@ -7,24 +7,20 @@ using SWGIndustries.Data;
 
 namespace SWGIndustries.Services;
 
-public class UserManager
+public class UserService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private UserInfo _userInfo;
-    private bool _profileFetched;
 
-    public UserManager(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor)
+    public UserService(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor)
     {
         _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
     }
-    
+
     internal async Task<UserInfo> UserLoggedIn(HttpContext httpContext)
     {
-        // Whether the user is logged or not, we won't attempt to load the profile again, until the user logs in again
-        _profileFetched = true;
-
         if (!httpContext.User.Identity!.IsAuthenticated)
         {
             return null;
@@ -36,35 +32,40 @@ public class UserManager
 
     internal void UserLoggedOut()
     {
-        _profileFetched = false;
         _userInfo = null;
     }
 
     public async Task<UserInfo> GetUserInfo()
     {
-        if (_profileFetched == false)
+        if ((_userInfo==null) || (_userInfo.IsGuest && _httpContextAccessor.HttpContext is { User.Identity.IsAuthenticated: true }))
         {
             _userInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
         }
-        return _userInfo ?? UserInfo.Unauthenticated;
+        return _userInfo ?? UserInfo.GetUnauthenticated(_serviceProvider);
     }
+
+    public async Task<ApplicationUser> BuildApplicationUser(ApplicationDbContext dbContext) => (await GetUserInfo()).BuildApplicationUser(dbContext);
 }
 
 public class UserInfo
 {
-    private IServiceProvider _serviceProvider;
-    private ApplicationUser _applicationUser;
+    private readonly IServiceProvider _serviceProvider;
+    private ThemeMode? _themeMode;
+    
+    private UserInfo(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
 
     internal static async Task<UserInfo> Create(IServiceProvider serviceProvider, HttpContext httpContext)
     {
-        var userInfo = new UserInfo();
-        await userInfo.Setup(httpContext, serviceProvider);
+        var userInfo = new UserInfo(serviceProvider);
+        await userInfo.Setup(httpContext);
         return userInfo;
     }
     
-    private async Task Setup(HttpContext httpContext, IServiceProvider serviceProvider)
+    private async Task Setup(HttpContext httpContext)
     {
-        _serviceProvider = serviceProvider;
         var httpContextUser = httpContext.User;
         var claims = httpContextUser.Claims.ToList();
 
@@ -108,47 +109,79 @@ public class UserInfo
         }
         
         // Create a new user in database if it doesn't exist, or load its settings
-        using var scope = serviceProvider.CreateScope();
+        using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var user = await context.Users.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
+        var user = await context.ApplicationUsers.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
         if (user == null)
         {
             user = new ApplicationUser
             {
                 CorrelationId = UserExternalId,
+                Name = Name
             };
-            context.Users.Add(user);
+            context.ApplicationUsers.Add(user);
             await context.SaveChangesAsync();
         }
-        _applicationUser = user;
     }
 
-    public bool IsAuthenticatedUser => _applicationUser != null;
+    public bool IsAuthenticatedUser => UserExternalId != null;
+    public bool IsGuest => UserExternalId == null;
+
+    internal ApplicationUser BuildApplicationUser(ApplicationDbContext context)
+    {
+        return IsGuest ? ApplicationUser.Guest : context.ApplicationUsers.FirstOrDefault(x => x.CorrelationId == UserExternalId);    
+    }
 
     public ThemeMode ThemeMode
     {
-        get => _applicationUser?.ThemeMode ?? ThemeMode.Auto;
+        get
+        {
+            if (IsGuest)
+            {
+                return ThemeMode.Auto;
+            }
+
+            if (_themeMode == null)
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var applicationUser = BuildApplicationUser(context);
+                _themeMode = applicationUser?.ThemeMode ?? ThemeMode.Auto;
+            }
+            return _themeMode.Value;
+        }
         set
         {
-            if (_applicationUser == null || _applicationUser.ThemeMode == value)
+            if (IsGuest)
+            {
+                return;
+            }
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var applicationUser = BuildApplicationUser(context);
+            if (applicationUser == null || applicationUser.ThemeMode == value)
             {
                 return;
             }
             
-            _applicationUser.ThemeMode = value;
-            using var scope = _serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            context.Users.Update(_applicationUser);
+            applicationUser.ThemeMode = value;
+            context.ApplicationUsers.Update(applicationUser);
             context.SaveChanges();
+            _themeMode = value;
         }
     }
 
     public string UserExternalId { get; private set; }
     public string Name { get; private set; }
     public string AvatarUrl { get; private set; }
+    // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public string Email { get; private set; }
-    public static UserInfo Unauthenticated { get; } = new()
+
+    public static UserInfo GetUnauthenticated(IServiceProvider serviceProvider)
     {
-        Name = "Guest"
-    };
+        return new UserInfo(serviceProvider)
+        {
+            Name = "Guest"
+        };
+    }
 }

@@ -1,8 +1,10 @@
 ﻿@page "/SWGAccounts"
-@using Microsoft.EntityFrameworkCore
 @using SWGIndustries.Data
-@inject Data.ApplicationDbContext DbContext
+@using SWGIndustries.Services
+
+@inject UserService UserService
 @inject ISnackbar Snackbar
+@inject DataAccessService DataAccessService
 
 <h3>Star Wars Galaxies Restoration - Game Accounts & Characters</h3>
 <br/>
@@ -12,67 +14,64 @@
         <MudFab Class="mb-4" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleAccountForm"/>
     </MudTooltip>
 
-    @if (showAccountForm)
+    @if (_showAccountForm)
     {
-        <MudPaper Class="pa-4" Style="width: 50%" MinWidth="50%">
-            <MudText Typo="Typo.h5">Add a new SWG Account</MudText>
-            <MudForm @ref="accountForm" @bind-IsValid="@accountFormSuccess" Model="@newAccount">
-                <MudTextField T="string" Label="Name" Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
-                              Validation="@(new Func<string, string>(ValidateAccountName))" @bind-Value="@newAccount.Name"></MudTextField>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!accountFormSuccess)" Class="ml-auto mt-4" 
-                           OnClick="CreateSWGAccount">Create</MudButton>
-            </MudForm>
-        </MudPaper>
+        // Form to create a new SWG Account
+        <AddNewSWGAccount OnAccountAdded="@(_ => { _showAccountForm = false; StateHasChanged(); })"/>
     }
 
-    @if (swgAccounts == null)
+    @if (_swgAccounts == null)
     {
         <p><em>Loading...</em></p>
     }
     else
     {
         <br/>
-        @foreach (var account in swgAccounts)
+        @foreach (var account in _swgAccounts)
         {
-            <MudExpansionPanel @ref="expansionPanel" class="mud-elevation-1">
+            // One expansion panel for each SWG Account
+            <MudExpansionPanel class="mud-elevation-1">
                 <TitleContent>
                     <div class="d-flex align-items-center" style="align-items: center;">
                         <MudMenu Dense="true" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.TwoTone.MoreVert" Class="mr-2">
-                            <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Delete account" 
+                            <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Delete account"
                                          OnClick="@(async () => await DeleteAccount(account))"/>
-                            <MudMenuItem Icon="@Icons.Material.Filled.Add" IconColor="Color.Primary" Label="Add Character"
-                                         Disabled="@(showAccountForm || addCharacterFor != null)"
-                                         OnClick="@(() =>
-                                        {
-                                            addCharacterFor ??= account;
-                                            expansionPanel.Expanded = true;
-                                        })"/>
                         </MudMenu>
-                        <MudText>@account.Name</MudText>
+                        <MudText>@($"{@account.Name} - {account.SWGCharacters.Count} characters")</MudText>
                     </div>
                 </TitleContent>
                 <ChildContent>
                     <div class="px-2">
-                        
-                        @if (addCharacterFor == account)
+                        <MudButtonGroup>
+                            <MudTooltip Text="Add a new character" openDelay="200" Placement="Placement.Top" Arrow="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                                               Disabled="@(_showAccountForm || _addCharacterFor != null || account.SWGCharacters.Count == 4)"
+                                               OnClick="() => _addCharacterFor ??= account"/>
+                            </MudTooltip>
+                        </MudButtonGroup>
+                        @if (_addCharacterFor == account)
                         {
-                            <MudPaper Class="pa-4" Style="width: 50%" MinWidth="50%">
-                                <MudText Typo="Typo.h5">Add a new SWG Character</MudText>
-                                <MudForm @ref="characterForm" @bind-IsValid="@characterFormSuccess" Model="@newCharacter">
-                                    <MudTextField T="string" Label="Name" Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
-                                                  Validation="@(new Func<string, string>(ValidateCharacterName))" @bind-Value="@newCharacter.Name"></MudTextField>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!characterFormSuccess)" Class="ml-auto mt-4" 
-                                               OnClick="@(() => CreateSWGCharacter(account))">Create</MudButton>
-                                </MudForm>
-                            </MudPaper>
+                            <AddNewSWGCharacter AddCharacterFor="account" OnCharacterAdded="@(_ => { _addCharacterFor = null; StateHasChanged(); })"/>
                         }
-                        
+
                         @if (account.SWGCharacters != null)
                         {
                             @foreach (var character in account.SWGCharacters)
                             {
-                                <MudExpansionPanel Text="@character.Name" class="mud-elevation-1 ma-4">
-                                    <p>Character details can go here.</p>
+                                // One expansion panel for each SWG Character
+                                <MudExpansionPanel class="mud-elevation-1 ma-4">
+                                    <TitleContent>
+                                        <div class="d-flex align-items-center" style="align-items: center;">
+                                            <MudMenu Dense="true" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.TwoTone.MoreVert" Class="mr-2">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Delete character"
+                                                             OnClick="@(async () => await DeleteCharacter(character))"/>
+                                            </MudMenu>
+                                            <MudText>@character.Name</MudText>
+                                        </div>
+                                    </TitleContent>
+                                    <ChildContent>
+                                        <p>Character details can go here.</p>
+                                    </ChildContent>
                                 </MudExpansionPanel>
                             }
                         }
@@ -83,74 +82,37 @@
     }
 </div>
 
-@code {
-    private List<Data.SWGAccount> swgAccounts;
+@code 
+{
+    private IList<SWGAccount> _swgAccounts;
     
-    private bool showAccountForm = false;
-    private Data.SWGAccount newAccount = new();
-    private MudForm accountForm;
-    private bool accountFormSuccess;
+    private bool _showAccountForm = false;
     
-    private Data.SWGAccount addCharacterFor;
-    private Data.SWGCharacter newCharacter = new();
-    private MudForm characterForm;
-    private bool characterFormSuccess;
-    
-    private MudExpansionPanel expansionPanel;
+    private UserInfo _user;
+    private SWGAccount _addCharacterFor;
 
-    [Inject] private IDialogService DialogService { get; set; }
+    [Inject] 
+    private IDialogService DialogService { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
-        swgAccounts = await DbContext.SWGAccounts.Include(a => a.SWGCharacters).ToListAsync();
+        _user = await UserService.GetUserInfo();
+        _swgAccounts = await DataAccessService.GetUserSWGAccounts();
     }
     
     private void ToggleAccountForm()
     {
-        showAccountForm = !showAccountForm;
+        _showAccountForm = !_showAccountForm;
     }
 
-    private string ValidateCharacterName(string name)
+    private async Task DeleteAccount(SWGAccount account)
     {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return "Name is required.";
-        }
-
-        if (addCharacterFor.SWGCharacters.Any(c => c.Name == name))
-        {
-            return "Name already exists.";
-        }
-            
-        return null;
-    }
-
-    
-    private string ValidateAccountName(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return "Name is required.";
-        }
-
-        if (DbContext.SWGAccounts.Any(c => c.Name == name))
-        {
-            return "Name already exists.";
-        }
-            
-        return null;
-    }
-
-    private async Task DeleteAccount(Data.SWGAccount account)
-    {
-        if (await DialogService.ShowMessageBox("Waring", $"Are you sure you want to delete '{account.Name}'?", yesText: "Delete", cancelText: "Cancel") != true)
+        if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to delete '{account.Name}'?", yesText: "Delete", cancelText: "Cancel") != true)
         {
             return;
         }
         
-        DbContext.SWGAccounts.Remove(account);
-        var rowDeleted = await DbContext.SaveChangesAsync();
-        if (rowDeleted > 0)
+        if (await DataAccessService.RemoveSWGAccount(account, true))
         {
             Snackbar.Add($"SWG Account '{account.Name}' deleted successfully.", Severity.Success);
         }
@@ -158,42 +120,22 @@
         {
             Snackbar.Add("Failed to delete SWG Account.", Severity.Error);
         }
-        swgAccounts = await DbContext.SWGAccounts.Include(a => a.SWGCharacters).ToListAsync();
     }
     
-    private async Task CreateSWGAccount()
+    private async Task DeleteCharacter(SWGCharacter character)
     {
-        DbContext.SWGAccounts.Add(newAccount);
-        var rowAdded = await DbContext.SaveChangesAsync();
-        if (rowAdded > 0)
+        if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to delete '{character.Name}'?", yesText: "Delete", cancelText: "Cancel") != true)
         {
-            Snackbar.Add($"SWG Account '{newAccount.Name}' added successfully.", Severity.Success);
+            return;
+        }
+        
+        if (await DataAccessService.RemoveSWGCharacter(character, true))
+        {
+            Snackbar.Add($"SWG Character '{character.Name}' deleted successfully.", Severity.Success);
         }
         else
         {
-            Snackbar.Add("Failed to add SWG Account.", Severity.Error);
+            Snackbar.Add("Failed to delete SWG Character.", Severity.Error);
         }
-        swgAccounts = await DbContext.SWGAccounts.Include(a => a.SWGCharacters).ToListAsync();
-        newAccount = new Data.SWGAccount();
-        showAccountForm = false;
-    }
-
-    private async Task CreateSWGCharacter(Data.SWGAccount account)
-    {
-        newCharacter.SWGAccount = account;
-        DbContext.SWGCharacters.Add(newCharacter);
-        var rowAdded = await DbContext.SaveChangesAsync();
-        if (rowAdded > 0)
-        {
-            Snackbar.Add($"SWG Character '{newCharacter.Name}' added successfully.", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add("Failed to add SWG Character.", Severity.Error);
-        }
-        swgAccounts = await DbContext.SWGAccounts.Include(a => a.SWGCharacters).ToListAsync();
-        newCharacter = new SWGCharacter();
-        addCharacterFor = null;
-        showAccountForm = false;
     }
 }

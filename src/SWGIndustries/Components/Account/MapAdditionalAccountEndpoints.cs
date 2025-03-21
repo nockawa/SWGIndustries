@@ -22,7 +22,7 @@ public static class AccountExtensions
 
         accountGroup.MapGet("/Logout", async (
             HttpContext context, 
-            [FromServices] UserManager userManager) =>
+            [FromServices] UserService userManager) =>
         {
             await context.SignOutAsync();
             userManager.UserLoggedOut();
@@ -31,7 +31,7 @@ public static class AccountExtensions
 
         accountGroup.MapGet("/ExternalLoginCallback", async (
             HttpContext context,
-            [FromServices] UserManager userManager,
+            [FromServices] UserService userManager,
             string returnUrl) =>
         {
             

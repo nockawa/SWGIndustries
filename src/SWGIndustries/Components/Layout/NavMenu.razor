@@ -1,36 +1,21 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using SWGIndustries.Services
 @inject IHttpContextAccessor HttpContextAccessor
-@inject UserManager UserManager
+@inject UserService UserService
 
-@*<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SWGIndustries</a>
-    </div>
-</div>
-
-<div>
-    <ul class="nav flex-column">
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        <AuthorizeView>
-            <!--Ensure the user can actually access guilds before showing the view-->
-            <Authorized>
-                <li class="nav-item px-1">
-                    <NavLink class="nav-link" href="SWGAccounts">
-                        <span class="bi" aria-hidden="true"></span> SWG Accounts
-                    </NavLink>
-                </li>
-            </Authorized>
-        </AuthorizeView>
-    </ul>
-</div>*@
-
-<MudNavLink Href="SWGAccounts">SWG Accounts</MudNavLink>
-
+<AuthorizeView>
+    <MudNavMenu Class="mud-width-full" Color="Color.Inherit">
+        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Warehouse" IconColor="Color.Inherit">Home</MudNavLink>
+        <MudNavLink Href="SWGAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">SWG Accounts</MudNavLink>
+        <MudNavLink Href="Crew" Icon="@Icons.Material.Filled.People" IconColor="Color.Inherit">Crew</MudNavLink>
+        <MudNavGroup Title="Buildings" Icon="@Icons.Material.Filled.Home" IconColor="Color.Inherit">
+            <MudNavLink Href="Buildings/Inventory" Icon="@Icons.Material.Filled.Inventory" IconColor="Color.Inherit">Inventory</MudNavLink>
+            <MudNavLink Href="Buildings/House" Icon="@Icons.Material.Filled.House" IconColor="Color.Inherit">Houses</MudNavLink>
+            <MudNavLink Href="Buildings/Factory" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Inherit">Factories</MudNavLink>
+            <MudNavLink Href="Buildings/Harvester" Icon="@Icons.Material.Filled.Volcano" IconColor="Color.Inherit">Harvesters</MudNavLink>
+        </MudNavGroup>
+    </MudNavMenu>
+</AuthorizeView>
 @code {
 
     private UserInfo _info;
@@ -40,7 +25,7 @@
         //Don't attempt to query if the user isn't authenticated.
         if (HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            _info = await UserManager.GetUserInfo();
+            _info = await UserService.GetUserInfo();
         }
     }
 }
