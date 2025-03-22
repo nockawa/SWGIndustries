@@ -4,6 +4,21 @@
 @inject DataAccessService DataAccessService
 @inject ISnackbar Snackbar
 
+@if (_answeredCrewInvitations != null && _answeredCrewInvitations.Count > 0)
+{
+    <MudPaper Class="ma-4 pa-4" Elevation="16">
+        @foreach (var invitation in _answeredCrewInvitations)
+        {
+            <MudAlert Class="ma-4 pa-4" Severity="@(invitation.Status == InvitationStatus.Accepted ? Severity.Success : Severity.Error)"
+                      ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true"
+                      CloseIconClicked="@(async () => await CloseAnsweredCrewInvitation(invitation))">
+                @($"Your invitation to {invitation.ToUser.Name} to join the crew {invitation.FromUser.Crew.Name} was " + 
+                  ((invitation.Status == InvitationStatus.Accepted) ? "accepted": "rejected"))
+            </MudAlert>
+        }
+    </MudPaper>
+}
+
 <MudPaper Elevation="2" Class="ma-4 pa-4">
     <MudText Typo="Typo.body1" Class="mb-4" >@($"{_crewLeader.Name} is the crew leader")</MudText>
 
@@ -15,66 +30,67 @@
             </li>
         }
     </ul>
+
+    <MudTooltip Text="Invite a user to join your crew" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" 
+                   OnClick="() => ToggleForm()">Invite a user</MudButton>
+    </MudTooltip>
+    
+    @if (_displayInviteForm)
+    {
+        <InviteNewCrewMember CrewLeader="_crewLeader" 
+                             OnCrewInvitationSent="async void (user) => await SendNewMemberInvitation(user)"/>
+    }
+    
 </MudPaper>
     
-@if (_crewInvitationsForLeader is { Count: > 0 })
+@if (_crewRequestsForLeader is { Count: > 0 })
 {
-    <MudPaper Class="ma-4 pa-4" Elevation="16">
-        <MudText Typo="Typo.h6" Class="mb-4">Invitations to join your crew</MudText>
-        <MudSimpleTable Dense="true" Striped="true" Class="mb-8">
-            <thead>
-            <tr>
-                <th>From</th>
-                <th>Status</th>
-                <th Style="width: 160px; text-align: center">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var invitation in _crewInvitationsForLeader)
-            {
-                if (invitation.InviteOrRequestToJoin == false)
-                {
-                    <tr>
-                        <td>@invitation.FromUser.Name</td>
-                        <td>@invitation.Status.ToString()</td>
-                        <td Style="text-align: center;">
-                            <MudTooltip Text="Reject this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
-                                <MudIconButton Icon="@Icons.Material.Outlined.Block" Color="Color.Error"
-                                               OnClick="@(async () => await ActionOnInvitationRequest(invitation, false))"/>
-                            </MudTooltip>
-                            <MudTooltip Text="Accept this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
-                                <MudIconButton Icon="@Icons.Material.Outlined.PersonAdd" Color="Color.Primary"
-                                               OnClick="@(async () => await ActionOnInvitationRequest(invitation, true))"/>
-                            </MudTooltip>
-                        </td>
-                    </tr>
-                }
-            }
-            </tbody>
-        </MudSimpleTable>
-    </MudPaper>
+    <LeaderPendingCrewRequests CrewLeader="_crewLeader" OnRequestToJoinCrew="async void (invitation, grant) => await ActionOnInvitationRequest(invitation, grant)"/>
 }
 
 @code {
-    private IList<CrewInvitation> _crewInvitationsForLeader;
+    private IList<CrewInvitation> _crewRequestsForLeader;
 
-    [Parameter]
-    public Crew Crew { get; set; }
+    [Parameter] public Crew Crew { get; set; }
     
     private ApplicationUser _crewLeader;
+    private bool _displayInviteForm;
+    private IList<CrewInvitation> _answeredCrewInvitations;
 
     protected override async Task OnInitializedAsync()
     {
         _crewLeader = Crew.CrewLeader;
-        _crewInvitationsForLeader = await DataAccessService.GetCrewInvitationForLeader(_crewLeader);
-       
-        
+        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(_crewLeader);
+        _answeredCrewInvitations = await DataAccessService.GetAnsweredCrewInvitations();
     }
     
     private async Task ActionOnInvitationRequest(CrewInvitation invitation, bool grant)
     {
         var (res, info) = await DataAccessService.ProcessRequestToJoinCrew(invitation, grant);
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
-        _crewInvitationsForLeader = await DataAccessService.GetCrewInvitationForLeader(_crewLeader);
+        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(_crewLeader);
+        StateHasChanged();
+    }
+
+    private void ToggleForm()
+    {
+        _displayInviteForm = !_displayInviteForm;
+        StateHasChanged();
+    }
+
+    private async Task<CrewInvitation> SendNewMemberInvitation(ApplicationUser invitedUser)
+    {
+        var (crewInvitation, info) = await DataAccessService.CreateInvitationToJoinCrew(_crewLeader, invitedUser);
+        Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
+
+        return crewInvitation;
+    }
+
+    private async Task CloseAnsweredCrewInvitation(CrewInvitation invitation)
+    {
+        await DataAccessService.CloseCrewInvitation(invitation);
+        _answeredCrewInvitations.Remove(invitation);
+        StateHasChanged();
     }
 }

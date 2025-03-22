@@ -80,6 +80,7 @@ public class Program
         {
             options.UseSqlite(connectionString, sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             options.UseSeeding((context, _) => { GenTestData(context); });
+            options.EnableSensitiveDataLogging();
         });
         
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -139,6 +140,18 @@ public class Program
 
     private static void GenTestData(DbContext context)
     {
+        /*
+        foreach (var name in AccountTestNames)
+        {
+            var appUser = new ApplicationUser
+            {
+                CorrelationId = $"{name}TestData",
+                Name = name
+            };
+            context.Set<ApplicationUser>().Add(appUser);
+        }
+        context.SaveChanges();
+        */
         /*
         var testAppUser = context.Set<ApplicationUser>().FirstOrDefault(a => a.CorrelationId == "This is test data");
         if (testAppUser != null)

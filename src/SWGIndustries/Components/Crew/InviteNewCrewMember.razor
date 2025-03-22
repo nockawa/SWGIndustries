@@ -1,0 +1,42 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject UserService UserService
+@inject ISnackbar Snackbar
+@inject DataAccessService DataAccessService
+
+<MudPaper Class="pa-4" Style="width: 50%">
+    <MudText Typo="Typo.h6" Class="mb-4">Invite a user to join your crew</MudText>
+    <MudForm @bind-IsValid="@_formSuccess">
+
+        <MudAutocomplete T="ApplicationUser" @bind-Value="_newMember" Variant="Variant.Filled" AutoFocus="true" ToStringFunc="a => a?.Name ?? string.Empty"
+                         DebounceInterval="500" Immediate="true" SearchFunc="async (text, ct) => await SearchFunc(text, ct)"
+                         Label="Type the name of the SWG Industries account of the user to invite"/>
+        
+        <div class="d-flex justify-end mt-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                       OnClick="@(() => OnCrewInvitationSent?.Invoke(null))">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
+                       OnClick="CreateAndSendInvitation">Send invitation</MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    [Parameter] public ApplicationUser CrewLeader { get; set; }
+    [Parameter] public Action<ApplicationUser> OnCrewInvitationSent { get; set; }
+
+    private ApplicationUser _newMember;
+    private bool _formSuccess;
+
+    private void CreateAndSendInvitation()
+    {
+        OnCrewInvitationSent?.Invoke(_newMember);
+    }
+
+    private async Task<IEnumerable<ApplicationUser>> SearchFunc(string text, CancellationToken ct)
+    {
+        return await DataAccessService.GetApplicationUsersByName(text, true, ct);
+    }
+
+}

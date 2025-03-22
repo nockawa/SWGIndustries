@@ -1,0 +1,50 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+
+<MudPaper Class="ma-4 pa-4" Elevation="16">
+    <MudText Typo="Typo.h6" Class="mb-4">Invitations to join your crew</MudText>
+    <MudSimpleTable Dense="true" Striped="true" Class="mb-8">
+        <thead>
+        <tr>
+            <th>From</th>
+            <th>Status</th>
+            <th Style="width: 160px; text-align: center">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var invitation in _crewRequestsForLeader)
+        {
+            if (invitation.InviteOrRequestToJoin == false)
+            {
+                <tr>
+                    <td>@invitation.FromUser.Name</td>
+                    <td>@invitation.Status.ToString()</td>
+                    <td Style="text-align: center;">
+                        <MudTooltip Text="Reject this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Block" Color="Color.Error"
+                                           OnClick="c => OnRequestToJoinCrew(invitation, false)"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Accept this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
+                            <MudIconButton Icon="@Icons.Material.Outlined.PersonAdd" Color="Color.Primary"
+                                           OnClick="c => OnRequestToJoinCrew(invitation, true)"/>
+                        </MudTooltip>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </MudSimpleTable>
+</MudPaper>
+
+@code 
+{
+    [Parameter] public ApplicationUser CrewLeader { get; set; }
+    [Parameter] public Action<CrewInvitation, bool> OnRequestToJoinCrew { get; set; }
+    private IList<CrewInvitation> _crewRequestsForLeader;
+    protected override async Task OnInitializedAsync()
+    {
+        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(CrewLeader);
+    }
+}

@@ -2,113 +2,76 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject ApplicationDbContext DbContext
 @inject ISnackbar Snackbar
 @inject DataAccessService DataAccessService
 
 
 <!-- Display the crew leader pane if the user is a crew leader -->
-@if (_isUserCrewLeader)
+@switch (_crewType)
 {
-    <h3>Crew leader home</h3>
-    <CrewLeaderPane Crew="_crew"/>
-} 
-else if (_isUserCrewMember)
-{
-    <h3>Crew member home</h3>
-    if (_answeredCrewRequest != null)
+    case CrewType.Leader:
     {
-        <MudAlert Class="ma-4 pa-4" Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
-                  CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
-            @($"Crew leader {_answeredCrewRequest.ToUser.Name} has granted your request to join the crew {_answeredCrewRequest.FromUser.Crew.Name}.")
-        </MudAlert>
-    }
-    
-} 
-else {
-    if (_answeredCrewRequest != null)
-    {
-        <MudAlert Class="ma-4 pa-4" Severity="Severity.Error" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
-                  CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
-            @($"Crew leader {_answeredCrewRequest.ToUser.Name} has rejected your request.")
-        </MudAlert>
+        <h3>Crew leader home</h3>
+        <CrewLeaderPane Crew="_crew"/>
+        break;
     }
 
-    // Display pending invitation, if any
-    if (_pendingCrewInvitations is { Count: > 0 })
+    case CrewType.Member:
     {
-        <MudPaper Class="ma-4 pa-4" Elevation="16">
-            <MudText Typo="Typo.h6" Class="mb-4">You have the following pending crew invitations</MudText>
-            <MudSimpleTable Dense="true" Striped="true" Class="mb-8">
-                <thead>
-                <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th Style="width: 80px; text-align: center">Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var invitation in _pendingCrewInvitations)
-                {
-                    if (invitation.InviteOrRequestToJoin == false)
-                    {
-                        <tr>
-                            <td>@invitation.FromUser.Name</td>
-                            <td>@invitation.ToUser.Name</td>
-                            <td Style="text-align: center;">
-                                <MudTooltip Text="Delete this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
-                                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error"
-                                                   OnClick="@(() => DeleteSentInvitationRequest(invitation))"/>
-                                </MudTooltip>
-                            </td>
-                        </tr>
-                    }
-                }
-                </tbody>
-            </MudSimpleTable>
-        </MudPaper>
+        <h3>Crew member home</h3>
+        if (_answeredCrewRequest != null)
+        {
+            <MudAlert Class="ma-4 pa-4" Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
+                      CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
+                @($"Crew leader {_answeredCrewRequest.ToUser.Name} has granted your request to join the crew {_answeredCrewRequest.FromUser.Crew.Name}.")
+            </MudAlert>
+        }
+        break;
     }
 
-    <!-- Display the forms to create or join a crew -->
-    <MudPaper Elevation="4" Class="ma-4 pa-4">
-        <MudText Typo="Typo.body1" Class="mb-4">
-            You can create or join a crew if you are not already part of one.<br/>
-            If there is a pending invitation to join a crew, you must accept or reject it before creating or joining another crew.
-        </MudText>
+    case CrewType.NotInCrew:
+    {
+        if (_answeredCrewRequest != null)
+        {
+            <MudAlert Class="ma-4 pa-4" Severity="Severity.Error" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
+                      CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
+                @($"Crew leader {_answeredCrewRequest.ToUser.Name} has rejected your request.")
+            </MudAlert>
+        }
+
+        // Display pending request, if any
+        if (_pendingCrewRequests!=null && _pendingCrewRequests.Count>0)
+        {
+            <MemberPendingCrewRequests PendingRequests="_pendingCrewRequests" 
+                                       OnDeleteSentInvitationRequest="@(async void (invitation) => await DeleteSentInvitationRequest(invitation))"
+                                       OnRequestToJoinCrew="@(async void (invitation, grandOrDeny) => await ProcessRequestToJoinCrew(invitation, grandOrDeny))"/>
+        }
+
+        <!-- Display the forms to create or join a crew -->
+        <CreateOrJoinCrew 
+            Crew="_crew" 
+            HasAnyRequests="@((_pendingCrewRequests!=null && _pendingCrewRequests.Any()) || _answeredCrewRequest != null)"
+            OnRequestToJoinCrew="@(async void (_) => { await UpdateCrewState(); })"
+            OnCrewCreated="@(async void (crew) => { _crew = crew; await UpdateCrewState(); })" />
         
-        <MudTooltip Text=@_createCrewToolTipText openDelay="500" Placement="Placement.Top" Arrow="true">
-            <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" Disabled="_canCreateCrew==false" 
-                       OnClick="() => ToggleForm(true)">Create</MudButton>
-        </MudTooltip>
-        <MudTooltip Text="Join an existing crew" openDelay="500" Placement="Placement.Top" Arrow="true">
-            <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" OnClick="() => ToggleForm(false)"
-                       Disabled="@(_pendingCrewInvitations.Any())">Join</MudButton>
-        </MudTooltip>
-
-        <!-- Display the form to create a crew -->
-        @if (_createFormState == true)
-        {
-            <CreateCrew OnCrewCreated="@(crew => OnCrewCreated(crew))"/>
-        }
-
-        // Display the form to join an existing crew        
-        else if (_createFormState == false)
-        {
-            <RequestToJoinCrew OnRequestToJoinCrew="@(async (_, _) => { _createFormState = null; await RefreshPendingInvitations(); })"/>
-        }
-    </MudPaper>
+        break;
+    }
 }
 
 @code {
-    private ApplicationUser _applicationUser;
-    private Crew _crew;
-    private bool _isUserCrewLeader;
-    private bool _isUserCrewMember => _crew != null;
-    private bool? _createFormState;     // null = not shown, true = create crew form, false = join crew form
-    private bool _canCreateCrew;
+
+    private enum CrewType
+    {
+        NotInCrew,
+        Member,
+        Leader
+    }
     
-    private string _createCrewToolTipText;
-    private List<CrewInvitation> _pendingCrewInvitations;
+    private ApplicationUser _applicationUser;
+    private CrewType _crewType;
+    private Crew _crew;
+    
+    private IList<CrewInvitation> _pendingCrewRequests;
     private CrewInvitation _answeredCrewRequest;
 
     protected override async Task OnInitializedAsync()
@@ -116,23 +79,26 @@ else {
         _applicationUser = await DataAccessService.GetApplicationUserAsync();
         await DataAccessService.DbContext.Entry(_applicationUser).Reference(a => a.Crew).LoadAsync();
         _crew = _applicationUser.Crew;
-        _isUserCrewLeader = _crew!=null && _crew.CrewLeader == _applicationUser;
-        
-        await RefreshPendingInvitations();
-        _answeredCrewRequest = await DataAccessService.GetAnsweredCrewRequest();
-
-        _canCreateCrew = _crew == null && _pendingCrewInvitations.Count == 0;
-        _createCrewToolTipText = _canCreateCrew ? "Create your crew" : "Can't create a crew, one of your account is already part of one";
+        await UpdateCrewState();
     }
 
-    private void ToggleForm(bool create) => _createFormState = _createFormState == create ? null : create;
-
-    private void OnCrewCreated(Crew crew)
+    private async Task UpdateCrewState()
     {
-        _crew = crew; 
-        _isUserCrewLeader = _crew!=null && _crew.CrewLeader == _applicationUser; 
-        _createFormState = null; 
-        StateHasChanged(); 
+        _pendingCrewRequests = await DataAccessService.GetPendingCrewRequests(_applicationUser);
+        _answeredCrewRequest = await DataAccessService.GetAnsweredCrewRequest();
+        if (_crew == null)
+        {
+            _crewType = CrewType.NotInCrew;
+        }
+        else if (_crew.CrewLeader == _applicationUser)
+        {
+            _crewType = CrewType.Leader;
+        }
+        else
+        {
+            _crewType = CrewType.Member;
+        }
+        StateHasChanged();
     }
     
     private async Task DeleteSentInvitationRequest(CrewInvitation invitation)
@@ -140,7 +106,7 @@ else {
         if (await DataAccessService.DeleteCrewInvitation(invitation))
         {
             Snackbar.Add("Request deleted.", Severity.Success);
-            await RefreshPendingInvitations();
+            await UpdateCrewState();
         }
         else
         {
@@ -148,18 +114,23 @@ else {
         }        
     }
 
-    private async Task RefreshPendingInvitations()
+    private async Task ProcessRequestToJoinCrew(CrewInvitation invitation, bool grantOrDeny)
     {
-        _pendingCrewInvitations = await DataAccessService.GetPendingCrewInvitations(_applicationUser);
-        _canCreateCrew = _crew == null && _pendingCrewInvitations.Count == 0;
-
-        StateHasChanged();
+        var (res, info) = await DataAccessService.ProcessInvitationToJoinCrew(invitation, grantOrDeny);
+        if (res)
+        {
+            Snackbar.Add(info, Severity.Success);
+            await UpdateCrewState();
+        }
+        else
+        {
+            Snackbar.Add(info, Severity.Error);
+        }
     }
 
     private async Task CloseAnsweredCrewRequest()
     {
         await DataAccessService.CloseCrewInvitation(_answeredCrewRequest);
-        _answeredCrewRequest = null;
-        StateHasChanged();
+        await UpdateCrewState();
     }
 }
