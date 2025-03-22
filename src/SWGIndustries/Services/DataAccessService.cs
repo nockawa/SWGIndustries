@@ -9,23 +9,6 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
 {
     private readonly Task<ApplicationUser> _applicationUserTask;
 
-    public async Task<ApplicationUser> GetApplicationUserAsync() => await _applicationUserTask;
-    public ApplicationUser GetApplicationUser() => _applicationUserTask.Result;
-    
-    public async Task<ApplicationUser> GetApplicationUserByName(string name, bool caseInsensitive)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return null;
-        }
-        
-        return await DbContext
-            .ApplicationUsers.Include(a => a.Crew)
-            .FirstOrDefaultAsync(u => caseInsensitive ? 
-                u.Name.ToLower() == name.ToLower() : 
-                u.Name == name);
-    }
-
     /// <summary>
     /// Should be used for read-only operations, or very carefully...
     /// </summary>
@@ -44,14 +27,42 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
 
     public async ValueTask DisposeAsync() => await DbContext.DisposeAsync();
 
+    #region ApplicationUser
+
+    public async Task<ApplicationUser> GetApplicationUserAsync() => await _applicationUserTask;
+    public ApplicationUser GetApplicationUser() => _applicationUserTask.Result;
+    
+    public async Task<ApplicationUser> GetApplicationUserByName(string name, bool caseInsensitive)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+        
+        return await DbContext
+            .ApplicationUsers.Include(a => a.Crew)
+            .FirstOrDefaultAsync(u => caseInsensitive ? 
+                u.Name.ToLower() == name.ToLower() : 
+                u.Name == name);
+    }
+
+    public async Task<IEnumerable<ApplicationUser>> GetApplicationUsersByName(string nameFragment, bool caseInsensitive, CancellationToken cancellationToken)
+    {
+        return await DbContext.ApplicationUsers.Where(u => EF.Functions.Like(u.Name, $"%{nameFragment}%"))
+            .ToListAsync(cancellationToken);
+    }
+
+    #endregion
+
+
+    #region SWGAccount operations
+
     public async Task<IList<SWGAccount>> GetUserSWGAccounts()
     {
         var user = await GetApplicationUserAsync();
         return user.SWGAccounts;
         
     }
-
-    #region SWGAccount operations
 
     public async Task<bool> AddSWGAccount(SWGAccount swgAccount, bool fullRefresh)
     {
@@ -249,20 +260,62 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     #endregion
 
     #region Crew Invitations
-    public async Task<(bool, string)> CreateRequestToJoinCrew(CrewInvitation crewInvitation)
+    
+    public async Task<(CrewInvitation, string)> CreateRequestToJoinCrew(ApplicationUser leader, ApplicationUser requester)
     {
-        if (await DbContext.CrewInvitations.AnyAsync(
-                ci => (ci.InviteOrRequestToJoin == false && ci.FromUser == crewInvitation.FromUser) ||
-                      (ci.InviteOrRequestToJoin == true && ci.ToUser == crewInvitation.FromUser)))
+        var crewInvitation = new CrewInvitation
         {
-            return (false, $"There is already an invitation pending for {crewInvitation.FromUser.Name}");
+            FromUser = requester,
+            ToUser = leader,
+            InviteOrRequestToJoin = false,
+            Status = InvitationStatus.Pending
+        };
+        
+        if (await DbContext.CrewInvitations.AnyAsync(
+                          ci => (ci.InviteOrRequestToJoin == false && ci.FromUser == crewInvitation.FromUser) ||
+                                (ci.InviteOrRequestToJoin == true && ci.ToUser == crewInvitation.FromUser)))
+        {
+            return (null, $"There is already an invitation pending for {crewInvitation.FromUser.Name}");
         }
 
         DbContext.CrewInvitations.Add(crewInvitation);
-        return (await DbContext.SaveChangesAsync() > 0, $"Crew invitation sent to {crewInvitation.ToUser.Name}");
+        var res = await DbContext.SaveChangesAsync() > 0;
+        return res ? 
+            (crewInvitation, $"Crew invitation sent to {leader.Name}") : 
+            (null, $"Failed to send crew invitation to {leader.Name}");
     }
+    
+    public async Task<(CrewInvitation, string)> CreateInvitationToJoinCrew(ApplicationUser leader, ApplicationUser invitedUser)
+    {
+        await DbContext.Entry(invitedUser).Reference(i => i.Crew).LoadAsync();
+        if (invitedUser.Crew != null)
+        {
+            return (null, $"{invitedUser.Name} is already a member of another crew");
+        }
+        
+        var crewInvitation = new CrewInvitation
+        {
+            FromUser = leader,
+            ToUser = invitedUser,
+            InviteOrRequestToJoin = true,
+            Status = InvitationStatus.Pending
+        };
+        
+        if (await DbContext.CrewInvitations.AnyAsync(
+                ci => (ci.InviteOrRequestToJoin == false && ci.FromUser == crewInvitation.ToUser) ||
+                      (ci.InviteOrRequestToJoin == true && ci.ToUser == crewInvitation.ToUser)))
+        {
+            return (null, $"There is already an invitation pending for {invitedUser.Name}");
+        }
 
-    public async Task<List<CrewInvitation>> GetPendingCrewInvitations(ApplicationUser applicationUser)
+        DbContext.CrewInvitations.Add(crewInvitation);
+        var res = await DbContext.SaveChangesAsync() > 0;
+        return res ? 
+            (crewInvitation, $"Crew invitation sent to {invitedUser.Name}") : 
+            (null, $"Failed to send crew invitation to {invitedUser.Name}");
+    }
+    
+    public async Task<List<CrewInvitation>> GetPendingCrewRequests(ApplicationUser applicationUser)
     {
         return await DbContext.CrewInvitations
             .Where(
@@ -280,10 +333,10 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         return await DbContext.SaveChangesAsync() > 0;
     }
 
-    public async Task<IList<CrewInvitation>> GetCrewInvitationForLeader(ApplicationUser crewLeader)
+    public async Task<IList<CrewInvitation>> GetCrewRequestForLeader(ApplicationUser crewLeader)
     {
         return await DbContext.CrewInvitations
-            .Where(ci => ci.Status == InvitationStatus.Pending && ci.ToUser == crewLeader)
+            .Where(ci => ci.Status == InvitationStatus.Pending && ci.ToUser == crewLeader && ci.InviteOrRequestToJoin==false)
             .ToListAsync();
     }
 
@@ -297,7 +350,7 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         
         if (crewMember.Crew == crewLeader.Crew)
         {
-            return (true, "Already a member of the crew");
+            return (true, $"{crewMember.Name} is already a member of the crew");
         }
 
         if (grantOrReject && crewMember.Crew != null)
@@ -312,14 +365,53 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
             return (false, "Failed to update the invitation status");
         }
 
+        var res = true;
         if (grantOrReject)
         {
             crewMember.Crew = crewLeader.Crew;
             DbContext.ApplicationUsers.Update(crewMember);
+            res = await DbContext.SaveChangesAsync() > 0;
         }
 
         var actionText = grantOrReject ? "accepted" : "rejected";
-        return (await DbContext.SaveChangesAsync() > 0, $"Invitation from {invitation.FromUser.Name} is {actionText}.");
+        return (res, res ? $"Invitation from {invitation.FromUser.Name} is {actionText}." : $"Failed to {actionText} the invitation");
+    }
+
+    public async Task<(bool, string)> ProcessInvitationToJoinCrew(CrewInvitation invitation, bool grantOrReject)
+    {
+        var crewLeader = invitation.FromUser;
+        var crewMember = invitation.ToUser;
+
+        await DbContext.Entry(crewLeader).Reference(c => c.Crew).LoadAsync();
+        await DbContext.Entry(crewMember).Reference(c => c.Crew).LoadAsync();
+        
+        if (crewMember.Crew == crewLeader.Crew)
+        {
+            return (true, $"{crewMember.Name} is already a member of the crew");
+        }
+
+        if (grantOrReject && crewMember.Crew != null)
+        {
+            return (false, $"Can't grant the request, {crewMember.Name} is already a member of another crew, he must first leave it.");
+        }
+
+        invitation.Status = grantOrReject ? InvitationStatus.Accepted : InvitationStatus.Rejected;
+        DbContext.CrewInvitations.Update(invitation);
+        if (await DbContext.SaveChangesAsync() == 1 == false)
+        {
+            return (false, "Failed to update the invitation status");
+        }
+
+        bool res = true;
+        if (grantOrReject)
+        {
+            crewMember.Crew = crewLeader.Crew;
+            DbContext.ApplicationUsers.Update(crewMember);
+            res = await DbContext.SaveChangesAsync() > 0;
+        }
+
+        var actionText = grantOrReject ? "accepted" : "rejected";
+        return (res, res ? $"Invitation from {invitation.FromUser.Name} is {actionText}." : $"Failed to {actionText} the invitation");
     }
 
     public async Task<CrewInvitation> GetAnsweredCrewRequest()
@@ -327,6 +419,13 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         var applicationUser = await GetApplicationUserAsync();
         return await DbContext.CrewInvitations
             .FirstOrDefaultAsync(ci => ci.Status!=InvitationStatus.Pending && ci.InviteOrRequestToJoin==false && ci.FromUser==applicationUser);
+    }
+    
+    public async Task<IList<CrewInvitation>> GetAnsweredCrewInvitations()
+    {
+        var applicationUser = await GetApplicationUserAsync();
+        return await DbContext.CrewInvitations
+            .Where(ci => ci.Status!=InvitationStatus.Pending && ci.InviteOrRequestToJoin && ci.FromUser==applicationUser).ToListAsync();
     }
     
     public async Task<bool> CloseCrewInvitation(CrewInvitation crewInvitation)

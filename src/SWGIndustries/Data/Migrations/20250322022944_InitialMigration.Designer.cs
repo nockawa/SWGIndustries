@@ -10,7 +10,7 @@ using SWGIndustries.Data;
 namespace SWGIndustries.data.migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250321030959_InitialMigration")]
+    [Migration("20250322022944_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />

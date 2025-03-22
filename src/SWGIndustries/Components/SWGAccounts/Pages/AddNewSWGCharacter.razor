@@ -4,7 +4,6 @@
 @inject DataAccessService DataAccessService
 @inject ISnackbar Snackbar
 
-// Form to add a new SWG Character
 <MudPaper Class="pa-4" Style="width: 50%" MinWidth="50%">
     <MudText Typo="Typo.h6">Add a new SWG Character</MudText>
     <MudForm @ref="_characterForm" @bind-IsValid="@_formSuccess" Model="@_newCharacter">

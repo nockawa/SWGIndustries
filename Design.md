@@ -121,26 +121,47 @@ SWGIndustries account info and operations, subtree to be defined.
 Page listing the accounts, their characters (up to four per account) with summary info for each character. With CRUD operations.
 
 ### / Crew
-Manage a crew of SWGAccounts to share some features/info (e.g. Harvester Clusters).
+Manage a crew of SWGCharacter to share some features/info (e.g. Harvester Clusters, factories).
 
-**TO DO: rewrite**
- - Start a crew (if the ApplicationUser doesn't have a SWGAccount which is crew leader or member).
-   - Select the Account that is the leader, pick the Characters that will be members.
- - Crew Info (either for leader or members), one section per SWGAccount involve in a crew.
-   - List SWGAccount that are members, the characters involved.
-   - Leader views/operations
-     - Invites
-       - List invitations, their status
-       - Revoke a pending invitation.
-       - Clear an invitation accepted/rejected.
-       - Invite a SWGAccount to join the crew.
-     - Remove a SWGAccount from the crew (can't be Crew Leader)
-     - Disband crew
-   - Member operations
-     - Select which SWGCharacter are part of the crew
-     - Leave crew
+Crew members are declared (created, joined) at the `UserApplication` level (`user` from now on), a given user can be part of zero to one crew, a crew has a unique name and can be identified from its leader or its name.
 
-**TO DO: rewrite**
+A system of invitation allows users to request and join a crew. A user who is part of a crew select the SWGCharacters that are members.
+
+A character that is member of a crew can "share" some of its lots for crew activities. A user can remove one character from the crew when it has no lots shared.
+
+The leader can remove a user from the crew.
+
+#### / Crew (`not a member`)
+Possibility to create or join a crew.
+
+##### / Crew / Create a crew (form)
+Give a unique name, then create to become the leader of the crew.
+
+##### / Crew / Request to join (form)
+A user can make the request to join a crew by identifying it either from its name or from the user account's name.
+Invitations are displayed in the crew leader's page and can be approved or rejected.
+
+Once approved, the crew member has access to his `crew member` page.
+
+#### / Crew (`crew leader`)
+
+##### / Crew / Invitation request (component) 
+Display pending invitations, the leader can accept or reject them.
+
+#### / Crew (`crew member`)
+Once granted, the member has access to the member page, an alert is displayed to inform him/her the invitation was granted. Closing the alert destroy the invitation object for good.
+
+#### / Crew (`member or leader`)
+
+##### / Crew / Characters (component)
+Lists all the characters of all accounts in a table, with the possible actions:
+- Join crew: can be made anytime.
+- Leave crew: only if the character doesn't have lot assigned to the crew.
+
+#### Invitation system
+The invitation is made of a `from` and `to` users, a status and whether it is an invitation (`from` the leader `to` the future member) or a request to join (`from` the future member `to` the leader).
+
+There can be only one invitation that involves a future member, the invitation object has to be destroyed before a request or invitation can be made again to that user. The reason behind is to ensure a user can't be part of more than one crew and to ease the whole implementation of the feature.
 
 ### / SWGHouse
 List houses, with CRUD.

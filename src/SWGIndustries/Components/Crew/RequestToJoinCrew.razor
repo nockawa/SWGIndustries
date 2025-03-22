@@ -15,7 +15,7 @@
 
     <div class="d-flex justify-end mt-4">
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
-                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null, null))">Cancel</MudButton>
+                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null))">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_crewNameFormSuccess)"
                    OnClick="(async() => { await SendRequestToJoinCrew(); })">Join</MudButton>
     </div>
@@ -27,7 +27,7 @@
 
     <div class="d-flex justify-end mt-4">
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
-                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null, null))">Cancel</MudButton>
+                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null))">Cancel</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_accountNameFormSuccess)"
                    OnClick="(async() => { await SendRequestToJoinCrew(); })">Join</MudButton>
     </div>
@@ -39,7 +39,7 @@
     /// First Account of the Action is the Crew Leader, the second one is the account to join the crew.
     /// If both are <c>null</c> the request was cancelled.
     /// </summary>
-    [Parameter] public Action<ApplicationUser, ApplicationUser> OnRequestToJoinCrew { get; set; }
+    [Parameter] public Action<CrewInvitation> OnRequestToJoinCrew { get; set; }
 
     private ApplicationUser _applicationUser;
     private Crew _crewToJoin;
@@ -54,17 +54,10 @@
 
     private async Task SendRequestToJoinCrew()
     {
-        var crewInvitation = new CrewInvitation
-        {
-            FromUser = _applicationUser,
-            ToUser = _crewToJoin.CrewLeader,
-            InviteOrRequestToJoin = false
-        };
-
-        var (res, info) = await DataAccessService.CreateRequestToJoinCrew(crewInvitation);
-        Snackbar.Add(info, res ? Severity.Success : Severity.Error);
+        var (crewInvitation, info) = await DataAccessService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _applicationUser);
+        Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
         
-        OnRequestToJoinCrew?.Invoke(crewInvitation.ToUser, crewInvitation.FromUser);
+        OnRequestToJoinCrew?.Invoke(crewInvitation);
         _crewToJoin = null;
     }
 
