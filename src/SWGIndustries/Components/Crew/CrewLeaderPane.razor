@@ -20,19 +20,8 @@
 }
 
 <MudPaper Elevation="2" Class="ma-4 pa-4">
-    <MudText Typo="Typo.body1" Class="mb-4" >@($"{_crewLeader.Name} is the crew leader")</MudText>
-
-    <ul>
-        @foreach (var character in _crewLeader.Crew.Members)
-        {
-            <li>
-                <MudText Typo="Typo.body1">@($"{character.Name}")</MudText>
-            </li>
-        }
-    </ul>
-
     <MudTooltip Text="Invite a user to join your crew" openDelay="500" Placement="Placement.Top" Arrow="true">
-        <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" 
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" 
                    OnClick="() => ToggleForm()">Invite a user</MudButton>
     </MudTooltip>
     

@@ -25,6 +25,10 @@ public class SWGAccount
     /// </summary>
     public IList<SWGCharacter> SWGCharacters { get; set; } = new List<SWGCharacter>();
     
+    public IList<Cluster> Clusters { get; set; } = new List<Cluster>();
+    
+    public IList<SWGBuilding> SWGBuildings { get; set; } = new List<SWGBuilding>();
+    
     #endregion
 
     /// <summary>

@@ -32,8 +32,26 @@ public class ApplicationDbContext : DbContext
             .HasMany(a => a.SWGCharacters)
             .WithOne(c => c.SWGAccount)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SWGAccount>()
+            .HasMany(a => a.Clusters)
+            .WithOne(c => c.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<SWGAccount>()
+            .HasMany(a => a.SWGBuildings)
+            .WithOne(b => b.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<SWGAccount>().Navigation(a => a.SWGCharacters).AutoInclude();
 
+        modelBuilder.Entity<SWGCharacter>()
+            .HasMany(c => c.PutDownBuildings)
+            .WithOne(b => b.PutDownBy)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<Cluster>()
+            .HasMany(c => c.Buildings)
+            .WithOne(b => b.Cluster)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         // Crew navigation customization
         modelBuilder.Entity<Crew>().HasMany(c => c.Members).WithOne(m => m.Crew);
         modelBuilder.Entity<Crew>().Navigation(c => c.CrewLeader).AutoInclude();

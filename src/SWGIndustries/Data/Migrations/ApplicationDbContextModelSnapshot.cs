@@ -42,6 +42,33 @@ namespace SWGIndustries.data.migrations
                     b.ToTable("ApplicationUsers");
                 });
 
+            modelBuilder.Entity("SWGIndustries.Data.Cluster", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Cluster");
+                });
+
             modelBuilder.Entity("SWGIndustries.Data.Crew", b =>
                 {
                     b.Property<int>("Id")
@@ -112,6 +139,45 @@ namespace SWGIndustries.data.migrations
                     b.ToTable("SWGAccounts");
                 });
 
+            modelBuilder.Entity("SWGIndustries.Data.SWGBuilding", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClusterId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("OwnerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PutDownById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PutDownPlanet")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SubType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClusterId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.HasIndex("PutDownById");
+
+                    b.ToTable("SWGBuilding");
+                });
+
             modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
                 {
                     b.Property<int>("Id")
@@ -119,6 +185,9 @@ namespace SWGIndustries.data.migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsCrewMember")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxLotsForCrew")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -142,6 +211,16 @@ namespace SWGIndustries.data.migrations
                         .HasForeignKey("CrewId");
 
                     b.Navigation("Crew");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.Cluster", b =>
+                {
+                    b.HasOne("SWGIndustries.Data.SWGAccount", "Owner")
+                        .WithMany("Clusters")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.Crew", b =>
@@ -177,6 +256,30 @@ namespace SWGIndustries.data.migrations
                     b.Navigation("OwnerApplicationUser");
                 });
 
+            modelBuilder.Entity("SWGIndustries.Data.SWGBuilding", b =>
+                {
+                    b.HasOne("SWGIndustries.Data.Cluster", "Cluster")
+                        .WithMany("Buildings")
+                        .HasForeignKey("ClusterId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SWGIndustries.Data.SWGAccount", "Owner")
+                        .WithMany("SWGBuildings")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SWGIndustries.Data.SWGCharacter", "PutDownBy")
+                        .WithMany("PutDownBuildings")
+                        .HasForeignKey("PutDownById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Cluster");
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("PutDownBy");
+                });
+
             modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
                 {
                     b.HasOne("SWGIndustries.Data.SWGAccount", "SWGAccount")
@@ -192,6 +295,11 @@ namespace SWGIndustries.data.migrations
                     b.Navigation("SWGAccounts");
                 });
 
+            modelBuilder.Entity("SWGIndustries.Data.Cluster", b =>
+                {
+                    b.Navigation("Buildings");
+                });
+
             modelBuilder.Entity("SWGIndustries.Data.Crew", b =>
                 {
                     b.Navigation("Members");
@@ -199,7 +307,16 @@ namespace SWGIndustries.data.migrations
 
             modelBuilder.Entity("SWGIndustries.Data.SWGAccount", b =>
                 {
+                    b.Navigation("Clusters");
+
+                    b.Navigation("SWGBuildings");
+
                     b.Navigation("SWGCharacters");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>
+                {
+                    b.Navigation("PutDownBuildings");
                 });
 #pragma warning restore 612, 618
         }

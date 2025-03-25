@@ -82,6 +82,7 @@ A cluster is for controlling/monitoring multiple harvesters put on a given resou
 - Name (string), for info purpose
 - Comment (string), for info purpose
 - Planet (int), planet where the cluster is located
+- Resource (int), not for default cluster
 
 ### SWGBuilding
 Represent an in-game building (house, harvester or factory).
@@ -146,7 +147,10 @@ Once approved, the crew member has access to his `crew member` page.
 #### / Crew (`crew leader`)
 
 ##### / Crew / Invitation request (component) 
-Display pending invitations, the leader can accept or reject them.
+Display pending requests to join, the leader can accept or reject them.
+
+##### / Crew / Member overview
+Display a table with all UserApplication accounts, their SWGAccounts, their characters (only the ones that are members) and some overview info about the characters ()
 
 #### / Crew (`crew member`)
 Once granted, the member has access to the member page, an alert is displayed to inform him/her the invitation was granted. Closing the alert destroy the invitation object for good.
