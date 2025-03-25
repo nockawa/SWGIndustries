@@ -434,5 +434,63 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         return await DbContext.SaveChangesAsync() > 0;
     }
 
+    public async Task<IList<SWGCharacter>> GetCrewCharacters(Crew crew)
+    {
+        return await DbContext.ApplicationUsers
+            .Where(a => a.Crew == crew)
+            .SelectMany(a => a.SWGAccounts)
+            .SelectMany(c => c.SWGCharacters).Where(c => c.IsCrewMember).Include(c => c.SWGAccount).ToListAsync();
+    }
+
+    public async Task<IList<SWGCharacter>> GetUserCharacters(ApplicationUser user)
+    {
+        return await DbContext.ApplicationUsers
+            .Where(a => a == user)
+            .SelectMany(a => a.SWGAccounts)
+            .SelectMany(c => c.SWGCharacters).Include(c => c.SWGAccount).ToListAsync();
+    }
+    
     #endregion
+
+    public async Task<(bool, string)> AddCharacterToCrew(SWGCharacter character, int? lotToLend)
+    {
+        if (character.IsCrewMember)
+        {
+            return (true, $"{character.Name} is already a crew member");
+        }
+        
+        character.IsCrewMember = true;
+        if (lotToLend.HasValue)
+        {
+            character.MaxLotsForCrew = lotToLend.Value;
+        }
+        DbContext.SWGCharacters.Update(character);
+        return await DbContext.SaveChangesAsync() > 0 ? (true, $"{character.Name} added to crew.") : (false, $"Failed to add {character.Name} to crew.");
+    }
+    
+    public async Task<(bool, string)> RemoveCharacterFromCrew(SWGCharacter character)
+    {
+        if (!character.IsCrewMember)
+        {
+            return (true, $"{character.Name} is not a crew member");
+        }
+        
+        character.IsCrewMember = false;
+        DbContext.SWGCharacters.Update(character);
+        return await DbContext.SaveChangesAsync() > 0 ? (true, $"{character.Name} removed from crew.") : (false, $"Failed to remove {character.Name} from crew.");
+    }
+
+    public async Task<(bool, string)> SetCharacterMaxLotToLend(SWGCharacter character, int lotToLend)
+    {
+        character.MaxLotsForCrew = lotToLend;
+        DbContext.SWGCharacters.Update(character);
+        return await DbContext.SaveChangesAsync() > 0 ? 
+            (true, $"{character.Name} max lot to lend set to {lotToLend}.") : 
+            (false, $"Failed to set {character.Name} max lot to lend.");
+    }
+
+    public Task<bool> CanRemoveCharacterFromCrew(SWGCharacter character)
+    {
+        return Task.FromResult(true);
+    }
 }

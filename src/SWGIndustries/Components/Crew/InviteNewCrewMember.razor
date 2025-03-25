@@ -5,13 +5,13 @@
 @inject ISnackbar Snackbar
 @inject DataAccessService DataAccessService
 
-<MudPaper Class="pa-4" Style="width: 50%">
+<MudPaper Class="pa-4 mt-4" Style="width: 50%">
     <MudText Typo="Typo.h6" Class="mb-4">Invite a user to join your crew</MudText>
     <MudForm @bind-IsValid="@_formSuccess">
 
         <MudAutocomplete T="ApplicationUser" @bind-Value="_newMember" Variant="Variant.Filled" AutoFocus="true" ToStringFunc="a => a?.Name ?? string.Empty"
                          DebounceInterval="500" Immediate="true" SearchFunc="async (text, ct) => await SearchFunc(text, ct)"
-                         Label="Type the name of the SWG Industries account of the user to invite"/>
+                         Label="Name of the SWG Industries account of the user to invite"/>
         
         <div class="d-flex justify-end mt-2">
             <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"

@@ -1,0 +1,20 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText Class="mb-4">How many of your 10 lots you want to lend to the crew.</MudText>
+        <MudNumericField T="int" @bind-Value="LendLotCount" Variant="Variant.Filled" Class="ma-4" 
+                         Min="1" Max="10" Step="1" style="width: 50%"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int LendLotCount { get; set; } = 1;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}
