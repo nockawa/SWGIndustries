@@ -1,0 +1,45 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+
+<MudSelect T="SWGAccount" @ref="_selectControl" SelectedValuesChanged="OnSelectedAccountChanged" Variant="Variant.Outlined" Label="Select the SWG Account" 
+           Dense="true" Style="width: 10rem" Class="mb-4">
+    
+    @foreach(var account in _accounts)
+    {
+        <MudSelectItem T="SWGAccount" Value="@account">@account.Name</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+
+    [Parameter]
+    public SWGAccount SelectedAccount { get; set; }
+
+    [Parameter] public EventCallback<SWGAccount> SelectedAccountChanged { get; set; }
+
+    private IList<SWGAccount> _accounts;
+    private MudSelect<SWGAccount> _selectControl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = await DataAccessService.GetUserSWGAccounts();
+        SelectedAccount = _accounts.FirstOrDefault();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && SelectedAccount != null)
+        {
+            _selectControl.Value = _accounts.FirstOrDefault();
+            _selectControl.ForceUpdate();
+        }
+    }
+
+    private Task OnSelectedAccountChanged(IEnumerable<SWGAccount> arg)
+    {
+        SelectedAccount = arg.FirstOrDefault();
+        return SelectedAccountChanged.InvokeAsync(SelectedAccount);
+    }
+}

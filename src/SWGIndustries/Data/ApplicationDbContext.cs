@@ -4,11 +4,14 @@ namespace SWGIndustries.Data;
 
 public class ApplicationDbContext : DbContext
 {
+    public DbSet<NamedSeries> NamedSeries { get; set; }
     public DbSet<ApplicationUser> ApplicationUsers { get; set; }
     public DbSet<SWGAccount> SWGAccounts { get; set; }
     public DbSet<SWGCharacter> SWGCharacters { get; set; }
     public DbSet<Crew> Crews { get; set; }
     public DbSet<CrewInvitation> CrewInvitations { get; set; }
+    public DbSet<SWGBuilding> SWGBuildings { get; set; }
+    public DbSet<Cluster> Clusters { get; set; }
     
     public ApplicationDbContext()
     {
@@ -22,11 +25,14 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Named series
+        modelBuilder.Entity<NamedSeries>().Property(p => p.Counter).IsConcurrencyToken();
+        
         // Application User navigation customization
         modelBuilder.Entity<ApplicationUser>().HasMany(e => e.SWGAccounts).WithOne(e => e.OwnerApplicationUser);
         
         modelBuilder.Entity<ApplicationUser>().Navigation(a => a.SWGAccounts).AutoInclude();
-
+        
         // SWG Account navigation customization
         modelBuilder.Entity<SWGAccount>()
             .HasMany(a => a.SWGCharacters)

@@ -1,0 +1,51 @@
+﻿@using SWGIndustries.Services
+@inject StructuresService Structures
+@inherits MudComponentBase
+
+<div>
+    <MudTextField T="string" Label="Search" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                  TextChanged="OnTextChanged" Immediate="true" Clearable="true"/>
+    <MudTreeView T="INode" @ref="_treeView" Items="@_items" Hover="true" Dense="true" ExpandOnClick="true" 
+                 FilterFunc="OnFilter" SelectedValue="@Selection" SelectedValueChanged="@SelectionChanged">
+        <ItemTemplate>
+            <MudTreeViewItem Items="@context.Children" Value="@context.Value" Text="@context.Value?.Name" Visible="@context.Visible"/>
+        </ItemTemplate>
+    </MudTreeView>
+</div>
+
+@code {
+    [Parameter] public INode Selection { get; set; }
+    [Parameter] public EventCallback<INode> SelectionChanged { get; set; }
+    
+    private MudTreeView<INode> _treeView;
+    private List<TreeItemPresenter> _items;
+    private string _searchPhrase;
+
+    public sealed class TreeItemPresenter : TreeItemData<INode>
+    {
+        public TreeItemPresenter(INode node) : base(node)
+        {
+            Name = node.Name;
+            Children = [];
+            Children!.AddRange(node.Children.Select(n => new TreeItemPresenter(n)));
+        }
+
+        public override List<TreeItemData<INode>> Children { get; set; }
+        public string Name { get; }
+    }
+
+    protected override void OnInitialized()
+    {
+        _items =  Structures.Children.Select(n => new TreeItemPresenter(n)).ToList();
+    }
+
+    private async void OnTextChanged(string searchPhrase)
+    {
+        _searchPhrase = searchPhrase;
+        await _treeView.FilterAsync();
+    }
+
+    private Task<bool> OnFilter(TreeItemData<INode> item) => 
+        Task.FromResult(!string.IsNullOrEmpty(item.Value?.Name) && item.Value.Name.Contains(_searchPhrase, StringComparison.OrdinalIgnoreCase));
+
+}

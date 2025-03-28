@@ -3,30 +3,34 @@ using JetBrains.Annotations;
 
 namespace SWGIndustries.Data;
 
-[PublicAPI]
 public enum BuildingType
 {
+    Undefined,
     House,
+    Factory,
     Harvester,
-    Factory
 }
 
-[PublicAPI]
 public enum BuildingSubType
 {
-    SmallHouse,
-    MediumHouse,
-    LargeHouse,
-    
-    PersonalHarvester,
-    MediumHarvester,
-    LargeHarvester,
-    EliteHarvester,
-    
-    FoodFactory,
-    EquipmentFactory,
-    StructureFactory,
-    WearableFactory,
+    Undefined,
+    HouseMerchantTent,
+    HouseNabooSmallHouse,
+    HouseSmallHouse,
+    HouseMediumHouse,
+    HouseLargeHouse,
+    FactoryEquipment,
+    FactoryFood,
+    FactoryStructure,
+    FactoryWearables,
+    HarvesterPersonal,
+    HarvesterMedium,
+    HarvesterHeavy,
+    HarvesterElite,
+    HarvesterWind,
+    HarvesterSolar,
+    HarvesterRadioactive,
+    HarvesterGeothermal,
 }
 
 [PublicAPI]

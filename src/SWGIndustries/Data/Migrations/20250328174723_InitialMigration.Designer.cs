@@ -10,7 +10,7 @@ using SWGIndustries.Data;
 namespace SWGIndustries.data.migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250324221842_InitialMigration")]
+    [Migration("20250328174723_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -69,7 +69,7 @@ namespace SWGIndustries.data.migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Cluster");
+                    b.ToTable("Clusters");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.Crew", b =>
@@ -120,6 +120,26 @@ namespace SWGIndustries.data.migrations
                     b.HasIndex("ToUserId");
 
                     b.ToTable("CrewInvitations");
+                });
+
+            modelBuilder.Entity("SWGIndustries.Data.NamedSeries", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Counter")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NamedSeries");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.SWGAccount", b =>
@@ -178,7 +198,7 @@ namespace SWGIndustries.data.migrations
 
                     b.HasIndex("PutDownById");
 
-                    b.ToTable("SWGBuilding");
+                    b.ToTable("SWGBuildings");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.SWGCharacter", b =>

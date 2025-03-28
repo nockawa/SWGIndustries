@@ -1,0 +1,72 @@
+﻿@page "/Buildings/Inventory"
+
+@using SWGIndustries.Services
+
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject DataAccessService DataAccessService
+
+<MudPaper Elevation="4" Class="ma-4 pa-4">
+    <MudText Typo="Typo.body1" Class="mb-4">
+        This page is used to interact with the inventory of an account.
+    </MudText>
+
+    <MudTooltip Text="Create one/many structures for a given account" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" OnClick="async () => await OnCreateStructure()">Create Structure</MudButton>
+    </MudTooltip>
+
+</MudPaper>
+
+
+
+@code {
+    private async Task<bool> OnCreateStructure()
+    {
+        var options = new DialogOptions()
+        {
+            BackdropClick = false,
+            CloseButton = false,
+        };
+
+        var title = "Create one/many structures";
+
+        var dialogRef = await DialogService.ShowAsync<CreateStructureDialog>(title, options);
+        var result = await dialogRef.Result;
+
+        if (result == null || result.Canceled)
+        {
+            return false;
+        }
+
+        var dialog = (CreateStructureDialog)dialogRef.Dialog!;
+        var template = dialog.SelectedTemplate;
+        var count = dialog.StructureCount;
+
+        var (res, info) = new ValueTuple<bool, string>();
+        
+        switch (template)
+        {
+            case House house:
+                (res, info) = await DataAccessService.CreateHouse(dialog.SelectedAccount, house, count);
+                break;
+                
+            case Factory:
+                break;
+                
+            case Harvester:
+                break;
+        }
+
+        if (res)
+        {
+            Snackbar.Add($"Successfully created {count} {template.Name} for account {dialog.SelectedAccount.Name}", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"Failed to create {count} {template.Name} for account {dialog.SelectedAccount.Name}: {info}", Severity.Error);
+        }
+        
+        return true;
+    }
+
+}

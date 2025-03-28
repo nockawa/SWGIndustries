@@ -7,6 +7,7 @@ namespace SWGIndustries.Services;
 [PublicAPI]
 public sealed class DataAccessService : IDisposable, IAsyncDisposable
 {
+    private readonly NamedSeriesService _namedSeriesService;
     private readonly Task<ApplicationUser> _applicationUserTask;
 
     /// <summary>
@@ -14,10 +15,11 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     /// </summary>
     public ApplicationDbContext DbContext { get; }
 
-    public DataAccessService(ApplicationDbContext dbContext, UserService userService)
+    public DataAccessService(ApplicationDbContext dbContext, UserService userService, NamedSeriesService namedSeriesService)
     {
         DbContext = dbContext;
         _applicationUserTask = userService.BuildApplicationUser(DbContext);
+        _namedSeriesService = namedSeriesService;
     }
 
     public void Dispose()
@@ -492,5 +494,23 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     public Task<bool> CanRemoveCharacterFromCrew(SWGCharacter character)
     {
         return Task.FromResult(true);
+    }
+
+    public async Task<(bool, string)> CreateHouse(SWGAccount owner, House house, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var building = new SWGBuilding()
+            {
+                Name = $"{house.Name} #{await _namedSeriesService.GetNextValueAsync(house.Name)}",
+                Owner = owner,
+                Type = house.Type,
+                SubType = house.SubType
+            };
+            
+            DbContext.SWGBuildings.Add(building);
+        }
+
+        return await DbContext.SaveChangesAsync() > 0 ? (true, $"{count} {house.Name} has been created.") : (false, "error creating the house objects");
     }
 }

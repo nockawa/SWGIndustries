@@ -1,0 +1,88 @@
+﻿@using SWGIndustries.Services
+@using SWGIndustries.Components.SWGAccounts
+@using SWGIndustries.Data
+
+<MudDialog Style="min-width: 40rem">
+    <DialogContent>
+        <AccountSelectionControl @ref="_accountSelectionControl" @bind-SelectedAccount="SelectedAccount"/>
+        <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Start" StretchItems="StretchItems.End">
+            <StructuresTreeControl @bind-Selection="SelectedTemplate" @bind-Selection:after="OnTemplateChanged"/>
+
+            <MudForm @bind-IsValid="@_success" @bind-Errors="_errors" Class="ma-2">
+                @if (SelectedTemplate is House or Factory or Harvester)
+                {
+                    if (SelectedTemplate is Harvester harvester)
+                    {
+                        if (harvester.IsEnergy == false)
+                        {
+                            <MudSelect T="HarvestingResourceType" @bind-value="HarvestingResourceType" Variant="Variant.Filled"
+                                       Label="Harvested resource type" Dense="true" Clearable="false">
+
+                                @foreach (HarvestingResourceType subType in Enum.GetValues(typeof(HarvestingResourceType)))
+                                {
+                                    <MudSelectItem Value="subType">@subType.ToString()</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudCheckBox T="bool" Label="Is self powered" @bind-Value="HarvesterSelfPowered"/>
+                        }
+
+                        <MudNumericField T="int" Label="BER" @bind-Value="@HarvesterBER" Required="true" Immediate="true"
+                                         Min="@harvester.MinBER" Max="@harvester.MaxBER" Class="ma-2"/>
+                        <MudNumericField T="int" Label="Hopper size (in K)" @bind-Value="@HarvesterHopperSize" Required="true" Immediate="true"
+                                         Min="@harvester.MinHopperSizeK" Max="@harvester.MaxHopperSizeK" Class="ma-2"/>
+
+                    }
+
+                    <MudTooltip Text="Will create multiple instance of the same structure in the inventory"
+                                openDelay="200" Placement="Placement.Top" Arrow="true">
+                        <MudNumericField T="int" Label="Count" @bind-Value="@StructureCount" Required="true" Immediate="true"
+                                         Min="1" Max="100" Class="ma-2"/>
+                    </MudTooltip>
+                }
+            </MudForm>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    
+    private bool _success;
+    private string[] _errors;
+    private AccountSelectionControl _accountSelectionControl;
+
+    public INode SelectedTemplate { get; private set; }
+    public int StructureCount { get; private set; }
+    public int HarvesterBER { get; private set; }
+    public int HarvesterHopperSize { get; private set; }
+    public HarvestingResourceType HarvestingResourceType { get; private set; }
+    public bool HarvesterSelfPowered { get; private set; }
+
+    public SWGAccount SelectedAccount { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+    
+    protected override void OnInitialized()
+    {
+        StructureCount = 1;
+        _success = true;
+    }
+
+    private void OnTemplateChanged()
+    {
+        if (SelectedTemplate is IHarvester harvester)
+        {
+            HarvesterBER = harvester.MaxBER;
+            HarvesterHopperSize = harvester.MinHopperSizeK;
+        }
+        _success = true;
+        StateHasChanged();
+    }
+}
