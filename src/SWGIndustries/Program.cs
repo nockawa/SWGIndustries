@@ -39,6 +39,8 @@ public class Program
         
         services.AddSingleton<UserService>();
         services.AddScoped<DataAccessService>();
+        services.AddSingleton<StructuresService>();
+        services.AddScoped<NamedSeriesService>();
 
         //Configure authentication for the user using Discord OAuth2
         services.AddAuthentication(opt =>

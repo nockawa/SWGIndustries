@@ -11,6 +11,20 @@ namespace SWGIndustries.data.migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "NamedSeries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Counter = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NamedSeries", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ApplicationUsers",
                 columns: table => new
                 {
@@ -91,7 +105,7 @@ namespace SWGIndustries.data.migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Cluster",
+                name: "Clusters",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -103,9 +117,9 @@ namespace SWGIndustries.data.migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Cluster", x => x.Id);
+                    table.PrimaryKey("PK_Clusters", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Cluster_SWGAccounts_OwnerId",
+                        name: "FK_Clusters_SWGAccounts_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "SWGAccounts",
                         principalColumn: "Id",
@@ -135,7 +149,7 @@ namespace SWGIndustries.data.migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SWGBuilding",
+                name: "SWGBuildings",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -150,20 +164,20 @@ namespace SWGIndustries.data.migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SWGBuilding", x => x.Id);
+                    table.PrimaryKey("PK_SWGBuildings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SWGBuilding_Cluster_ClusterId",
+                        name: "FK_SWGBuildings_Clusters_ClusterId",
                         column: x => x.ClusterId,
-                        principalTable: "Cluster",
+                        principalTable: "Clusters",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_SWGBuilding_SWGAccounts_OwnerId",
+                        name: "FK_SWGBuildings_SWGAccounts_OwnerId",
                         column: x => x.OwnerId,
                         principalTable: "SWGAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_SWGBuilding_SWGCharacters_PutDownById",
+                        name: "FK_SWGBuildings_SWGCharacters_PutDownById",
                         column: x => x.PutDownById,
                         principalTable: "SWGCharacters",
                         principalColumn: "Id");
@@ -175,8 +189,8 @@ namespace SWGIndustries.data.migrations
                 column: "CrewId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Cluster_OwnerId",
-                table: "Cluster",
+                name: "IX_Clusters_OwnerId",
+                table: "Clusters",
                 column: "OwnerId");
 
             migrationBuilder.CreateIndex(
@@ -206,18 +220,18 @@ namespace SWGIndustries.data.migrations
                 column: "OwnerApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SWGBuilding_ClusterId",
-                table: "SWGBuilding",
+                name: "IX_SWGBuildings_ClusterId",
+                table: "SWGBuildings",
                 column: "ClusterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SWGBuilding_OwnerId",
-                table: "SWGBuilding",
+                name: "IX_SWGBuildings_OwnerId",
+                table: "SWGBuildings",
                 column: "OwnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SWGBuilding_PutDownById",
-                table: "SWGBuilding",
+                name: "IX_SWGBuildings_PutDownById",
+                table: "SWGBuildings",
                 column: "PutDownById");
 
             migrationBuilder.CreateIndex(
@@ -244,10 +258,13 @@ namespace SWGIndustries.data.migrations
                 name: "CrewInvitations");
 
             migrationBuilder.DropTable(
-                name: "SWGBuilding");
+                name: "NamedSeries");
 
             migrationBuilder.DropTable(
-                name: "Cluster");
+                name: "SWGBuildings");
+
+            migrationBuilder.DropTable(
+                name: "Clusters");
 
             migrationBuilder.DropTable(
                 name: "SWGCharacters");
