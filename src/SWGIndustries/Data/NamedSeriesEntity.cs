@@ -2,7 +2,7 @@
 
 namespace SWGIndustries.Data;
 
-public class NamedSeries
+public class NamedSeriesEntity
 {
     [Key]
     public int Id { get; set; }

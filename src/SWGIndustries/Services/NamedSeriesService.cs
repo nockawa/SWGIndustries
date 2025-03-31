@@ -20,17 +20,17 @@ public class NamedSeriesService
         var maxRetries = MaxRetries;
         do
         {
-            var namedSeries = await _context.Set<NamedSeries>()
+            var namedSeries = await _context.Set<NamedSeriesEntity>()
                 .FirstOrDefaultAsync(ns => ns.Name == name);
 
             if (namedSeries == null)
             {
-                namedSeries = new NamedSeries
+                namedSeries = new NamedSeriesEntity
                 {
                     Name = name,
                     Counter = 1
                 };
-                _context.Set<NamedSeries>().Add(namedSeries);
+                _context.Set<NamedSeriesEntity>().Add(namedSeries);
             }
             else
             {

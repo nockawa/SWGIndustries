@@ -13,7 +13,7 @@
             <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
                        OnClick="@(() => OnCharacterAdded?.Invoke(null))">Cancel</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
-                       OnClick="@(() => CreateSWGCharacter(AddCharacterFor))">Create</MudButton>
+                       OnClick="@(() => CreateCharacter(AddCharacterFor))">Create</MudButton>
         </div>
     </MudForm>
 </MudPaper>
@@ -21,12 +21,12 @@
 @code {
     
     [Parameter] 
-    public SWGAccount AddCharacterFor { get; set; }
+    public GameAccountEntity AddCharacterFor { get; set; }
     
     [Parameter] 
-    public Action<SWGCharacter> OnCharacterAdded { get; set; }
+    public Action<CharacterEntity> OnCharacterAdded { get; set; }
 
-    private SWGCharacter _newCharacter = new();
+    private CharacterEntity _newCharacter = new();
     private MudForm _characterForm;
     private bool _formSuccess;
  
@@ -37,7 +37,7 @@
             return "Name is required.";
         }
 
-        if (AddCharacterFor.SWGCharacters.Any(c => c.Name == name))
+        if (AddCharacterFor.Characters.Any(c => c.Name == name))
         {
             return "Name already exists.";
         }
@@ -45,17 +45,17 @@
         return null;
     }
 
-    private async Task CreateSWGCharacter(SWGAccount account)
+    private async Task CreateCharacter(GameAccountEntity account)
     {
-        if (await DataAccessService.AddSWGCharacter(account, _newCharacter, true))
+        if (await DataAccessService.AddCharacter(account, _newCharacter, true))
         {
-            Snackbar.Add($"SWG Character '{_newCharacter.Name}' added successfully.", Severity.Success);
+            Snackbar.Add($"Character '{_newCharacter.Name}' added successfully.", Severity.Success);
         }
         else
         {
-            Snackbar.Add("Failed to add SWG Character.", Severity.Error);
+            Snackbar.Add("Failed to add Character.", Severity.Error);
         }
         OnCharacterAdded?.Invoke(_newCharacter);
-        _newCharacter = new SWGCharacter();
+        _newCharacter = new CharacterEntity();
     }
 }

@@ -1,0 +1,87 @@
+﻿@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+@inject DataScopeService DataScopeService
+
+<MudSelect T="DataScope" @ref="_selectControl" SelectedValuesChanged="OnSelectionChanged" Variant="Variant.Outlined" Dense="true" Style="width: 10rem"
+           Class="mb-4" Label="@(Label ?? "Select the scope of the data you want to deal with")">
+
+    @foreach (var tuple in _scopes)
+    {
+        <MudSelectItem T="DataScope" Value="tuple.Item1">@(tuple.Item2)</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public bool NoCrew { get; set; }
+    [Parameter] public bool NoCrewLeaderUnfold { get; set; }
+    [Parameter] public bool NoAppAccount { get; set; }
+    [Parameter] public string Label { get; set; }
+    
+    [Parameter] public DataScope SelectedScope { get; set; }
+    [Parameter] public EventCallback<DataScope> SelectedScopeChanged { get; set; }
+    
+    private MudSelect<DataScope> _selectControl;
+    private IList<(DataScope, string)> _scopes = new List<(DataScope, string)>();
+    
+    protected override void OnParametersSet()
+    {
+        RefreshList();
+        StateHasChanged();
+    }
+
+    private void RefreshList()
+    {
+        _scopes.Clear();
+        
+        var appAccount = DataAccessService.GetAppAccount();
+        var isCrewLeader = appAccount.IsCrewLeader;
+
+        // Crew item
+        if (NoCrew == false && isCrewLeader)
+        {
+            var scope = DataScopeService.GetCrewScope();
+            _scopes.Add((scope, $"{scope} (Crew)"));
+        }
+        
+        // ApplicationUser item
+        if (NoAppAccount == false)
+        {
+            var scope = DataScopeService.GetAppAccountScope();
+            _scopes.Add((scope, $"{scope} (SWG Industries account)")); 
+        }
+
+        // List of GameAccounts, for the crew leader, it's all the accounts of the crew members
+        if (NoCrewLeaderUnfold==false && isCrewLeader)
+        {
+            foreach (var account in appAccount.Crew.Members.SelectMany(m => m.GameAccounts))
+            {
+                var scope = DataScopeService.GetGameAccountScope(account);
+                _scopes.Add((scope, $"{scope} (SWG Account)"));
+            }
+        }
+        else
+        {
+            foreach (var account in appAccount.GameAccounts)
+            {
+                var scope = DataScopeService.GetGameAccountScope(account);
+                _scopes.Add((scope, $"{scope} (SWG Account)"));
+            }
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _selectControl.Value = _scopes.FirstOrDefault().Item1;
+            _selectControl.ForceUpdate();
+        }
+    }
+
+    private Task OnSelectionChanged(IEnumerable<DataScope> arg)
+    {
+        SelectedScope = arg.FirstOrDefault();
+        return SelectedScopeChanged.InvokeAsync(SelectedScope);
+    }
+}

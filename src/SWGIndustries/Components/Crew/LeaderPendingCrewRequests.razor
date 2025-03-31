@@ -19,7 +19,7 @@
             if (invitation.InviteOrRequestToJoin == false)
             {
                 <tr>
-                    <td>@invitation.FromUser.Name</td>
+                    <td>@invitation.FromAccount.Name</td>
                     <td>@invitation.Status.ToString()</td>
                     <td Style="text-align: center;">
                         <MudTooltip Text="Reject this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
@@ -40,9 +40,9 @@
 
 @code 
 {
-    [Parameter] public ApplicationUser CrewLeader { get; set; }
-    [Parameter] public Action<CrewInvitation, bool> OnRequestToJoinCrew { get; set; }
-    private IList<CrewInvitation> _crewRequestsForLeader;
+    [Parameter] public AppAccountEntity CrewLeader { get; set; }
+    [Parameter] public Action<CrewInvitationEntity, bool> OnRequestToJoinCrew { get; set; }
+    private IList<CrewInvitationEntity> _crewRequestsForLeader;
     protected override async Task OnInitializedAsync()
     {
         _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(CrewLeader);

@@ -38,10 +38,10 @@
 </MudPaper>
 
 @code {
-    [Parameter] public Crew Crew { get; set; }
+    [Parameter] public CrewEntity Crew { get; set; }
     [Parameter] public bool HasAnyRequests { get; set; }
-    [Parameter] public Action<Crew> OnCrewCreated { get; set; }
-    [Parameter] public Action<CrewInvitation> OnRequestToJoinCrew { get; set; }
+    [Parameter] public Action<CrewEntity> OnCrewCreated { get; set; }
+    [Parameter] public Action<CrewInvitationEntity> OnRequestToJoinCrew { get; set; }
     
     private string _createCrewToolTipText;
     private bool? _createFormState;     // null = not shown, true = create crew form, false = join crew form

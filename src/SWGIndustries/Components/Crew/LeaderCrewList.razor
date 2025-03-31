@@ -16,7 +16,8 @@
 </style>
 
 <MudPaper Elevation="2" Class="ma-4 pa-4">
-    <MudTable T="SWGCharacter" GroupBy="_groupDefinition" Dense="true" Items="_characters" Elevation="0" Hover="true"
+    <MudText Typo="Typo.h6" Class="mb-4">You can manage your crew here.</MudText>
+    <MudTable T="CharacterEntity" GroupBy="_groupDefinition" Dense="true" Items="_characters" Elevation="0" Hover="true"
               GroupHeaderStyle="background-color:var(--mud-palette-background-gray);">
         <ColGroup>
             <col style="width: 60px;"/>
@@ -30,7 +31,7 @@
             <MudTh Style="color: var(--mud-palette-primary-text)">Actions</MudTh>
         </HeaderContent>
         <GroupHeaderTemplate>
-            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="3">@(((SWGAccount)context.Key).Name)</MudTh>
+            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="3">@(((GameAccountEntity)context.Key).Name)</MudTh>
         </GroupHeaderTemplate>
         <RowTemplate>
             <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -57,7 +58,7 @@
     </MudTable>
 </MudPaper>
 @code {
-    [Parameter] public Crew Crew { get; set; }
+    [Parameter] public CrewEntity Crew { get; set; }
     [Parameter] public Action OnCrewListChanged { get; set; }
     
     public async Task RefreshCrewList()
@@ -66,15 +67,15 @@
         StateHasChanged();
     }
     
-    private TableGroupDefinition<SWGCharacter> _groupDefinition = new()
+    private TableGroupDefinition<CharacterEntity> _groupDefinition = new()
     {
         GroupName = "Account",
         Indentation = true,
         Expandable = true,
-        Selector = e => e.SWGAccount,
+        Selector = e => e.GameAccount,
     };
 
-    private IList<SWGCharacter> _characters;
+    private IList<CharacterEntity> _characters;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -87,12 +88,12 @@
         StateHasChanged();
     }
 
-    private async Task<bool> CanRemoveCharacter(SWGCharacter character)
+    private async Task<bool> CanRemoveCharacter(CharacterEntity character)
     {
         return await DataAccessService.CanRemoveCharacterFromCrew(character);
     }
 
-    private async Task<bool> RemoveCharacterFromCrew(SWGCharacter character)
+    private async Task<bool> RemoveCharacterFromCrew(CharacterEntity character)
     {
         if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to remove '{character.Name}' from the screw?", 
                 yesText: "Remove", cancelText: "Cancel") != true)

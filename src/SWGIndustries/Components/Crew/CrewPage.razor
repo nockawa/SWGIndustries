@@ -12,7 +12,7 @@
     {
         <MudAlert Class="ma-4 pa-4" Severity="Severity.Error" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
                   CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
-            @($"Crew leader {_answeredCrewRequest.ToUser.Name} has rejected your request.")
+            @($"Crew leader {_answeredCrewRequest.ToAccount.Name} has rejected your request.")
         </MudAlert>
     }
 
@@ -63,14 +63,14 @@ else
         {
             <MudAlert Class="ma-4 pa-4" Severity="Severity.Success" ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true" 
                       CloseIconClicked="async () => await CloseAnsweredCrewRequest()">
-                @($"Crew leader {_answeredCrewRequest.ToUser.Name} has granted your request to join the crew {_answeredCrewRequest.FromUser.Crew.Name}.")
+                @($"Crew leader {_answeredCrewRequest.ToAccount.Name} has granted your request to join the crew {_answeredCrewRequest.FromAccount.Crew.Name}.")
             </MudAlert>
         }
         
     }
 
     // Member and Leader common pane
-    <MemberCharacterList @ref="_memberCharacterList" User="_applicationUser" OnCrewListChanged="@(async void () => await _leaderCrewList?.RefreshCrewList())"/>
+    <MemberCharacterList @ref="_memberCharacterList" AppAccount="_appAccount" OnCrewListChanged="@(async void () => await _leaderCrewList?.RefreshCrewList())"/>
 }
 
 @code {
@@ -82,33 +82,33 @@ else
         Leader
     }
 
-    private ApplicationUser _applicationUser;
+    private AppAccountEntity _appAccount;
     private CrewType _crewType;
-    private Crew _crew;
+    private CrewEntity _crew;
 
     private LeaderCrewList _leaderCrewList;
     private MemberCharacterList _memberCharacterList;
 
-    private IList<CrewInvitation> _pendingCrewRequests;
-    private CrewInvitation _answeredCrewRequest;
+    private IList<CrewInvitationEntity> _pendingCrewRequests;
+    private CrewInvitationEntity _answeredCrewRequest;
 
     protected override async Task OnInitializedAsync()
     {
-        _applicationUser = await DataAccessService.GetApplicationUserAsync();
-        await DataAccessService.DbContext.Entry(_applicationUser).Reference(a => a.Crew).LoadAsync();
-        _crew = _applicationUser.Crew;
+        _appAccount = await DataAccessService.GetAppAccountAsync();
+        await DataAccessService.DbContext.Entry(_appAccount).Reference(a => a.Crew).LoadAsync();
+        _crew = _appAccount.Crew;
         await UpdateCrewState();
     }
 
     private async Task UpdateCrewState()
     {
-        _pendingCrewRequests = await DataAccessService.GetPendingCrewRequests(_applicationUser);
+        _pendingCrewRequests = await DataAccessService.GetPendingCrewRequests(_appAccount);
         _answeredCrewRequest = await DataAccessService.GetAnsweredCrewRequest();
         if (_crew == null)
         {
             _crewType = CrewType.NotInCrew;
         }
-        else if (_crew.CrewLeader == _applicationUser)
+        else if (_crew.CrewLeader == _appAccount)
         {
             _crewType = CrewType.Leader;
         }
@@ -120,7 +120,7 @@ else
         StateHasChanged();
     }
 
-    private async Task DeleteSentInvitationRequest(CrewInvitation invitation)
+    private async Task DeleteSentInvitationRequest(CrewInvitationEntity invitation)
     {
         if (await DataAccessService.DeleteCrewInvitation(invitation))
         {
@@ -133,7 +133,7 @@ else
         }
     }
 
-    private async Task ProcessRequestToJoinCrew(CrewInvitation invitation, bool grantOrDeny)
+    private async Task ProcessRequestToJoinCrew(CrewInvitationEntity invitation, bool grantOrDeny)
     {
         var (res, info) = await DataAccessService.ProcessInvitationToJoinCrew(invitation, grantOrDeny);
         if (res)

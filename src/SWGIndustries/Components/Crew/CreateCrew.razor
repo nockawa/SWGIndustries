@@ -24,19 +24,19 @@
 
 @code {
     private bool _formSuccess;
-    private ApplicationUser _applicationUser;
+    private AppAccountEntity _appAccount;
     private string _crewName;
     
-    [Parameter] public Action<Crew> OnCrewCreated { get; set; }
+    [Parameter] public Action<CrewEntity> OnCrewCreated { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        _applicationUser = await DataAccessService.GetApplicationUserAsync();
+        _appAccount = await DataAccessService.GetAppAccountAsync();
     }
 
     private async Task<string> ValidateCrewName(string text)
     {
-        if (string.IsNullOrEmpty(text) || text.StartsWith(" ") || text.EndsWith(" ") || text.Length >= Crew.CrewNameMaxLength)
+        if (string.IsNullOrEmpty(text) || text.StartsWith(" ") || text.EndsWith(" ") || text.Length >= CrewEntity.CrewNameMaxLength)
         {
             return "Invalid name or empty name.";
         }
@@ -46,9 +46,9 @@
             return "Crew name must be at least 5 characters long.";
         }
         
-        if (text.Length >= Crew.CrewNameMaxLength)
+        if (text.Length >= CrewEntity.CrewNameMaxLength)
         {
-            return $"Crew name length is exceeding the limit of {Crew.CrewNameMaxLength} characters.";
+            return $"Crew name length is exceeding the limit of {CrewEntity.CrewNameMaxLength} characters.";
         }
 
         if (await DataAccessService.GetCrewByName(text, true) != null)
@@ -61,7 +61,7 @@
 
     private async Task OnCreateCrew()
     {
-        var (res, info) = await DataAccessService.CreateCrew(_applicationUser, _crewName);
+        var (res, info) = await DataAccessService.CreateCrew(_appAccount, _crewName);
         Snackbar.Add(info, res != null ? Severity.Success : Severity.Error);
 
         OnCrewCreated?.Invoke(res);

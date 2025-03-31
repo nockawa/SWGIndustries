@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SWGIndustries.Data;
 
 [Index(nameof(Name), IsUnique = true)]
-public class Crew
+public class CrewEntity
 {
     internal const int CrewNameMaxLength = 64;
     
@@ -17,7 +17,7 @@ public class Crew
     /// <summary>
     /// Crew leader
     /// </summary>
-    public ApplicationUser CrewLeader { get; set; }
+    public AppAccountEntity CrewLeader { get; set; }
 
     /// <summary>
     /// Name of the crew
@@ -28,5 +28,5 @@ public class Crew
     /// <summary>
     /// Members of the crew (leader included)
     /// </summary>
-    public IList<ApplicationUser> Members { get; } = new List<ApplicationUser>();
+    public IList<AppAccountEntity> Members { get; } = new List<AppAccountEntity>();
 }

@@ -4,14 +4,16 @@ namespace SWGIndustries.Data;
 
 public class ApplicationDbContext : DbContext
 {
-    public DbSet<NamedSeries> NamedSeries { get; set; }
-    public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-    public DbSet<SWGAccount> SWGAccounts { get; set; }
-    public DbSet<SWGCharacter> SWGCharacters { get; set; }
-    public DbSet<Crew> Crews { get; set; }
-    public DbSet<CrewInvitation> CrewInvitations { get; set; }
-    public DbSet<SWGBuilding> SWGBuildings { get; set; }
-    public DbSet<Cluster> Clusters { get; set; }
+    public DbSet<NamedSeriesEntity>     NamedSeries     { get; set; }
+    public DbSet<AppAccountEntity>      AppAccounts     { get; set; }
+    public DbSet<GameAccountEntity>     GameAccounts    { get; set; }
+    public DbSet<CharacterEntity>       Characters      { get; set; }
+    public DbSet<CrewEntity>            Crews           { get; set; }
+    public DbSet<CrewInvitationEntity>  CrewInvitations { get; set; }
+    public DbSet<BuildingEntity>        Buildings       { get; set; }
+    public DbSet<ClusterEntity>         Clusters        { get; set; }
+    
+    public DbSet<ResourceEntity> Resources { get; set; }
     
     public ApplicationDbContext()
     {
@@ -25,46 +27,74 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Named series
-        modelBuilder.Entity<NamedSeries>().Property(p => p.Counter).IsConcurrencyToken();
+        // Named series Entity
+        modelBuilder.Entity<NamedSeriesEntity>().ToTable("NamedSeries");
+        modelBuilder.Entity<NamedSeriesEntity>().HasIndex(p => p.Name).IsUnique();
+        modelBuilder.Entity<NamedSeriesEntity>().Property(p => p.Counter).IsConcurrencyToken();
         
-        // Application User navigation customization
-        modelBuilder.Entity<ApplicationUser>().HasMany(e => e.SWGAccounts).WithOne(e => e.OwnerApplicationUser);
+        // Application User Entity
+        modelBuilder.Entity<AppAccountEntity>().ToTable("AppAccounts");
+        modelBuilder.Entity<AppAccountEntity>()
+            .HasMany(e => e.GameAccounts).WithOne(e => e.OwnerAppAccount);
+        modelBuilder.Entity<AppAccountEntity>().Navigation(a => a.GameAccounts).AutoInclude();
+
+        // Resource Entity
+        modelBuilder.Entity<ResourceEntity>().ToTable("Resources");
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.Name).IsUnique();
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.DepletedSince);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CategoryIndex);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI0);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI1);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI2);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI3);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI4);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI5);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI6);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI7);
+        modelBuilder.Entity<ResourceEntity>().Property(r => r.Name).IsRequired();
         
-        modelBuilder.Entity<ApplicationUser>().Navigation(a => a.SWGAccounts).AutoInclude();
-        
-        // SWG Account navigation customization
-        modelBuilder.Entity<SWGAccount>()
-            .HasMany(a => a.SWGCharacters)
-            .WithOne(c => c.SWGAccount)
+        // Game Account Entity
+        modelBuilder.Entity<GameAccountEntity>().ToTable("GameAccounts");
+        modelBuilder.Entity<GameAccountEntity>()
+            .HasMany(a => a.Characters)
+            .WithOne(c => c.GameAccount)
             .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<SWGAccount>()
+        modelBuilder.Entity<GameAccountEntity>()
             .HasMany(a => a.Clusters)
             .WithOne(c => c.Owner)
             .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<SWGAccount>()
-            .HasMany(a => a.SWGBuildings)
+        modelBuilder.Entity<GameAccountEntity>()
+            .HasMany(a => a.Buildings)
             .WithOne(b => b.Owner)
             .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<SWGAccount>().Navigation(a => a.SWGCharacters).AutoInclude();
+        modelBuilder.Entity<GameAccountEntity>().Navigation(a => a.Characters).AutoInclude();
 
-        modelBuilder.Entity<SWGCharacter>()
+        // Character Entity
+        modelBuilder.Entity<CharacterEntity>().ToTable("Characters");
+        modelBuilder.Entity<CharacterEntity>()
             .HasMany(c => c.PutDownBuildings)
             .WithOne(b => b.PutDownBy)
             .OnDelete(DeleteBehavior.NoAction);
         
-        modelBuilder.Entity<Cluster>()
+        // Building Entity
+        modelBuilder.Entity<BuildingEntity>().ToTable("Buildings");
+        
+        // Cluster Entity
+        modelBuilder.Entity<ClusterEntity>().ToTable("Clusters");
+        modelBuilder.Entity<ClusterEntity>()
             .HasMany(c => c.Buildings)
             .WithOne(b => b.Cluster)
             .OnDelete(DeleteBehavior.NoAction);
         
         // Crew navigation customization
-        modelBuilder.Entity<Crew>().HasMany(c => c.Members).WithOne(m => m.Crew);
-        modelBuilder.Entity<Crew>().Navigation(c => c.CrewLeader).AutoInclude();
-        modelBuilder.Entity<Crew>().Navigation(c => c.Members).AutoInclude();
+        modelBuilder.Entity<CrewEntity>().ToTable("Crews");
+        modelBuilder.Entity<CrewEntity>().HasMany(c => c.Members).WithOne(m => m.Crew);
+        modelBuilder.Entity<CrewEntity>().Navigation(c => c.CrewLeader).AutoInclude();
+        modelBuilder.Entity<CrewEntity>().Navigation(c => c.Members).AutoInclude();
         
         // Crew Invitation navigation customization
-        modelBuilder.Entity<CrewInvitation>().Navigation(ci => ci.FromUser).AutoInclude();
-        modelBuilder.Entity<CrewInvitation>().Navigation(ci => ci.ToUser).AutoInclude();
+        modelBuilder.Entity<CrewInvitationEntity>().ToTable("CrewInvitations");
+        modelBuilder.Entity<CrewInvitationEntity>().Navigation(ci => ci.FromAccount).AutoInclude();
+        modelBuilder.Entity<CrewInvitationEntity>().Navigation(ci => ci.ToAccount).AutoInclude();
     }
 }

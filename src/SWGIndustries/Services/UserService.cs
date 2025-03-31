@@ -44,7 +44,7 @@ public class UserService
         return _userInfo ?? UserInfo.GetUnauthenticated(_serviceProvider);
     }
 
-    public async Task<ApplicationUser> BuildApplicationUser(ApplicationDbContext dbContext) => (await GetUserInfo()).BuildApplicationUser(dbContext);
+    public async Task<AppAccountEntity> BuildAppAccount(ApplicationDbContext dbContext) => (await GetUserInfo()).BuildAppAccount(dbContext);
 }
 
 public class UserInfo
@@ -111,15 +111,15 @@ public class UserInfo
         // Create a new user in database if it doesn't exist, or load its settings
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var user = await context.ApplicationUsers.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
+        var user = await context.AppAccounts.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
         if (user == null)
         {
-            user = new ApplicationUser
+            user = new AppAccountEntity
             {
                 CorrelationId = UserExternalId,
                 Name = Name
             };
-            context.ApplicationUsers.Add(user);
+            context.AppAccounts.Add(user);
             await context.SaveChangesAsync();
         }
     }
@@ -127,9 +127,12 @@ public class UserInfo
     public bool IsAuthenticatedUser => UserExternalId != null;
     public bool IsGuest => UserExternalId == null;
 
-    internal ApplicationUser BuildApplicationUser(ApplicationDbContext context)
+    internal AppAccountEntity BuildAppAccount(ApplicationDbContext context)
     {
-        return IsGuest ? ApplicationUser.Guest : context.ApplicationUsers.FirstOrDefault(x => x.CorrelationId == UserExternalId);    
+        return IsGuest ? AppAccountEntity.Guest : context.AppAccounts.Where(x => x.CorrelationId == UserExternalId)
+            .Include(a => a.Crew)
+            .Include(a => a.GameAccounts)
+            .FirstOrDefault();    
     }
 
     public ThemeMode ThemeMode
@@ -145,8 +148,8 @@ public class UserInfo
             {
                 using var scope = _serviceProvider.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var applicationUser = BuildApplicationUser(context);
-                _themeMode = applicationUser?.ThemeMode ?? ThemeMode.Auto;
+                var appAccount = BuildAppAccount(context);
+                _themeMode = appAccount?.ThemeMode ?? ThemeMode.Auto;
             }
             return _themeMode.Value;
         }
@@ -158,14 +161,14 @@ public class UserInfo
             }
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var applicationUser = BuildApplicationUser(context);
-            if (applicationUser == null || applicationUser.ThemeMode == value)
+            var appAccount = BuildAppAccount(context);
+            if (appAccount == null || appAccount.ThemeMode == value)
             {
                 return;
             }
             
-            applicationUser.ThemeMode = value;
-            context.ApplicationUsers.Update(applicationUser);
+            appAccount.ThemeMode = value;
+            context.AppAccounts.Update(appAccount);
             context.SaveChanges();
             _themeMode = value;
         }

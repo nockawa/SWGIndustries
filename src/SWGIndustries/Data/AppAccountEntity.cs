@@ -26,7 +26,7 @@ public enum ThemeMode
 /// <summary>
 /// Represents a user of the SWG Industries web application.
 /// </summary>
-public class ApplicationUser
+public class AppAccountEntity
 {
     /// <summary>
     /// Database Primary Key
@@ -37,6 +37,7 @@ public class ApplicationUser
     /// <summary>
     /// Name of the user, as given by the authentication provider.
     /// </summary>
+    [MaxLength(32)]
     public string Name { get; set; }
     
     /// <summary>
@@ -54,16 +55,18 @@ public class ApplicationUser
     /// <summary>
     /// If non <c>null</c> the user is member of the given crew.
     /// </summary>
-    public Crew Crew { get; set; }
+    public CrewEntity Crew { get; set; }
     
     /// <summary>
-    /// List of SWGAccounts owned by this SWG Industries user.
+    /// List of GameAccounts owned by this SWG Industries user.
     /// </summary>
-    public IList<SWGAccount> SWGAccounts { get; } = new List<SWGAccount>();
+    public IList<GameAccountEntity> GameAccounts { get; } = new List<GameAccountEntity>();
+
+    public bool IsCrewLeader => Crew != null && Crew.CrewLeader == this;
 
     #endregion
     
-    public static ApplicationUser Guest => new ApplicationUser
+    public static AppAccountEntity Guest => new AppAccountEntity
     {
         CorrelationId = "Guest",
         ThemeMode = ThemeMode.Auto

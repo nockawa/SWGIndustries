@@ -21,8 +21,8 @@
                 if (invitation.InviteOrRequestToJoin == false)
                 {
                     <tr>
-                        <td>@invitation.FromUser.Name</td>
-                        <td>@invitation.ToUser.Name</td>
+                        <td>@invitation.FromAccount.Name</td>
+                        <td>@invitation.ToAccount.Name</td>
                         <td Style="text-align: center;">
                             <MudTooltip Text="Delete this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
                                 <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error"
@@ -34,8 +34,8 @@
                 else
                 {
                     <tr>
-                        <td>@invitation.FromUser.Name</td>
-                        <td>@invitation.ToUser.Name</td>
+                        <td>@invitation.FromAccount.Name</td>
+                        <td>@invitation.ToAccount.Name</td>
                         <td Style="text-align: center;">
                             <MudTooltip Text="Reject this invitation request" openDelay="500" Placement="Placement.Top" Arrow="true">
                                 <MudIconButton Icon="@Icons.Material.Outlined.Block" Color="Color.Error"
@@ -55,7 +55,7 @@
 </MudPaper>
 
 @code {
-    [Parameter] public IList<CrewInvitation> PendingRequests { get; set; }
-    [Parameter] public Action<CrewInvitation> OnDeleteSentInvitationRequest { get; set; }
-    [Parameter] public Action<CrewInvitation, bool> OnRequestToJoinCrew { get; set; }
+    [Parameter] public IList<CrewInvitationEntity> PendingRequests { get; set; }
+    [Parameter] public Action<CrewInvitationEntity> OnDeleteSentInvitationRequest { get; set; }
+    [Parameter] public Action<CrewInvitationEntity, bool> OnRequestToJoinCrew { get; set; }
 }

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SWGIndustries.Data;
 
@@ -20,7 +20,7 @@ public enum InvitationStatus
     Rejected
 }
 
-public class CrewInvitation
+public class CrewInvitationEntity
 {
     /// <summary>
     /// Database Primary Key
@@ -36,12 +36,12 @@ public class CrewInvitation
     /// <summary>
     /// Account that sent the invitation
     /// </summary>
-    public ApplicationUser FromUser { get; set; }
+    public AppAccountEntity FromAccount { get; set; }
 
     /// <summary>
     /// Account that received the invitation
     /// </summary>
-    public ApplicationUser ToUser { get; set; }
+    public AppAccountEntity ToAccount { get; set; }
 
     /// <summary>
     /// <c>true</c> the invitation was sent from a crew leader to a member.
