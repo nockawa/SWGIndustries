@@ -1,25 +1,282 @@
 ﻿@page "/Buildings/Inventory"
 
+@using Microsoft.EntityFrameworkCore.Storage
+@using SWGIndustries.Data
 @using SWGIndustries.Services
+@using SWGIndustries.Components.Misc
 
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject DataAccessService DataAccessService
 
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+    .mud-table-head .mud-table-cell {
+        background-color: var(--mud-palette-primary);
+    }
+    .mud-table-head .mud-table-cell:hover * {
+        color: white !important;
+    }
+    .mud-text-field-focused {
+        width: 60%;
+    }
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+
+    .mud-table-cell-custom-group-footer {
+        padding-bottom: 50px;
+        text-align: right;
+    }
+    
+    .mud-table-toolbar {
+        height: 6rem;
+    }
+</style>
+
 <MudPaper Elevation="4" Class="ma-4 pa-4">
     <MudText Typo="Typo.body1" Class="mb-4">
-        This page is used to interact with the inventory of an account.
+        This page is used to interact with the inventory at the account level, as deeds are transferable through their characters.
     </MudText>
 
     <MudTooltip Text="Create one/many structures for a given account" openDelay="500" Placement="Placement.Top" Arrow="true">
         <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" OnClick="async () => await OnCreateStructure()">Create Structure</MudButton>
     </MudTooltip>
+    
+    <ScopeSelectionControl SelectedScopeChanged="DataScopeChanged"/>
 
+    <MudTable T="BuildingEntity" @ref="_table" Items="_buildings" Dense="true" Hover="true" Striped="true"
+        Filter="FilterTable"
+
+        GroupBy="_groupDefinition"
+
+        CanCancelEdit="true" IsEditRowSwitchingBlocked="true" EditButtonPosition="TableEditButtonPosition.End"
+        EditTrigger="TableEditTrigger.RowClick"
+
+        CommitEditTooltip="Save changes" CancelEditTooltip="Cancel changes"
+        OnCommitEditClick="SaveRowChanges" RowEditPreview="RowEditPreview" RowEditCancel="RowEditCancel"
+        >
+
+        <ToolBarContent>
+          <MudGrid>
+              <MudItem xs="12" Class="pl-4 pt-4">
+                  <MudText Typo="Typo.h6">Buildings inventory</MudText>
+              </MudItem>
+              <MudItem xs="3" Class="pl-4 pt-1">
+                  <MudSelect T="GroupBy" ValueChanged="OnGroupByChanged" Variant="Variant.Text" AdornmentText="Group by"
+                             Adornment="Adornment.Start" Dense="true" Class="mx-2">
+                      <MudSelectItem T="GroupBy" Value="GroupBy.None">None</MudSelectItem>
+                      <MudSelectItem T="GroupBy" Value="GroupBy.Owner">Owner</MudSelectItem>
+                      <MudSelectItem T="GroupBy" Value="GroupBy.Type">Type</MudSelectItem>
+                      <MudSelectItem T="GroupBy" Value="GroupBy.TypeAndSubType">Type / Subtype</MudSelectItem>
+                  </MudSelect>
+              </MudItem>
+              <MudItem xs="3" Class="pl-4 pt-1">
+                  <MudSelect T="BuildingType" ValueChanged="OnFilterByChanged" Variant="Variant.Text" AdornmentText="Filter by"
+                             Adornment="Adornment.Start" Dense="true" Class="mx-2">
+                      <MudSelectItem T="BuildingType" Value="BuildingType.Undefined">None</MudSelectItem>
+                      <MudSelectItem T="BuildingType" Value="BuildingType.House">House</MudSelectItem>
+                      <MudSelectItem T="BuildingType" Value="BuildingType.Factory">Factory</MudSelectItem>
+                      <MudSelectItem T="BuildingType" Value="BuildingType.Harvester">Harvester</MudSelectItem>
+                  </MudSelect>
+              </MudItem>
+              <MudItem xs="3" Class="pl-4 pt-1">
+                  <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                                @onfocus="() => _isFocused = true" @onblur="() => _isFocused = false"
+                                Class="@(_isFocused ? "mud-text-field-focused" : "")"/>
+              </MudItem>
+          </MudGrid>
+        </ToolBarContent>
+        <ColGroup>
+            @if (HasGroupBy)
+            {
+                <col style="width: 4rem"/>
+            }
+            
+            @if (IsGroupByOwner == false)
+            {
+                <col style="width: 10rem"/>
+            }
+            
+            <col style="width: 20rem"/>
+            
+            @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == BuildingType.Undefined)
+            {
+                <col style="width: 10rem"/>
+            }
+            
+            @if (IsGroupByTypeAndSubType == false)
+            {
+                <col style="width: 20rem"/>
+            }
+            
+            <col/>
+            <col style="width: 5rem"/>
+        </ColGroup>
+        <HeaderContent>
+            @if (IsGroupByOwner == false)
+            {
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Owner.Name)">Owner</MudTableSortLabel>
+                </MudTh>
+            }
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Name)">Name</MudTableSortLabel>
+            </MudTh>
+            @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == BuildingType.Undefined)
+            {
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Type.ToString())">Type</MudTableSortLabel>
+                </MudTh>
+            }
+            @if (IsGroupByTypeAndSubType == false)
+            {
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.SubType.ToString())">Subtype</MudTableSortLabel>
+                </MudTh>
+            }
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Comments)">Comments</MudTableSortLabel>
+            </MudTh>
+        </HeaderContent>
+        <GroupHeaderTemplate>
+            <MudTh Class="mud-table-cell-custom-group" colspan="4">@($"{context.GroupName}: {context.Key}")</MudTh>
+        </GroupHeaderTemplate>
+
+        <GroupFooterTemplate>
+            <MudTh Class="mud-table-cell-custom-group mud-table-cell-custom-group-footer" colspan="4">
+                @($"Count: {context.Items.Count()}")
+            </MudTh>
+        </GroupFooterTemplate>
+        <RowTemplate>
+            @if (IsGroupByOwner == false)
+            {
+                <MudTd DataLabel="Owner">@context.Owner.Name</MudTd>
+            }
+            
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            
+            @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == BuildingType.Undefined)
+            {
+                <MudTd DataLabel="Type">@context.Type</MudTd>
+            }
+            
+            @if (IsGroupByTypeAndSubType == false)
+            {
+                <MudTd DataLabel="Subtype">@context.SubType.GetName()</MudTd>
+            }
+            
+            <MudTd DataLabel="Comments">@context.Comments</MudTd>
+        </RowTemplate>
+        <RowEditingTemplate>
+            @if (IsGroupByOwner == false)
+            {
+                <MudTd DataLabel="Owner">@context.Owner.Name</MudTd>
+            }
+
+            <MudTd DataLabel="Name">
+                <MudTextField T="string" @bind-value="@context.Name" Required="true"/>
+            </MudTd>
+
+            @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == BuildingType.Undefined)
+            {
+                <MudTd DataLabel="Type">@context.Type</MudTd>
+            }
+
+            @if (IsGroupByTypeAndSubType == false)
+            {
+                <MudTd DataLabel="Subtype">@context.SubType.GetName()</MudTd>
+            }
+
+            <MudTd DataLabel="Comments">
+                <MudTextField T="string" @bind-value="@context.Comments"/>
+            </MudTd>
+        </RowEditingTemplate>
+    </MudTable>
 </MudPaper>
 
-
-
 @code {
+    private enum GroupBy
+    {
+        None,
+        Owner,
+        Type,
+        TypeAndSubType
+    }
+    
+    private MudTable<BuildingEntity> _table;
+    private List<BuildingEntity> _buildings;
+    private string _searchString = "";
+    private bool _isFocused;
+
+    private TableGroupDefinition<BuildingEntity> _groupDefinition;
+    private GroupBy _groupBy;
+
+    private BuildingEntity _editingBuilding;
+    private IDbContextTransaction _editTransaction;
+    private BuildingType _buildingTypeFilter;
+    private DataScope _buildingsScope;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _buildings = await DataAccessService.GetBuildings(null);
+    }
+    
+    private bool HasGroupBy => _groupDefinition != null;
+    private bool IsGroupByOwner => _groupBy == GroupBy.Owner;
+    private bool IsGroupByType => _groupBy == GroupBy.Type;
+    private bool IsGroupByTypeAndSubType => _groupBy == GroupBy.TypeAndSubType;
+    
+    private void OnGroupByChanged(GroupBy groupBy)
+    {
+        _groupBy = groupBy;
+        switch (groupBy)
+        {
+            case GroupBy.None:
+                _groupDefinition = null;
+                break;
+            case GroupBy.Owner:
+                _groupDefinition = new TableGroupDefinition<BuildingEntity>
+                {
+                    GroupName = "Owner",
+                    Indentation = true,
+                    Expandable = true,
+                    Selector = e => e.Owner.Name,
+                };
+                break;
+            case GroupBy.Type:
+                _groupDefinition = new TableGroupDefinition<BuildingEntity>
+                {
+                    GroupName = "Type",
+                    Indentation = true,
+                    Expandable = true,
+                    Selector = e => e.Type.GetName(),
+                };
+                break;
+            case GroupBy.TypeAndSubType:
+                _groupDefinition = new TableGroupDefinition<BuildingEntity>
+                {
+                    GroupName = "Type / Subtype",
+                    Indentation = true,
+                    Expandable = true,
+                    Selector = e => e.Type.GetName(),
+                    InnerGroup = new TableGroupDefinition<BuildingEntity>
+                    {
+                        GroupName = "Subtype",
+                        Indentation = true,
+                        Expandable = true,
+                        Selector = e => e.SubType.GetName(),
+                    }
+                };
+                break;
+        }
+        StateHasChanged();
+    }
+
     private async Task<bool> OnCreateStructure()
     {
         var options = new DialogOptions()
@@ -50,10 +307,13 @@
                 (res, info) = await DataAccessService.CreateHouse(dialog.SelectedAccount, house, count);
                 break;
                 
-            case Factory:
+            case Factory factory:
+                (res, info) = await DataAccessService.CreateFactory(dialog.SelectedAccount, factory, count);
                 break;
                 
-            case Harvester:
+            case Harvester harvester:
+                (res, info) = await DataAccessService.CreateHarvester(dialog.SelectedAccount, harvester, dialog.HarvesterCreationProperties, count);
+                
                 break;
         }
 
@@ -69,4 +329,53 @@
         return true;
     }
 
+    private async Task DataScopeChanged(DataScope scope)
+    {
+        _buildingsScope = scope;
+        _buildings = await DataAccessService.GetBuildings(scope);
+        StateHasChanged();
+    }
+
+    private async Task OnFilterByChanged(BuildingType buildingType)
+    {
+        _buildingTypeFilter = buildingType;
+        _buildings = await DataAccessService.GetBuildings(_buildingsScope, _buildingTypeFilter);
+        StateHasChanged();
+    }
+    
+    private bool FilterTable(BuildingEntity building)
+    {
+        return (building.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) ||
+               (building.Owner.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) ||
+               (building.Comments != null && building.Comments.Contains(_searchString, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SaveRowChanges()
+    {
+        DataAccessService.UpdateBuilding(_editingBuilding);
+        var res = DataAccessService.SaveChanges(_editTransaction);        
+        _editingBuilding = null;
+        if (res)
+        {
+            Snackbar.Add("Changes saved", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to save changes", Severity.Error);
+        }
+    }
+
+    private void RowEditPreview(object obj)
+    {
+        _editTransaction = DataAccessService.BeginTransaction();
+        _editingBuilding = (BuildingEntity)obj;
+    }
+
+    private void RowEditCancel(object obj)
+    {
+        DataAccessService.ReloadBuilding(_editingBuilding);
+        Snackbar.Add("Changes cancelled", Severity.Warning);
+        _editingBuilding = null;
+        _editTransaction.Rollback();
+    }
 }

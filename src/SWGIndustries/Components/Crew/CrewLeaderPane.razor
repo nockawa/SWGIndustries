@@ -12,7 +12,7 @@
             <MudAlert Class="ma-4 pa-4" Severity="@(invitation.Status == InvitationStatus.Accepted ? Severity.Success : Severity.Error)"
                       ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true"
                       CloseIconClicked="@(async () => await CloseAnsweredCrewInvitation(invitation))">
-                @($"Your invitation to {invitation.ToUser.Name} to join the crew {invitation.FromUser.Crew.Name} was " + 
+                @($"Your invitation to {invitation.ToAccount.Name} to join the crew {invitation.FromAccount.Crew.Name} was " + 
                   ((invitation.Status == InvitationStatus.Accepted) ? "accepted": "rejected"))
             </MudAlert>
         }
@@ -39,13 +39,13 @@
 }
 
 @code {
-    private IList<CrewInvitation> _crewRequestsForLeader;
+    private IList<CrewInvitationEntity> _crewRequestsForLeader;
 
-    [Parameter] public Crew Crew { get; set; }
+    [Parameter] public CrewEntity Crew { get; set; }
     
-    private ApplicationUser _crewLeader;
+    private AppAccountEntity _crewLeader;
     private bool _displayInviteForm;
-    private IList<CrewInvitation> _answeredCrewInvitations;
+    private IList<CrewInvitationEntity> _answeredCrewInvitations;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,7 +54,7 @@
         _answeredCrewInvitations = await DataAccessService.GetAnsweredCrewInvitations();
     }
     
-    private async Task ActionOnInvitationRequest(CrewInvitation invitation, bool grant)
+    private async Task ActionOnInvitationRequest(CrewInvitationEntity invitation, bool grant)
     {
         var (res, info) = await DataAccessService.ProcessRequestToJoinCrew(invitation, grant);
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
@@ -68,15 +68,15 @@
         StateHasChanged();
     }
 
-    private async Task<CrewInvitation> SendNewMemberInvitation(ApplicationUser invitedUser)
+    private async Task<CrewInvitationEntity> SendNewMemberInvitation(AppAccountEntity invitedAccount)
     {
-        var (crewInvitation, info) = await DataAccessService.CreateInvitationToJoinCrew(_crewLeader, invitedUser);
+        var (crewInvitation, info) = await DataAccessService.CreateInvitationToJoinCrew(_crewLeader, invitedAccount);
         Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
 
         return crewInvitation;
     }
 
-    private async Task CloseAnsweredCrewInvitation(CrewInvitation invitation)
+    private async Task CloseAnsweredCrewInvitation(CrewInvitationEntity invitation)
     {
         await DataAccessService.CloseCrewInvitation(invitation);
         _answeredCrewInvitations.Remove(invitation);

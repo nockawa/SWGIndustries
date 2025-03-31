@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace SWGIndustries.Data;
 
 [PublicAPI]
-public class Cluster
+public class ClusterEntity
 {
     /// <summary>
     /// Database Primary Key
@@ -12,7 +12,7 @@ public class Cluster
     [Key]
     public int Id { get; set; }
 
-    public SWGAccount Owner { get; set; }
+    public GameAccountEntity Owner { get; set; }
 
     public bool IsDefault { get; set; }
 
@@ -22,5 +22,5 @@ public class Cluster
     [MaxLength(128)]
     public string Comment { get; set; }
 
-    public IList<SWGBuilding> Buildings { get; set; } = new List<SWGBuilding>();
+    public IList<BuildingEntity> Buildings { get; set; } = new List<BuildingEntity>();
 }

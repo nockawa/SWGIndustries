@@ -16,7 +16,8 @@
 </style>
 
 <MudPaper Elevation="2" Class="ma-4 pa-4">
-    <MudTable T="SWGCharacter" GroupBy="_groupDefinition" Dense="true" Items="_characters" Elevation="0" Hover="true"
+    <MudText Typo="Typo.subtitle1" Class="mb-4">You can manage which characters are member of the crew and how many lots they are lending.</MudText>
+    <MudTable T="CharacterEntity" GroupBy="_groupDefinition" Dense="true" Items="_characters" Elevation="0" Hover="true"
               GroupHeaderStyle="background-color:var(--mud-palette-background-gray);">
         <ColGroup>
             <col style="width: 2rem;"/>
@@ -32,7 +33,7 @@
             <MudTh Style="color: var(--mud-palette-primary-text); text-align: center">Actions</MudTh>
         </HeaderContent>
         <GroupHeaderTemplate>
-            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="4">@(((SWGAccount)context.Key).Name)</MudTh>
+            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="4">@(((GameAccountEntity)context.Key).Name)</MudTh>
         </GroupHeaderTemplate>
         <RowTemplate>
             <MudTd DataLabel="Name">@context.Name</MudTd>
@@ -56,40 +57,40 @@
                 {
                     <MudTooltip Text="Add character as member of the crew" openDelay="500" Placement="Placement.Top" Arrow="true">
                         <MudIconButton Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(async ()=> await AddCharacterToCrew(context, true))"/>
+                                       OnClick="@(async () => await AddCharacterToCrew(context, true))"/>
                     </MudTooltip>
                 }
                 else
                 {
                     <MudTooltip Text="Change the maximum number of lots to lend" openDelay="500" Placement="Placement.Top" Arrow="true">
                         <MudIconButton Icon="@Icons.Material.Filled.DashboardCustomize" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(async ()=> await AddCharacterToCrew(context, false))"/>
+                                       OnClick="@(async () => await AddCharacterToCrew(context, false))"/>
                     </MudTooltip>
                     <MudTooltip Text="Remove character from crew, only possible if your character no longer lends slots to the crew" openDelay="500" Placement="Placement.Top" Arrow="true">
-                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Color="Color.Error" Size="Size.Small" 
-                                       Disabled="@(CanRemoveCharacter(context)==false)" 
-                                       OnClick="@(async ()=> await RemoveCharacterFromCrew(context))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Color="Color.Error" Size="Size.Small"
+                                       Disabled="@(CanRemoveCharacter(context) == false)"
+                                       OnClick="@(async () => await RemoveCharacterFromCrew(context))"/>
                     </MudTooltip>
                 }
             </MudTd>
         </RowTemplate>
-        
+
     </MudTable>
 </MudPaper>
 
 @code {
-    [Parameter] public ApplicationUser User { get; set; }
+    [Parameter] public AppAccountEntity AppAccount { get; set; }
     [Parameter] public Action OnCrewListChanged { get; set; }
 
-    private TableGroupDefinition<SWGCharacter> _groupDefinition = new()
+    private TableGroupDefinition<CharacterEntity> _groupDefinition = new()
     {
         GroupName = "Account",
         Indentation = true,
         Expandable = true,
-        Selector = e => e.SWGAccount,
+        Selector = e => e.GameAccount,
     };
 
-    private IList<SWGCharacter> _characters;
+    private IList<CharacterEntity> _characters;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -98,17 +99,17 @@
     
     public async Task RefreshCharacters()
     {
-        _characters = await DataAccessService.GetUserCharacters(User);
+        _characters = await DataAccessService.GetUserCharacters(AppAccount);
         StateHasChanged();
     }
 
-    private bool CanRemoveCharacter(SWGCharacter character)
+    private bool CanRemoveCharacter(CharacterEntity character)
     {
         // TODO
         return true;
     }
 
-    private async Task<bool> RemoveCharacterFromCrew(SWGCharacter character)
+    private async Task<bool> RemoveCharacterFromCrew(CharacterEntity character)
     {
         if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to remove '{character.Name}' from the screw?", 
                 yesText: "Remove", cancelText: "Cancel") != true)
@@ -124,7 +125,7 @@
         return res;
     }
 
-    private async Task<bool> AddCharacterToCrew(SWGCharacter character, bool addOrChangeLot)
+    private async Task<bool> AddCharacterToCrew(CharacterEntity character, bool addOrChangeLot)
     {
         var options = new DialogOptions()
         {

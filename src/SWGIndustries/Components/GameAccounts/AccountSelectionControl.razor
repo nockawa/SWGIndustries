@@ -3,28 +3,28 @@
 
 @inject DataAccessService DataAccessService
 
-<MudSelect T="SWGAccount" @ref="_selectControl" SelectedValuesChanged="OnSelectedAccountChanged" Variant="Variant.Outlined" Label="Select the SWG Account" 
+<MudSelect T="GameAccountEntity" @ref="_selectControl" SelectedValuesChanged="OnSelectedAccountChanged" Variant="Variant.Outlined" Label="Select the SWG Account" 
            Dense="true" Style="width: 10rem" Class="mb-4">
     
     @foreach(var account in _accounts)
     {
-        <MudSelectItem T="SWGAccount" Value="@account">@account.Name</MudSelectItem>
+        <MudSelectItem T="GameAccountEntity" Value="@account">@account.Name</MudSelectItem>
     }
 </MudSelect>
 
 @code {
 
     [Parameter]
-    public SWGAccount SelectedAccount { get; set; }
+    public GameAccountEntity SelectedAccount { get; set; }
 
-    [Parameter] public EventCallback<SWGAccount> SelectedAccountChanged { get; set; }
+    [Parameter] public EventCallback<GameAccountEntity> SelectedAccountChanged { get; set; }
 
-    private IList<SWGAccount> _accounts;
-    private MudSelect<SWGAccount> _selectControl;
+    private IList<GameAccountEntity> _accounts;
+    private MudSelect<GameAccountEntity> _selectControl;
 
     protected override async Task OnInitializedAsync()
     {
-        _accounts = await DataAccessService.GetUserSWGAccounts();
+        _accounts = await DataAccessService.GetUserGameAccounts();
         SelectedAccount = _accounts.FirstOrDefault();
     }
 
@@ -37,7 +37,7 @@
         }
     }
 
-    private Task OnSelectedAccountChanged(IEnumerable<SWGAccount> arg)
+    private Task OnSelectedAccountChanged(IEnumerable<GameAccountEntity> arg)
     {
         SelectedAccount = arg.FirstOrDefault();
         return SelectedAccountChanged.InvokeAsync(SelectedAccount);

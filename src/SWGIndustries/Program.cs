@@ -41,6 +41,7 @@ public class Program
         services.AddScoped<DataAccessService>();
         services.AddSingleton<StructuresService>();
         services.AddScoped<NamedSeriesService>();
+        services.AddScoped<DataScopeService>();
 
         //Configure authentication for the user using Discord OAuth2
         services.AddAuthentication(opt =>
@@ -81,11 +82,13 @@ public class Program
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlite(connectionString, sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            options.UseSeeding((context, _) => { GenTestData(context); });
-            options.EnableSensitiveDataLogging();
+            //options.UseSeeding((context, _) => { GenTestData(context); });
+            //options.EnableSensitiveDataLogging();
         });
         
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+        
+        services.AddHostedService<ResourceManagerService>();
         
         // Build the application
         var app = builder.Build();
@@ -140,59 +143,57 @@ public class Program
         "Cody", "Fox", "Gree", "Bly"
     ];
 
+    /*
     private static void GenTestData(DbContext context)
     {
-        /*
         foreach (var name in AccountTestNames)
         {
-            var appUser = new ApplicationUser
+            var appUser = new AppAccountEntity
             {
                 CorrelationId = $"{name}TestData",
                 Name = name
             };
-            context.Set<ApplicationUser>().Add(appUser);
+            context.Set<AppAccountEntity>().Add(appUser);
         }
         context.SaveChanges();
-        */
-        /*
-        var testAppUser = context.Set<ApplicationUser>().FirstOrDefault(a => a.CorrelationId == "This is test data");
+        var testAppUser = context.Set<AppAccountEntity>().FirstOrDefault(a => a.CorrelationId == "This is test data");
         if (testAppUser != null)
         {
-            var testAccounts = context.Set<SWGAccount>().Where(a => a.OwnerApplicationUser == testAppUser).ToList();
-            context.Set<SWGAccount>().RemoveRange(testAccounts);
+            var testAccounts = context.Set<GameAccountEntity>().Where(a => a.OwnerAppAccount == testAppUser).ToList();
+            context.Set<GameAccountEntity>().RemoveRange(testAccounts);
             context.SaveChanges();
                     
-            context.Set<ApplicationUser>().Remove(testAppUser);
+            context.Set<AppAccountEntity>().Remove(testAppUser);
             context.SaveChanges();
         }
-        foreach (var applicationUser in context.Set<ApplicationUser>().Where(a => a.CorrelationId == "This is test data").ToList())
+        foreach (var applicationUser in context.Set<AppAccountEntity>().Where(a => a.CorrelationId == "This is test data").ToList())
         {
-            context.Set<ApplicationUser>().Remove(applicationUser);
+            context.Set<AppAccountEntity>().Remove(applicationUser);
         }
         context.SaveChanges();
                 
-        var appUser = new ApplicationUser
+        var appUser = new AppAccountEntity
         {
             CorrelationId = "This is test data"
         };
-        context.Set<ApplicationUser>().Add(appUser);
+        context.Set<AppAccountEntity>().Add(appUser);
 
         foreach (var name in AccountTestNames)
         {
-            var account = new SWGAccount
+            var account = new GameAccountEntity
             {
                 Name = name,
-                OwnerApplicationUser = appUser
+                OwnerAppAccount = appUser
             };
-            context.Set<SWGAccount>().Add (account);
+            context.Set<GameAccountEntity>().Add (account);
                     
-            context.Set<SWGCharacter>().Add(new SWGCharacter
+            context.Set<CharacterEntity>().Add(new CharacterEntity
             {
                 Name = name,
-                SWGAccount = account,
+                GameAccount = account,
             });
         }
         context.SaveChanges();
-    */
     }
+*/
 }

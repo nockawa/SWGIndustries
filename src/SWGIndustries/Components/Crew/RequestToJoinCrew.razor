@@ -39,22 +39,22 @@
     /// First Account of the Action is the Crew Leader, the second one is the account to join the crew.
     /// If both are <c>null</c> the request was cancelled.
     /// </summary>
-    [Parameter] public Action<CrewInvitation> OnRequestToJoinCrew { get; set; }
+    [Parameter] public Action<CrewInvitationEntity> OnRequestToJoinCrew { get; set; }
 
-    private ApplicationUser _applicationUser;
-    private Crew _crewToJoin;
+    private AppAccountEntity _appAccount;
+    private CrewEntity _crewToJoin;
     private bool _crewNameFormSuccess;
     private bool _accountNameFormSuccess;
 
     protected override async Task OnInitializedAsync()
     {
-        _applicationUser = await DataAccessService.GetApplicationUserAsync();
+        _appAccount = await DataAccessService.GetAppAccountAsync();
     }
 
 
     private async Task SendRequestToJoinCrew()
     {
-        var (crewInvitation, info) = await DataAccessService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _applicationUser);
+        var (crewInvitation, info) = await DataAccessService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _appAccount);
         Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
         
         OnRequestToJoinCrew?.Invoke(crewInvitation);

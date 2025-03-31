@@ -4,16 +4,17 @@
 @inject UserService UserService
 
 <AuthorizeView>
-    <MudNavMenu Class="mud-width-full" Color="Color.Inherit">
-        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Warehouse" IconColor="Color.Inherit">Home</MudNavLink>
-        <MudNavLink Href="SWGAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">SWG Accounts</MudNavLink>
+    <MudNavMenu Class="mud-width-full" Color="Color.Info" Bordered="true">
+        <MudNavLink Href="Home" Icon="@Icons.Material.Filled.Warehouse" IconColor="Color.Inherit">Home</MudNavLink>
+        <MudNavLink Href="GameAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">Game Accounts</MudNavLink>
         <MudNavLink Href="Crew" Icon="@Icons.Material.Filled.People" IconColor="Color.Inherit">Crew</MudNavLink>
         <MudNavGroup Title="Buildings" Icon="@Icons.Material.Filled.Home" IconColor="Color.Inherit">
             <MudNavLink Href="Buildings/Inventory" Icon="@Icons.Material.Filled.Inventory" IconColor="Color.Inherit">Inventory</MudNavLink>
-            <MudNavLink Href="Buildings/House" Icon="@Icons.Material.Filled.House" IconColor="Color.Inherit">Houses</MudNavLink>
+            <MudNavLink Href="Buildings/Lots" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Inherit">Lots</MudNavLink>
             <MudNavLink Href="Buildings/Factory" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Inherit">Factories</MudNavLink>
             <MudNavLink Href="Buildings/Harvester" Icon="@Icons.Material.Filled.Volcano" IconColor="Color.Inherit">Harvesters</MudNavLink>
         </MudNavGroup>
+        <MudNavLink Href="Resources" Icon="@Icons.Material.Filled.Storage" IconColor="Color.Inherit">Resources</MudNavLink>
     </MudNavMenu>
 </AuthorizeView>
 @code {

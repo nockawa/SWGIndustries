@@ -4,10 +4,10 @@ using JetBrains.Annotations;
 namespace SWGIndustries.Data;
 
 /// <summary>
-/// Represents a Character owned by a SWG Restoration Account
+/// Represents a Character owned by a Game Account
 /// </summary>
 [PublicAPI]
-public class SWGCharacter
+public class CharacterEntity
 {
     /// <summary>
     /// Database Primary Key
@@ -22,12 +22,12 @@ public class SWGCharacter
     public string Name { get; set; }
     
     /// <summary>
-    /// Owner SWG Restoration Account
+    /// Owner Game Account
     /// </summary>
-    public SWGAccount SWGAccount { get; set; }
+    public GameAccountEntity GameAccount { get; set; }
 
     /// <summary>
-    /// <c>true</c> if this character is a member of a Crew (only meaningful if the SWGAccount is a crew member).
+    /// <c>true</c> if this character is a member of a Crew (only meaningful if the GameAccount is a crew member).
     /// </summary>
     public bool IsCrewMember { get; set; }
 
@@ -39,5 +39,5 @@ public class SWGCharacter
     /// <summary>
     /// Building the character put down.
     /// </summary>
-    public IList<SWGBuilding> PutDownBuildings { get; set; } = new List<SWGBuilding>();
+    public IList<BuildingEntity> PutDownBuildings { get; set; } = new List<BuildingEntity>();
 }
