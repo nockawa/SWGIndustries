@@ -70,7 +70,14 @@ else
     }
 
     // Member and Leader common pane
-    <MemberCharacterList @ref="_memberCharacterList" AppAccount="_appAccount" OnCrewListChanged="@(async void () => await _leaderCrewList?.RefreshCrewList())"/>
+    <MemberCharacterList @ref="_memberCharacterList" AppAccount="_appAccount" 
+                         OnCrewListChanged="@(async void () =>
+                                            {
+                                                if (_leaderCrewList != null)
+                                                {
+                                                    await _leaderCrewList.RefreshCrewList();
+                                                }
+                                            })"/>
 }
 
 @code {

@@ -150,7 +150,7 @@ namespace SWGIndustries.data.migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    AccountId = table.Column<int>(type: "INTEGER", nullable: true),
+                    GameAccountId = table.Column<int>(type: "INTEGER", nullable: true),
                     IsCrewMember = table.Column<bool>(type: "INTEGER", nullable: false),
                     MaxLotsForCrew = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -158,8 +158,8 @@ namespace SWGIndustries.data.migrations
                 {
                     table.PrimaryKey("PK_Characters", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Characters_GameAccounts_AccountId",
-                        column: x => x.AccountId,
+                        name: "FK_Characters_GameAccounts_GameAccountId",
+                        column: x => x.GameAccountId,
                         principalTable: "GameAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -255,9 +255,9 @@ namespace SWGIndustries.data.migrations
                 column: "PutDownById");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Characters_AccountId",
+                name: "IX_Characters_GameAccountId",
                 table: "Characters",
-                column: "AccountId");
+                column: "GameAccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Clusters_OwnerId",
