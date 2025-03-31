@@ -11,7 +11,7 @@ using SWGIndustries.Data;
 namespace SWGIndustries.data.migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250331154943_InitialMigration")]
+    [Migration("20250331161705_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -129,7 +129,7 @@ namespace SWGIndustries.data.migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AccountId")
+                    b.Property<int?>("GameAccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsCrewMember")
@@ -144,7 +144,7 @@ namespace SWGIndustries.data.migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("GameAccountId");
 
                     b.ToTable("Characters", (string)null);
                 });
@@ -418,12 +418,12 @@ namespace SWGIndustries.data.migrations
 
             modelBuilder.Entity("SWGIndustries.Data.CharacterEntity", b =>
                 {
-                    b.HasOne("SWGIndustries.Data.GameAccountEntity", "Account")
+                    b.HasOne("SWGIndustries.Data.GameAccountEntity", "GameAccount")
                         .WithMany("Characters")
-                        .HasForeignKey("AccountId")
+                        .HasForeignKey("GameAccountId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Account");
+                    b.Navigation("GameAccount");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.ClusterEntity", b =>
