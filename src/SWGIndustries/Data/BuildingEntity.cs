@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using JetBrains.Annotations;
 using SWGIndustries.Services;
 
@@ -70,6 +71,30 @@ public static class EnumsExtensions
             BuildingSubType.HarvesterGeothermal => "Geothermal Harvester",
             _ => "Unknown"
         };
+    }
+    public static void AllPlanets(this ref Planet planet) =>
+        planet = Planet.Corellia | Planet.Dantooine | Planet.Dathomir | Planet.Endor |
+        Planet.Kashyyyk | Planet.Lok | Planet.Mustafar | Planet.Naboo |
+        Planet.Rori | Planet.Talus | Planet.Tatooine | Planet.Yavin4;
+
+    public static Color GetPlanetColor(this Planet planet)
+    {
+        switch (planet)
+        {
+            case Planet.Corellia: return Color.FromArgb(unchecked((int)0xff2190ac));
+            case Planet.Dantooine: return Color.FromArgb(unchecked((int)0xff6a006a));
+            case Planet.Dathomir: return Color.FromArgb(unchecked((int)0xff8f5120));
+            case Planet.Endor: return Color.FromArgb(unchecked((int)0xff6f9975));
+            case Planet.Kashyyyk: return Color.FromArgb(unchecked((int)0xff146e54));
+            case Planet.Lok: return Color.FromArgb(unchecked((int)0xffa84909));
+            case Planet.Mustafar: return Color.FromArgb(unchecked((int)0xff67120d));
+            case Planet.Naboo: return Color.FromArgb(unchecked((int)0xff415c71));
+            case Planet.Rori: return Color.FromArgb(unchecked((int)0xff827660));
+            case Planet.Talus: return Color.FromArgb(unchecked((int)0xff677449));
+            case Planet.Tatooine: return Color.FromArgb(unchecked((int)0xffe0c37b));
+            case Planet.Yavin4: return Color.FromArgb(unchecked((int)0xff71bb9a));
+            default: return Color.FromArgb(unchecked((int)0xff000000));
+        }
     }
 }
 

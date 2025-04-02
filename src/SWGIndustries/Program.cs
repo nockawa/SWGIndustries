@@ -8,6 +8,7 @@ using SWGIndustries.Components.Account;
 using SWGIndustries.Data;
 using SWGIndustries.Services;
 
+
 namespace SWGIndustries;
 
 public class Program
@@ -87,8 +88,17 @@ public class Program
         });
         
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+        services.AddSingleton<ResourceManagerService>();
+        services.AddHostedService<ResourceUpdateBackgroundService>();
         
-        services.AddHostedService<ResourceManagerService>();
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddSeq(builder.Configuration.GetSection("Seq"));
+            });
+        }
         
         // Build the application
         var app = builder.Build();

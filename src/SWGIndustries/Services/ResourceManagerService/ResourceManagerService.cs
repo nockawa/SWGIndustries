@@ -6,7 +6,7 @@ using SWGIndustries.Data;
 
 namespace SWGIndustries.Services;
 
-public class ResourceManagerService : BackgroundService
+public class ResourceManagerService
 {
     private const string SWGAideResourceFileUrl = "https://swgaide.com/pub/exports/currentresources_162.xml.gz";
     
@@ -14,7 +14,7 @@ public class ResourceManagerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ResourceManagerService> _logger;
 
-    private readonly object _lock;
+    private readonly SemaphoreSlim _locker = new(1, 1);
 
     private readonly Dictionary<string, ResourceCategory> _resourceCategoryByName;
     private readonly Dictionary<ushort, ResourceCategory> _resourceCategoryById;
@@ -27,58 +27,65 @@ public class ResourceManagerService : BackgroundService
         _env = env;
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _lock = new object();
         
         _resourceCategoryByName = new Dictionary<string, ResourceCategory>();
         _resourceCategoryById = new Dictionary<ushort, ResourceCategory>();
         _resourceByName = new Dictionary<string, Resource>();
-    }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
         _logger.LogInformation("Timed Hosted Service running.");
 
-        await Initialize();
-        
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            await RefreshResources();
-            await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+            Initialize().GetAwaiter().GetResult();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "An error occured while initializing the resource category.");
+            throw;
         }
     }
 
     private async Task Initialize()
     {
-        // Load the resource category tree from XML
+        await _locker.WaitAsync();
         try
         {
-            var resourceTreeFilePathName = Path.Combine(_env.WebRootPath, "Resources", "resource_tree.xml");
-            var serializer = new XmlSerializer(typeof(XmlResourceCategory));
-            await using FileStream fileStream = new FileStream(resourceTreeFilePathName, FileMode.Open);
-            var rootCategory = (XmlResourceCategory)serializer.Deserialize(fileStream);
-    
-            RootCategory = BuildResourceCategories(null, rootCategory);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Failed to load categories from 'resource_tree.xml'");
-        }
-        
-        // Load actives resources from database, reference them into their respective category
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var activeResources = await context.Resources.Where(r => r.DepletedSince == null).ToListAsync();
-
-            foreach (var resourceModel in activeResources)
+            // Load the resource category tree from XML
+            try
             {
-                var resource = new Resource(resourceModel);
-                
-                var category = _resourceCategoryById[resourceModel.CategoryIndex];
-                category.AddResource(resource);
-                
-                _resourceByName.Add(resource.Name, resource);
+                var resourceTreeFilePathName = Path.Combine(_env.WebRootPath, "Resources", "resource_tree.xml");
+                var serializer = new XmlSerializer(typeof(XmlResourceCategory));
+                await using var fileStream = new FileStream(resourceTreeFilePathName, FileMode.Open);
+                var rootCategory = (XmlResourceCategory)serializer.Deserialize(fileStream);
+
+                RootCategory = BuildResourceCategories(null, rootCategory);
             }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to load categories from 'resource_tree.xml'");
+                throw;
+            }
+
+            // Load actives resources from database, reference them into their respective category
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var activeResources = await context.Resources.Where(r => r.DepletedSince == null).ToListAsync();
+
+                foreach (var resourceModel in activeResources)
+                {
+                    var resource = new Resource(resourceModel);
+
+                    var category = _resourceCategoryById[resourceModel.CategoryIndex];
+                    category.AddResource(resource);
+
+                    _resourceByName.Add(resource.Name, resource);
+                }
+            }
+        }
+        finally
+        {
+            _locker.Release();
         }
     }
     
@@ -95,14 +102,14 @@ public class ResourceManagerService : BackgroundService
         return cat;
     }    
     
-    private async Task RefreshResources()
+    internal async Task RefreshResources()
     {
         _logger.LogInformation("Updating resources from SWGAide");
         
         try
         {
             // Load current resources from SWGAide for the Restoration 3 server, it's a zipped XML file
-            using HttpClient client = new HttpClient();
+            using var client = new HttpClient();
             await using var fileStream = await client.GetStreamAsync(SWGAideResourceFileUrl);
             await using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
             var xmlDoc = new XmlDocument();
@@ -129,7 +136,8 @@ public class ResourceManagerService : BackgroundService
             }
 
             // From this point we enter a blocking section
-            lock (_lock)
+            await _locker.WaitAsync();
+            try
             {
                 // Look for depleted resources, they are present in _resourceByName but not our temporary dictionary
                 var depletedResources = new List<Resource>();
@@ -140,13 +148,13 @@ public class ResourceManagerService : BackgroundService
                     {
                         continue;
                     }
-                    
+
                     // Resource is depleted, set the depleted date/time, add to our list
                     var resource = kvp.Value;
                     resource.DepletedSince = DateTime.UtcNow;
                     depletedResources.Add(resource);
                 }
-                
+
                 // Look for new resources or updated, they are present in our temporary dictionary but not _resourceByName
                 var newResources = new List<Resource>();
                 var updatedResources = new List<(Resource, Resource)>();
@@ -165,11 +173,12 @@ public class ResourceManagerService : BackgroundService
                             continue;
                         }
                     }
+
                     newResources.Add(kvp.Value);
                 }
-                
+
                 // Time to conciliate with database
-                
+
                 // First we need to remove the depleted resources
                 using var scope = _serviceProvider.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -184,37 +193,44 @@ public class ResourceManagerService : BackgroundService
                     _resourceByName.Remove(resource.Name);
                     resource.Category.Remove(resource);
                 }
-                context.SaveChanges();
+
+                await context.SaveChangesAsync();
                 _logger.LogInformation("Removed {DepletedResourcesCount} depleted resources.", depletedResources.Count);
-                
+
                 // Now we can add the new resources
                 foreach (var resource in newResources)
                 {
                     // Add the resource to the service
                     _resourceByName.Add(resource.Name, resource);
                     _logger.LogDebug("New resource {ResourceName} is being added.", resource.Name);
-                    
+
                     // Add the resource to its category
                     var category = _resourceCategoryById[resource.CategoryIndex];
                     category.AddResource(resource);
-                    
+
                     // Add to the database
                     var model = resource.ToModel();
                     context.Resources.Add(model);
                 }
-                context.SaveChanges();
+
+                await context.SaveChangesAsync();
                 _logger.LogInformation("Added {NewResourcesCount} new resources.", newResources.Count);
-                
+
                 // Now we can update the outdated resources
                 foreach (var (newResource, curResource) in updatedResources)
                 {
                     curResource.UpdateFrom(newResource);
                     _logger.LogDebug("Resource {ResourceName} is being updated with new stats/planets.", curResource.Name);
-                    
+
                     context.Resources.Update(curResource.ToModel());
                 }
-                context.SaveChanges();
+
+                await context.SaveChangesAsync();
                 _logger.LogInformation("Updated {UpdatedResourcesCount} existing resources.", updatedResources.Count);
+            }
+            finally
+            {
+                _locker.Release();
             }
         }
         catch (Exception e)
