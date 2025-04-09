@@ -24,8 +24,9 @@ public class XmlResource
     [XmlArrayItem("planet")]
     public List<XmlPlanet> Planets { get; set; }
 
-    [XmlElement("waypoints")]
-    public string Waypoints { get; set; }
+    [XmlArray("waypoints")]
+    [XmlArrayItem("waypoint")]
+    public List<XmlWaypoint> Waypoints { get; set; }
 
     [XmlElement("available_timestamp")]
     public long AvailableTimestamp { get; set; }

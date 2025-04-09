@@ -50,47 +50,46 @@
 
     <MudTable T="BuildingEntity" @ref="_table" Items="_buildings" Dense="true" Hover="true" Striped="true"
         Filter="FilterTable"
-
         GroupBy="_groupDefinition"
 
         CanCancelEdit="true" IsEditRowSwitchingBlocked="true" EditButtonPosition="TableEditButtonPosition.End"
         EditTrigger="TableEditTrigger.RowClick"
 
         CommitEditTooltip="Save changes" CancelEditTooltip="Cancel changes"
-        OnCommitEditClick="SaveRowChanges" RowEditPreview="RowEditPreview" RowEditCancel="RowEditCancel"
-        >
+        OnCommitEditClick="SaveRowChanges" RowEditPreview="RowEditPreview" RowEditCancel="RowEditCancel">
 
         <ToolBarContent>
-          <MudGrid>
-              <MudItem xs="12" Class="pl-4 pt-4">
-                  <MudText Typo="Typo.h6">Buildings inventory</MudText>
-              </MudItem>
-              <MudItem xs="3" Class="pl-4 pt-1">
-                  <MudSelect T="GroupBy" ValueChanged="OnGroupByChanged" Variant="Variant.Text" AdornmentText="Group by"
-                             Adornment="Adornment.Start" Dense="true" Class="mx-2">
-                      <MudSelectItem T="GroupBy" Value="GroupBy.None">None</MudSelectItem>
-                      <MudSelectItem T="GroupBy" Value="GroupBy.Owner">Owner</MudSelectItem>
-                      <MudSelectItem T="GroupBy" Value="GroupBy.Type">Type</MudSelectItem>
-                      <MudSelectItem T="GroupBy" Value="GroupBy.TypeAndSubType">Type / Subtype</MudSelectItem>
-                  </MudSelect>
-              </MudItem>
-              <MudItem xs="3" Class="pl-4 pt-1">
-                  <MudSelect T="BuildingType" ValueChanged="OnFilterByChanged" Variant="Variant.Text" AdornmentText="Filter by"
-                             Adornment="Adornment.Start" Dense="true" Class="mx-2">
-                      <MudSelectItem T="BuildingType" Value="BuildingType.Undefined">None</MudSelectItem>
-                      <MudSelectItem T="BuildingType" Value="BuildingType.House">House</MudSelectItem>
-                      <MudSelectItem T="BuildingType" Value="BuildingType.Factory">Factory</MudSelectItem>
-                      <MudSelectItem T="BuildingType" Value="BuildingType.Harvester">Harvester</MudSelectItem>
-                  </MudSelect>
-              </MudItem>
-              <MudItem xs="3" Class="pl-4 pt-1">
-                  <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start"
-                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
-                                @onfocus="() => _isFocused = true" @onblur="() => _isFocused = false"
-                                Class="@(_isFocused ? "mud-text-field-focused" : "")"/>
-              </MudItem>
-          </MudGrid>
+            <MudGrid>
+                <MudItem xs="12" Class="pl-4 pt-4">
+                    <MudText Typo="Typo.h6">Buildings inventory</MudText>
+                </MudItem>
+                <MudItem xs="3" Class="pl-4 pt-1">
+                    <MudSelect T="GroupBy" ValueChanged="OnGroupByChanged" Variant="Variant.Text" AdornmentText="Group by"
+                               Adornment="Adornment.Start" Dense="true" Class="mx-2">
+                        <MudSelectItem T="GroupBy" Value="GroupBy.None">None</MudSelectItem>
+                        <MudSelectItem T="GroupBy" Value="GroupBy.Owner">Owner</MudSelectItem>
+                        <MudSelectItem T="GroupBy" Value="GroupBy.Type">Type</MudSelectItem>
+                        <MudSelectItem T="GroupBy" Value="GroupBy.TypeAndSubType">Type / Subtype</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3" Class="pl-4 pt-1">
+                    <MudSelect T="BuildingType" ValueChanged="OnFilterByChanged" Variant="Variant.Text" AdornmentText="Filter by"
+                               Adornment="Adornment.Start" Dense="true" Class="mx-2">
+                        <MudSelectItem T="BuildingType" Value="BuildingType.Undefined">None</MudSelectItem>
+                        <MudSelectItem T="BuildingType" Value="BuildingType.House">House</MudSelectItem>
+                        <MudSelectItem T="BuildingType" Value="BuildingType.Factory">Factory</MudSelectItem>
+                        <MudSelectItem T="BuildingType" Value="BuildingType.Harvester">Harvester</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3" Class="pl-4 pt-1">
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                                  @onfocus="() => _isFocused = true" @onblur="() => _isFocused = false"
+                                  Class="@(_isFocused ? "mud-text-field-focused" : "")"/>
+                </MudItem>
+            </MudGrid>
         </ToolBarContent>
+        
         <ColGroup>
             @if (HasGroupBy)
             {
@@ -102,21 +101,26 @@
                 <col style="width: 10rem"/>
             }
             
+            <!-- Name -->
             <col style="width: 20rem"/>
-            
+
+            <!-- Type -->
             @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == BuildingType.Undefined)
             {
                 <col style="width: 10rem"/>
             }
-            
+
+            <!-- Subtype -->
             @if (IsGroupByTypeAndSubType == false)
             {
                 <col style="width: 20rem"/>
             }
-            
+
+            <!-- Comments -->
             <col/>
-            <col style="width: 5rem"/>
+            <col style="width: 50px;"/>
         </ColGroup>
+        
         <HeaderContent>
             @if (IsGroupByOwner == false)
             {
@@ -142,7 +146,9 @@
             <MudTh Style="color: var(--mud-palette-primary-text)">
                 <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Comments)">Comments</MudTableSortLabel>
             </MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">Actions</MudTh>
         </HeaderContent>
+        
         <GroupHeaderTemplate>
             <MudTh Class="mud-table-cell-custom-group" colspan="4">@($"{context.GroupName}: {context.Key}")</MudTh>
         </GroupHeaderTemplate>
@@ -152,6 +158,7 @@
                 @($"Count: {context.Items.Count()}")
             </MudTh>
         </GroupFooterTemplate>
+        
         <RowTemplate>
             @if (IsGroupByOwner == false)
             {
@@ -171,7 +178,25 @@
             }
             
             <MudTd DataLabel="Comments">@context.Comments</MudTd>
+
+            <MudTd DataLabel="Actions" Style="text-align: center;">
+                @if (context.PutDownBy == null)
+                {
+                    <MudTooltip Text="Put down this building" openDelay="500" Placement="Placement.Top" Arrow="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.FileDownload" Color="Color.Info" Size="Size.Small"
+                                       OnClick="@(async ()=> await PutDownBuilding(context))"/>
+                    </MudTooltip>
+                }
+                else
+                {
+                    <MudTooltip Text="Re-deed this building" openDelay="500" Placement="Placement.Top" Arrow="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.FileUpload" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(async ()=> await ReDeedBuilding(context))"/>
+                    </MudTooltip>
+                }
+            </MudTd>
         </RowTemplate>
+        
         <RowEditingTemplate>
             @if (IsGroupByOwner == false)
             {
@@ -221,11 +246,6 @@
     private BuildingType _buildingTypeFilter;
     private DataScope _buildingsScope;
 
-    protected override async Task OnInitializedAsync()
-    {
-        _buildings = await DataAccessService.GetBuildings(null);
-    }
-    
     private bool HasGroupBy => _groupDefinition != null;
     private bool IsGroupByOwner => _groupBy == GroupBy.Owner;
     private bool IsGroupByType => _groupBy == GroupBy.Type;
@@ -325,7 +345,8 @@
         {
             Snackbar.Add($"Failed to create {count} {template.Name} for account {dialog.SelectedAccount.Name}: {info}", Severity.Error);
         }
-        
+
+        await DataScopeChanged(_buildingsScope);
         return true;
     }
 
@@ -378,4 +399,55 @@
         _editingBuilding = null;
         _editTransaction.Rollback();
     }
+
+    private async Task<bool> PutDownBuilding(BuildingEntity building)
+    {
+        var options = new DialogOptions()
+        {
+            BackdropClick = false,
+            CloseButton = false,
+        };
+
+        var parameters = new DialogParameters<BuildingPutDownDialog>
+        {
+            { x => x.Building, building },
+            { x => x.GameAccount, building.Owner }
+        };
+
+        var title = "Put the building down";
+        var dialogRef = await DialogService.ShowAsync<BuildingPutDownDialog>(title, parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result == null || result.Canceled)
+        {
+            return false;
+        }
+
+        var dialog = (BuildingPutDownDialog)dialogRef.Dialog!;
+        var character = dialog.Character;
+        var isForCrew = dialog.IsForCrew;
+
+        building.PutDownBy = character;
+        building.BuildingForCrew = isForCrew;
+        building.PutDownPlanet = dialog.Planet;
+        
+        DataAccessService.UpdateBuilding(building);
+        var r = DataAccessService.SaveChanges(null);
+        if (r)
+        {
+            Snackbar.Add($"Successfully put down the building '{building.Name}' for account {building.Owner.Name} on character {character.Name}", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"Failed to put down the building '{building.Name}' for account {building.Owner.Name} on character {character.Name}", Severity.Error);
+        }
+        
+        return true;
+    }
+
+    private Task ReDeedBuilding(BuildingEntity building)
+    {
+        return Task.CompletedTask;
+    }
+
 }

@@ -116,7 +116,16 @@ public class ResourceManagerService
             xmlDoc.Load(gzipStream);
             var serializer = new XmlSerializer(typeof(XmlResourceData));
             using var reader = new XmlNodeReader(xmlDoc);
-            var resources = (XmlResourceData)serializer.Deserialize(reader)!;
+            XmlResourceData resources;
+            try
+            {
+                resources = (XmlResourceData)serializer.Deserialize(reader)!;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Couldn't deserialize SWGAide resources zip file");
+                throw;
+            }
 
             // Load the resources into temp dictionary
             var dic = new Dictionary<string, Resource>(resources.Resources.Count);
@@ -167,6 +176,7 @@ public class ResourceManagerService
                         if (existingResource.IsOutDated(newResource))
                         {
                             updatedResources.Add((newResource, existingResource));
+                            continue;
                         }
                         else
                         {

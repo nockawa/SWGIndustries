@@ -61,7 +61,7 @@ public class ApplicationDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<GameAccountEntity>()
             .HasMany(a => a.Clusters)
-            .WithOne(c => c.Owner)
+            .WithOne(c => c.GameAccount)
             .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<GameAccountEntity>()
             .HasMany(a => a.Buildings)
@@ -75,12 +75,14 @@ public class ApplicationDbContext : DbContext
             .HasMany(c => c.PutDownBuildings)
             .WithOne(b => b.PutDownBy)
             .OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<CharacterEntity>().Navigation(c => c.PutDownBuildings).AutoInclude();
         
         // Building Entity
         modelBuilder.Entity<BuildingEntity>().ToTable("Buildings");
         
         // Cluster Entity
         modelBuilder.Entity<ClusterEntity>().ToTable("Clusters");
+        modelBuilder.Entity<ClusterEntity>().Property(p => p.CreationDateTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
         modelBuilder.Entity<ClusterEntity>()
             .HasMany(c => c.Buildings)
             .WithOne(b => b.Cluster)
@@ -88,9 +90,16 @@ public class ApplicationDbContext : DbContext
         
         // Crew navigation customization
         modelBuilder.Entity<CrewEntity>().ToTable("Crews");
-        modelBuilder.Entity<CrewEntity>().HasMany(c => c.Members).WithOne(m => m.Crew);
+        modelBuilder.Entity<CrewEntity>()
+            .HasMany(c => c.Members)
+            .WithOne(m => m.Crew);
+        modelBuilder.Entity<CrewEntity>()
+            .HasMany(a => a.Clusters)
+            .WithOne(c => c.Crew)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<CrewEntity>().Navigation(c => c.CrewLeader).AutoInclude();
         modelBuilder.Entity<CrewEntity>().Navigation(c => c.Members).AutoInclude();
+        modelBuilder.Entity<CrewEntity>().HasIndex(c => c.Name).IsUnique();
         
         // Crew Invitation navigation customization
         modelBuilder.Entity<CrewInvitationEntity>().ToTable("CrewInvitations");

@@ -171,20 +171,35 @@ namespace SWGIndustries.data.migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    OwnerId = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsDefault = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreationDateTime = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CrewId = table.Column<int>(type: "INTEGER", nullable: true),
+                    GameAccountId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ResourceId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Planet = table.Column<int>(type: "INTEGER", nullable: false),
+                    Waypoint = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 32, nullable: true),
-                    Comment = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true)
+                    Comments = table.Column<string>(type: "TEXT", maxLength: 1024, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clusters", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Clusters_GameAccounts_OwnerId",
-                        column: x => x.OwnerId,
+                        name: "FK_Clusters_Crews_CrewId",
+                        column: x => x.CrewId,
+                        principalTable: "Crews",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Clusters_GameAccounts_GameAccountId",
+                        column: x => x.GameAccountId,
                         principalTable: "GameAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Clusters_Resources_ResourceId",
+                        column: x => x.ResourceId,
+                        principalTable: "Resources",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -197,10 +212,11 @@ namespace SWGIndustries.data.migrations
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
                     SubType = table.Column<int>(type: "INTEGER", nullable: false),
                     PutDownById = table.Column<int>(type: "INTEGER", nullable: true),
+                    BuildingForCrew = table.Column<bool>(type: "INTEGER", nullable: false),
                     PutDownPlanet = table.Column<int>(type: "INTEGER", nullable: false),
                     ClusterId = table.Column<int>(type: "INTEGER", nullable: true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true),
-                    Comments = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    Comments = table.Column<string>(type: "TEXT", maxLength: 1024, nullable: true),
                     MaintenanceAmount = table.Column<int>(type: "INTEGER", nullable: false),
                     MaintenanceLastUpdate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     PowerAmount = table.Column<int>(type: "INTEGER", nullable: false),
@@ -211,7 +227,8 @@ namespace SWGIndustries.data.migrations
                     HarvesterSelfPowered = table.Column<bool>(type: "INTEGER", nullable: false),
                     HarvesterBER = table.Column<int>(type: "INTEGER", nullable: false),
                     HarvesterHopperSize = table.Column<int>(type: "INTEGER", nullable: false),
-                    HarvestingResourceType = table.Column<int>(type: "INTEGER", nullable: false)
+                    HarvestingResourceType = table.Column<int>(type: "INTEGER", nullable: false),
+                    ResourceConcentration = table.Column<float>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -260,9 +277,19 @@ namespace SWGIndustries.data.migrations
                 column: "GameAccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Clusters_OwnerId",
+                name: "IX_Clusters_CrewId",
                 table: "Clusters",
-                column: "OwnerId");
+                column: "CrewId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clusters_GameAccountId",
+                table: "Clusters",
+                column: "GameAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clusters_ResourceId",
+                table: "Clusters",
+                column: "ResourceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CrewInvitations_FromAccountId",
@@ -377,9 +404,6 @@ namespace SWGIndustries.data.migrations
                 name: "NamedSeries");
 
             migrationBuilder.DropTable(
-                name: "Resources");
-
-            migrationBuilder.DropTable(
                 name: "Characters");
 
             migrationBuilder.DropTable(
@@ -387,6 +411,9 @@ namespace SWGIndustries.data.migrations
 
             migrationBuilder.DropTable(
                 name: "GameAccounts");
+
+            migrationBuilder.DropTable(
+                name: "Resources");
 
             migrationBuilder.DropTable(
                 name: "Crews");

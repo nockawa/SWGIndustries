@@ -1,0 +1,73 @@
+﻿@page "/Resources/Clusters"
+
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+@using SWGIndustries.Components.Misc
+
+@inject ISnackbar Snackbar
+@inject DataAccessService DataAccessService
+@inject DataScopeService DataScopeService
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+    .mud-table-head .mud-table-cell {
+        background-color: var(--mud-palette-primary);
+    }
+    .mud-table-head .mud-table-cell:hover * {
+        color: white !important;
+    }
+</style>
+
+<MudPaper Elevation="4" Class="ma-4 pa-4">
+
+    <MudText Typo="Typo.body1" Class="mb-4">
+        This page lists the Clusters you are part of.
+    </MudText>
+
+    <MudTable T="ClusterEntity" @ref="_table" Items="@_clusters" Dense="true" Striped="true" Hover="true">
+        <ColGroup>
+            <col />
+            <col style="width: 16rem"/>
+            <col style="width: 10rem"/>
+            <col style="width: 10rem"/>
+        </ColGroup>
+        <HeaderContent>
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<ClusterEntity, object>(c => c.Name)">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<ClusterEntity, object>(c => c.Resource.Name)">Resource</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<ClusterEntity, object>(c => c.Planet)">Planet</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<ClusterEntity, object>(c => c.Crew)">Owned by Crew</MudTableSortLabel>
+            </MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Name">
+                <MudLink Href=@($"/Resources/Cluster?id={context.Id}")>@context.Name</MudLink>
+            </MudTd>
+            <MudTd DataLabel="Name">@context.Resource.Name</MudTd>
+            <MudTd DataLabel="Name">@context.Planet.GetFriendlyName()</MudTd>
+            <MudTd DataLabel="Owned by Crew">
+                <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Secondary" Style="@(context.Crew==null ? "display: none" : "")"/>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    private MudTable<ClusterEntity> _table;
+    private IList<ClusterEntity> _clusters;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var appAcount = await DataAccessService.GetAppAccountAsync();
+        _clusters = await DataAccessService.GetClusters(appAcount);
+    }
+    
+}

@@ -1,0 +1,425 @@
+﻿@page "/Resources/Cluster"
+
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+    .mud-table-head .mud-table-cell {
+        background-color: var(--mud-palette-primary);
+    }
+    .mud-table-head .mud-table-cell:hover * {
+        color: white !important;
+    }
+    .mud-text-field-focused {
+        width: 60%;
+    }
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+
+    .mud-table-cell-custom-group-footer {
+        padding-bottom: 50px;
+        text-align: right;
+    }
+
+    .mud-table-toolbar {
+        height: 6rem;
+    }
+</style>
+
+<MudPaper Elevation="2" Class="ma-2 px-4 pt-0 pb-4">
+    <!-- Viewing mode header of the cluster -->
+    @if (_editMode == false)
+    {
+        <div style="display: flex; align-items: center;">
+            <h2>@($"Cluster {_cluster.Name ?? ""}")</h2>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Class="ml-2" OnClick="OnEdit"/>
+        </div>
+
+        <MudText Typo="Typo.body1" Class="my-4">
+            @($"This cluster is located on planet {_cluster.Planet.GetFriendlyName()}, harvesting resource {_cluster.Resource.Name}.")
+        </MudText>
+        
+        <div style="display: flex; align-items: center;" class="mb-4">
+            <h3 class="mr-2 mt-1">Waypoint:</h3>
+            <code class="mt-1">@($"{_cluster.Waypoint ?? ""}")</code>
+            <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap" Size="Size.Small" Color="Color.Primary" Class="ml-2" OnClick="@(() => DisplayMap(false))"/>
+        </div>
+        
+        <h3>Comments</h3>
+        <pre style="font-family: inherit">@(_cluster.Comments)</pre>
+    }
+    else
+    {
+        // Edit mode header of the cluster
+        _nameTextField?.Validate();
+        <MudForm @bind-IsValid="@_isFormValid">
+            <MudTextField @ref="_nameTextField" T="string" Label="Cluster's name" @bind-Value="_editNewName" Variant="Variant.Outlined" AutoFocus="true"
+                          Immediate="true" Class="mt-4" Required="true" Validation="@(new Func<string, string>((t) => string.IsNullOrWhiteSpace(t)==false ? null : "Give a valid name"))"/>
+
+            <MudTextField T="string" Label="Comments" @bind-value="@_editNewComment" Variant="Variant.Outlined" Class="mt-4"  Lines="5"/>
+
+            <div style="display: flex; align-items: center;" class="mb-4">
+                <h3 class="mr-2 mt-1">Waypoint:</h3>
+                <code class="mt-1">@($"{_editNewWaypoint ?? ""}")</code>
+                <MudIconButton Icon="@Icons.Material.Filled.ZoomOutMap" Size="Size.Small" Color="Color.Primary" Class="ml-2" OnClick="@(() => DisplayMap(true))"/>
+            </div>
+
+            <div style="display: flex; align-items: flex-start;" class="mb-4">
+                <MudButton OnClick="OnCancel">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_isFormValid)" OnClick="OnSave" Class="ml-2">Save</MudButton>
+            </div>
+        </MudForm>
+    }
+</MudPaper>
+
+<MudTable T="BuildingEntity" @ref="_table" Items="@_cluster.Buildings" Dense="true" Striped="true" Hover="true"
+          Filter="FilterTable" GroupBy="_groupDefinition" Class="ma-2 pa-4">
+
+    <ToolBarContent>
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" Class="pl-4 pt-4">
+                <MudText Typo="Typo.h6">Harvesters for this cluster</MudText>
+            </MudItem>
+            <MudItem xs="3" Class="pl-4 pt-1">
+                <MudSelect T="GroupBy" ValueChanged="OnGroupByChanged" Variant="Variant.Outlined" AdornmentText="Group by"
+                           Adornment="Adornment.Start" Dense="true" Class="mx-2">
+                    <MudSelectItem T="GroupBy" Value="GroupBy.None">None</MudSelectItem>
+                    <MudSelectItem T="GroupBy" Value="GroupBy.GameAccount">Game Account</MudSelectItem>
+                    <MudSelectItem T="GroupBy" Value="GroupBy.Character">Character</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="3" Class="pl-4 pt-1">
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Variant="Variant.Outlined" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"
+                              @onfocus="() => _isFocused = true" @onblur="() => _isFocused = false"
+                              Class="@(_isFocused ? "mud-text-field-focused" : "")"/>
+            </MudItem>
+        </MudGrid>
+    </ToolBarContent>
+    
+    <ColGroup>
+        <!-- First grouping level -->
+        @if (HasGroupBy)
+        {
+            <col style="width: 4rem"/>
+        }
+
+        <!-- Second grouping level -->
+        @if (IsGroupByCharacter)
+        {
+            <col style="width: 4rem"/>
+        }
+
+        <!-- Name -->
+        <col style="width: 16rem"/>
+
+        <!-- Game Account -->
+        @if (!HasGroupBy)
+        {
+            <col style="width: 14rem"/>
+        }
+
+        <!-- Character -->
+        @if (IsGroupByGameAccount)
+        {
+            <col style="width: 10rem"/>
+        }
+
+        <!-- Comment -->
+        <col/>
+    </ColGroup>
+    
+    <HeaderContent>
+        <!-- Name -->
+        <MudTh Style="color: var(--mud-palette-primary-text)">
+            <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Name)">Name</MudTableSortLabel>
+        </MudTh>
+
+        <!-- Game Account -->
+        @if (!HasGroupBy)
+        {
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Owner.Name)">Game Account</MudTableSortLabel>
+            </MudTh>
+        }
+
+        <!-- Character -->
+        @if (IsGroupByGameAccount)
+        {
+            <MudTh Style="color: var(--mud-palette-primary-text)">
+                <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.PutDownBy.Name)">Character</MudTableSortLabel>
+            </MudTh>
+        }
+        
+        <!-- Comments -->
+        <MudTh Style="color: var(--mud-palette-primary-text)">Comments</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>
+        <!-- Name -->
+        <MudTd DataLabel="Owner">@context.Name</MudTd>
+
+        <!-- Game Account -->
+        @if (!HasGroupBy)
+        {
+            <MudTd DataLabel="Owner">@context.Owner.Name</MudTd>
+        }
+
+        <!-- Character -->
+        @if (IsGroupByGameAccount)
+        {
+            <MudTd DataLabel="Type">@context.PutDownBy.Name</MudTd>
+        }
+
+        <MudTd DataLabel="Comments">@context.Comments</MudTd>
+    </RowTemplate>
+</MudTable>
+
+<MudPaper Elevation="2" Class="ma-2 pa-4">
+    <MudTooltip Text="Add harvesters to cluster" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudFab Class="mb-4" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleAddHarvesters"/>
+    </MudTooltip>
+
+    @if (_toggleAddHarvester)
+    {
+        <MudText Class="mb-4">
+            Select one or many harvesters to add to the cluster, set the average concentration, you can also change their maintenance and power.
+        </MudText>
+        <MudTable T="BuildingEntity" Items="_availableHarvester" MultiSelection="true" Hover="true" Dense="true" Striped="true">
+            <ColGroup>
+                <!-- Checkbox -->
+                <col style="width: 4rem"/>
+
+                <!-- Class -->
+                <col style="width: 12rem"/>
+
+                <!-- Owner -->
+                <col style="width: 10rem"/>
+
+                <!-- Name -->
+                <col style="width: 16rem"/>
+                
+                <!-- BER -->
+                <col style="width: 4rem"/>
+
+                <!-- Hopper Size -->
+                <col style="width: 8rem"/>
+
+                <!-- Maintenance amount -->
+                <col style="width: 8rem"/>
+
+                <!-- Power amount -->
+                <col style="width: 8rem"/>
+
+                <!-- Comments -->
+                <col/>
+            </ColGroup>
+            
+            <HeaderContent>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.SubType)">Class</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Owner.Name)">Owner</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Name)">Name</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.HarvesterBER)">BER</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.HarvesterHopperSize)">Hopper Size</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.MaintenanceAmount)">Maintenance</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.PowerAmount)">Power</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="color: var(--mud-palette-primary-text)">Comments</MudTh>
+            </HeaderContent>
+            
+            <RowTemplate>
+                <MudTd DataLabel="Class">@context.SubType.GetName()</MudTd>
+                <MudTd DataLabel="Owner">@context.Owner.Name</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="BER">@context.HarvesterBER</MudTd>
+                <MudTd DataLabel="Hopper Size">@($"{context.HarvesterHopperSize}K")</MudTd>
+                <MudTd DataLabel="Maintenance">@context.MaintenanceAmount</MudTd>
+                <MudTd DataLabel="Power">@context.PowerAmount</MudTd>
+                <MudTd DataLabel="Comments">@context.Comments</MudTd>
+            </RowTemplate>
+
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    private enum GroupBy
+    {
+        None,
+        GameAccount,
+        Character,
+    }
+
+    [Parameter] [SupplyParameterFromQuery(Name = "id")] public int Id { get; set; }
+
+    private ClusterEntity _cluster;
+    
+    private MudTextField<string> _nameTextField;
+    private bool _editMode;
+    private bool _isFormValid;
+    private string _editNewName;
+    private string _editNewComment;
+    private string _editNewWaypoint;
+    
+    private MudTable<BuildingEntity> _table;
+    private string _searchString;
+    private TableGroupDefinition<BuildingEntity> _groupDefinition;
+    private bool _isFocused;
+    private GroupBy _groupBy;
+
+    private bool HasGroupBy => _groupDefinition != null;
+    private bool IsGroupByGameAccount => _groupBy == GroupBy.GameAccount;
+    private bool IsGroupByCharacter => _groupBy == GroupBy.Character;
+
+    private bool _toggleAddHarvester;
+    private IList<BuildingEntity> _availableHarvester;
+
+    private void OnGroupByChanged(GroupBy groupBy)
+    {
+        _groupBy = groupBy;
+        switch (groupBy)
+        {
+            case GroupBy.None:
+                _groupDefinition = null;
+                break;
+            case GroupBy.GameAccount:
+                _groupDefinition = new TableGroupDefinition<BuildingEntity>
+                {
+                    GroupName = "Game Account",
+                    Indentation = true,
+                    Expandable = true,
+                    Selector = e => e.Owner.Name,
+                };
+                break;
+            case GroupBy.Character:
+                _groupDefinition = new TableGroupDefinition<BuildingEntity>
+                {
+                    GroupName = "Character",
+                    Indentation = true,
+                    Expandable = true,
+                    Selector = e => e.PutDownBy.Name,
+                };
+                break;
+        }
+        StateHasChanged();
+    }
+
+    private void OnEdit()
+    {
+        _editNewName = _cluster.Name;
+        _editNewComment = _cluster.Comments;
+        _editNewWaypoint = _cluster.Waypoint;
+        _editMode = true;
+        StateHasChanged();
+    }
+    
+    private void OnCancel()
+    {
+        _editMode = false;
+        StateHasChanged();
+    }
+
+    private void OnSave()
+    {
+        _cluster.Name = _editNewName;
+        _cluster.Comments = _editNewComment;
+        _cluster.Waypoint = _editNewWaypoint;
+        DataAccessService.UpdateCluster(_cluster);
+        DataAccessService.SaveChanges(null);
+        _editMode = false;
+        StateHasChanged();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var appAccount = await DataAccessService.GetAppAccountAsync();
+        var cluster = await DataAccessService.GetCluster(Id);
+        
+        // Check if the cluster belongs to the app account (it's easy to navigate with a tampered URL)
+        if ((cluster != null) &&
+            ((cluster.GameAccount != null && appAccount.GameAccounts.Contains(cluster.GameAccount)) ||
+            (cluster.Crew != null && appAccount.Crew == cluster.Crew)))
+        {
+            _cluster = cluster;
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/Unauthorized", true);
+        }
+    }
+
+    private async Task DisplayMap(bool allowEdit)
+    {
+        var options = new DialogOptions()
+        {
+            BackdropClick = false,
+            CloseButton = false,
+        };
+        
+        var parameters = new DialogParameters<ShowMapDialog>
+        {
+            { x => x.WaypointAsString, _cluster.Waypoint },
+            { x => x.AllowEdit, allowEdit }
+        };
+
+        var title = $"Waypoint for cluster {_cluster.Name}";
+        var dialogRef = await DialogService.ShowAsync<ShowMapDialog>(title, parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        var dialog = (ShowMapDialog)dialogRef.Dialog!;
+        
+        // Fetch changes
+        _editNewWaypoint = dialog.WaypointAsString;
+        if (Waypoint.TryParse(_editNewWaypoint, out var wp))
+        {
+            _cluster.Planet = wp.Planet;
+        }
+    }
+    
+    private bool FilterTable(BuildingEntity building)
+    {
+        return (building.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) ||
+               (building.Owner.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) ||
+               (building.Comments != null && building.Comments.Contains(_searchString, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task ToggleAddHarvesters()
+    {
+        _toggleAddHarvester = !_toggleAddHarvester;
+        if (_toggleAddHarvester == false)
+        {
+            return;
+        }
+
+        //var hrt = _cluster.Resource.HarvestingResourceType;
+        _availableHarvester = await DataAccessService.GetAvailableHarvesters(null, HarvestingResourceType.Mineral);
+    }
+
+}

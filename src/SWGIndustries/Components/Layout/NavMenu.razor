@@ -14,7 +14,10 @@
             <MudNavLink Href="Buildings/Factory" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Inherit">Factories</MudNavLink>
             <MudNavLink Href="Buildings/Harvester" Icon="@Icons.Material.Filled.Volcano" IconColor="Color.Inherit">Harvesters</MudNavLink>
         </MudNavGroup>
-        <MudNavLink Href="Resources" Icon="@Icons.Material.Filled.Storage" IconColor="Color.Inherit">Resources</MudNavLink>
+        <MudNavGroup Title="Resources" Icon="@Icons.Material.Filled.Storage">
+            <MudNavLink Href="Resources/Current" Icon="@Icons.Material.Filled.Storage" IconColor="Color.Inherit">Current</MudNavLink>
+            <MudNavLink Href="Resources/Clusters" Icon="@Icons.Material.Filled.Hive" IconColor="Color.Inherit">Clusters</MudNavLink>
+        </MudNavGroup>
     </MudNavMenu>
 </AuthorizeView>
 @code {

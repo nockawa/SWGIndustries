@@ -1,12 +1,16 @@
-﻿@page "/Resources"
+﻿@page "/Resources/Current"
 @using System.Drawing
 @using System.Text
+@using SWGIndustries.Components.Resources.Clusters
 @using SWGIndustries.Data
 @using SWGIndustries.Services
-@using Color = System.Drawing.Color
 @using Size = MudBlazor.Size
 
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject DataAccessService DataAccessService
 @inject ResourceManagerService ResourceManagerService
+@inject IDialogService DialogService
 
 <style>
     .small-text *  {
@@ -30,6 +34,7 @@
     .column-options.cursor-pointer{
         display: none !important;
     }
+
 </style>
 
 <MudToolBar Style="padding-left: 16px">
@@ -44,28 +49,29 @@
 </MudToolBar>
 
 <MudStack Justify="Justify.FlexStart" Row="true">
-    <div style="width: 20rem; @( _categoriesOpen ? "" : "display: none;")">
+    <div style="width: 22rem; @( _categoriesOpen ? "" : "display: none;")">
         <MudTextField T="string" Label="Search" Adornment="Adornment.Start" Class="mx-4"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       OnDebounceIntervalElapsed="OnTreeFilterTextChanged" DebounceInterval="500" Clearable="true"/>
         <MudTreeView  Class="small-text mb-4" T="ResourceCategory" @ref="_resourceCategoriesTree" Items="_root" Dense="true"
-                      Hover="true" AutoExpand="true" ExpandOnDoubleClick="true" FilterFunc="ResourceCategoriesTreeFilterFunc"
-                      SelectedValueChanged="ResourceCategoryChanged"
-                      >
+                      Hover="true" AutoExpand="true" ExpandOnDoubleClick="true" FilterFunc="ResourceCategoriesTreeFilterFunc" 
+                      SelectedValueChanged="ResourceCategoryChanged">
             <ItemTemplate>
                 <MudTreeViewItem T="ResourceCategory" @bind-Expanded="@context.Expanded" Value="@context.Value"
-                                 Text="@($"{context.Value?.Name} ({context.Value?.Resources.Count})")" Items="@context.Children" Visible="@context.Visible"/>
+                                 Text="@($"{context.Value?.Name} ({context.Value?.Resources.Count})")" Items="@context.Children" Visible="@context.Visible"
+                                 />
             </ItemTemplate>
         </MudTreeView>
     </div>
     <div>
-        <MudDataGrid T="Resource" Items="_resources" Dense="true" Hover="true" Square="true" Striped="true" QuickFilter="ResourceQuickFilter">
+        <MudDataGrid T="Resource" Items="_resources" Dense="true" Hover="true" Square="true" Striped="true" 
+                     QuickFilter="ResourceQuickFilter" RowStyleFunc="RowStyleFunc" RowContextMenuClick="OpenContextMenu">
             <ToolBarContent>
                 <MudText Typo="Typo.h6" Class="mt-4 mr-8">Resources</MudText>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-4 mr-4" Style="max-width: 30rem"/>
-                <MudSelect @ref="_planetFilter" T="Planet" Style="max-width: 30rem; margin-left: auto" Label="Planets" MultiSelection="true"
-                           SelectAll="true" SelectAllText="All Planets" SelectedValuesChanged="OnSelectPlanetsChanged" 
+                <MudSelect T="Planet" Style="max-width: 30rem; margin-left: auto" Label="Planets" MultiSelection="true"
+                           SelectAll="true" SelectAllText="All Planets" SelectedValues="@_selectedPlanets" SelectedValuesChanged="OnSelectPlanetsChanged" 
                            MultiSelectionTextFunc="MultiSelectPlanets">
                     @foreach(var planet in Enum.GetValues(typeof(Planet)).Cast<Planet>())
                     {
@@ -106,6 +112,9 @@
                         <MudStack Row="true" Spacing="0">
                             @foreach(var planet in Enum.GetValues(typeof(Planet)).Cast<Planet>())
                             {
+                                if (context.Selected == false)
+                                {
+                                }
                                 if (planet == Planet.Undefined)
                                 {
                                     continue;
@@ -137,6 +146,10 @@
                 <MudDataGridPager T="Resource" PageSizeOptions="new []{25, 50, 100}"/>
             </PagerContent>
         </MudDataGrid>
+        <MudMenu PositionAtCursor="true" @ref="_contextMenu" id="_contextMenu" >
+            <MudMenuItem OnClick="CreateCluster">Create Cluster on @_contextRow.Name</MudMenuItem>
+            
+        </MudMenu>
     </div>
 </MudStack>
 
@@ -149,18 +162,23 @@
     private bool _categoriesOpen = true;
     private ResourceCategory _selectedResourceCategory;
     private List<Resource> _resources;
-    private Planet _selectedPlanets;
+    private Planet _combinedSelectedPlanets;
     private string _searchString;
-    private MudSelect<Planet> _planetFilter;
+    private IEnumerable<Planet> _selectedPlanets;
+    private MudMenu _contextMenu;
+    private Resource _contextRow;
 
     protected override void OnInitialized()
     {
         var rootList = new List<TreeItemData<ResourceCategory>>();
         var rootItem = new TreeItemData<ResourceCategory> { Value = ResourceManagerService.RootCategory };
         LoadSubCategories(rootItem);
+        rootItem.Expanded = true;
         rootList.Add(rootItem);
         _root = rootList;
-        OnSelectPlanetsChanged([]);
+        _selectedPlanets = Enum.GetValues(typeof(Planet)).Cast<Planet>().Where(p => p != Planet.Undefined);
+        _combinedSelectedPlanets.All();
+        ResourceCategoryChanged(rootItem.Value);
     }
 
     private void LoadSubCategories(TreeItemData<ResourceCategory> item)
@@ -208,7 +226,7 @@
         {
             return;
         }
-        _resources = _selectedResourceCategory.Resources.Where(r => (r.Planets & _selectedPlanets) != 0).OrderByDescending(r => r.AvailableSince).ToList();
+        _resources = _selectedResourceCategory.Resources.Where(r => (r.Planets & _combinedSelectedPlanets) != 0).OrderByDescending(r => r.AvailableSince).ToList();
         StateHasChanged();
     }
 
@@ -301,13 +319,11 @@
 
     private void OnSelectPlanetsChanged(IEnumerable<Planet> planets)
     {
-        var p = planets.Aggregate(Planet.Undefined, (current, planet) => current | planet);
-        if (p == Planet.Undefined)
-        {
-            p.AllPlanets();
-        }
+        var newSelection = planets as Planet[] ?? planets.ToArray();
+        var p = newSelection.Aggregate(Planet.Undefined, (current, planet) => current | planet);
 
-        _selectedPlanets = p;
+        _combinedSelectedPlanets = p;
+        _selectedPlanets = newSelection;
         UpdateResources();
     }
 
@@ -331,4 +347,73 @@
         return false;
     }
 
+    private string RowStyleFunc(Resource resource, int arg)
+    {
+        return "";
+    }
+
+    private async Task OpenContextMenu(DataGridRowClickEventArgs<Resource> args)
+    {
+        _contextRow = args.Item;
+        await _contextMenu.OpenMenuAsync(args.MouseEventArgs);
+    }
+
+    private async Task CreateCluster()
+    {
+        var options = new DialogOptions()
+        {
+            BackdropClick = false,
+            CloseButton = false,
+        };
+
+        var parameters = new DialogParameters<CreateClusterDialog>
+        {
+            { x => x.Resource, _contextRow }
+        };
+
+        var title = $"Create a cluster for {_contextRow.Name}";
+        var dialogRef = await DialogService.ShowAsync<CreateClusterDialog>(title, parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        var user = await DataAccessService.GetAppAccountAsync();
+        var dialog = (CreateClusterDialog)dialogRef.Dialog!;
+        
+        var clusterName = dialog.Name;
+        var clusterComments = dialog.Comments;
+        var clusterWaypoint = dialog.Waypoint;
+        var clusterPlanet = dialog.Planet;
+        var isForCrew = dialog.IsForCrew;
+        var gameAccount = dialog.GameAccount;
+        
+        var cluster = new ClusterEntity
+        {
+            Name = clusterName,
+            Comments = clusterComments,
+            Waypoint = clusterWaypoint?.ToString(),
+            Planet = clusterPlanet,
+            Resource = await DataAccessService.GetResource(_contextRow.SWGAideId),
+        };
+        if (isForCrew)
+        {
+            cluster.Crew = user.Crew;
+        }
+        else
+        {
+            cluster.GameAccount = gameAccount;
+        }
+
+        if (await DataAccessService.CreateCluster(cluster) == false)
+        {
+            Snackbar.Add($"Failed to create cluster {cluster.Name}", Severity.Error);
+            return;
+        }
+
+        Snackbar.Add($"Successfully created cluster {cluster.Name}", Severity.Success);
+        Navigation.NavigateTo($"/Resources/Cluster?id={cluster.Id}");
+    }
 }

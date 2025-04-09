@@ -50,11 +50,14 @@ namespace SWGIndustries.data.migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("BuildingForCrew")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ClusterId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Comments")
-                        .HasMaxLength(256)
+                        .HasMaxLength(1024)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("HarvesterBER")
@@ -102,6 +105,9 @@ namespace SWGIndustries.data.migrations
 
                     b.Property<int>("PutDownPlanet")
                         .HasColumnType("INTEGER");
+
+                    b.Property<float>("ResourceConcentration")
+                        .HasColumnType("REAL");
 
                     b.Property<int>("SubType")
                         .HasColumnType("INTEGER");
@@ -152,23 +158,42 @@ namespace SWGIndustries.data.migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Comment")
-                        .HasMaxLength(128)
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1024)
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsDefault")
+                    b.Property<DateTime>("CreationDateTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int?>("CrewId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("GameAccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("OwnerId")
+                    b.Property<int>("Planet")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ResourceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Waypoint")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("CrewId");
+
+                    b.HasIndex("GameAccountId");
+
+                    b.HasIndex("ResourceId");
 
                     b.ToTable("Clusters", (string)null);
                 });
@@ -425,12 +450,25 @@ namespace SWGIndustries.data.migrations
 
             modelBuilder.Entity("SWGIndustries.Data.ClusterEntity", b =>
                 {
-                    b.HasOne("SWGIndustries.Data.GameAccountEntity", "Owner")
+                    b.HasOne("SWGIndustries.Data.CrewEntity", "Crew")
                         .WithMany("Clusters")
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("CrewId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Owner");
+                    b.HasOne("SWGIndustries.Data.GameAccountEntity", "GameAccount")
+                        .WithMany("Clusters")
+                        .HasForeignKey("GameAccountId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SWGIndustries.Data.ResourceEntity", "Resource")
+                        .WithMany()
+                        .HasForeignKey("ResourceId");
+
+                    b.Navigation("Crew");
+
+                    b.Navigation("GameAccount");
+
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("SWGIndustries.Data.CrewEntity", b =>
@@ -483,6 +521,8 @@ namespace SWGIndustries.data.migrations
 
             modelBuilder.Entity("SWGIndustries.Data.CrewEntity", b =>
                 {
+                    b.Navigation("Clusters");
+
                     b.Navigation("Members");
                 });
 

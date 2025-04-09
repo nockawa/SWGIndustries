@@ -54,12 +54,55 @@
     </MudMainContent>
 </MudLayout>
 
-
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@*
+<!-- 4 rows, taking the whole space -->
+<MudGrid Style="height: calc(100vh - 5rem); background-color: #e685b5">
+    <MudItem md="12">
+        <MudPaper Style="height: 100%; background-color: #ffc107"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+</MudGrid>
+*@
+
+@*
+<!-- a column taking the whole height, 3/12 wide, then 4 rows, taking the whole space remaining -->
+<MudGrid Style="height: calc(100vh - 5rem); background-color: #e685b5">
+    <MudItem md="3">
+        <MudPaper Style="height: 100%; background-color: #ffc107"></MudPaper>
+    </MudItem>
+
+    <MudItem md="9">
+        <MudGrid Style="height: calc(100% + 1.5rem)">
+            <MudItem md="12">
+                <MudPaper Style="height: 100%; background-color: #0dcaf0"></MudPaper>
+            </MudItem>
+            <MudItem md="12">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+            <MudItem md="12">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+            <MudItem md="12" Style="margin-bottom: 0">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
+*@
 
 @code
 {
