@@ -8,9 +8,10 @@ namespace SWGIndustries.Services;
 [DebuggerDisplay("Name: {Name}, since {AvailableSince}")]
 public class Resource
 {
-    public Resource(Data.ResourceEntity model)
+    public Resource(ResourceEntity model)
     {
         SWGAideId = model.SWGAideId;
+        ModelId = model.Id;
         Name = model.Name;
         Planets = model.Planets;
         AvailableSince = model.AvailableSince;
@@ -75,6 +76,7 @@ public class Resource
         }
     }
 
+    public int ModelId { get; set; }
     public string Name { get; set; }
     public ResourceCategory Category { get; internal set; }
     internal ushort CategoryIndex { get; private set; }         // Always set, even if the resource is not (yet) in a category
@@ -103,6 +105,7 @@ public class Resource
     {
         var model = new Data.ResourceEntity
         {
+            Id = ModelId,
             Name = Name,
             CategoryIndex = Category.Index,
             SWGAideId = SWGAideId,

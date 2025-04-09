@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using JetBrains.Annotations;
 
 namespace SWGIndustries.Data;
@@ -7,6 +8,7 @@ namespace SWGIndustries.Data;
 /// Represents a Character owned by a Game Account
 /// </summary>
 [PublicAPI]
+[DebuggerDisplay("{Name}")]
 public class CharacterEntity
 {
     /// <summary>

@@ -1,0 +1,123 @@
+﻿@*
+    A dialog used to put down a given building.
+    Building is given as a parameter, the AppUser must select the Character that puts it down and 
+    if the building is part of a crew
+*@
+
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DataAccessService DataAccessService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_isFormValid">
+            <MudText Class="mb-2">@($"Putting down the building {Building.Name} requires {_requiredLotAmount} lot" + (_requiredLotAmount > 1 ? "s." : "."))</MudText>
+
+            <MudSelect T="CharacterEntity" Label=@($"Select a character of the account {GameAccount.Name}")
+                                              @bind-Value="Character" Immediate="true" 
+                       Validation="@((CharacterEntity c) => OnValidateCharacter(c))">
+
+                @if (GameAccount != null)
+                {
+                    foreach (var character in GameAccount.Characters)
+                    {
+                        <MudSelectItem T="CharacterEntity" Value="@character">@character.Name</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+            
+            <MudSelect T="Planet" Label="Planet where the building is put down" @bind-Value="Planet">
+                @foreach (var planet in Enum.GetValues<Planet>())
+                {
+                    <MudSelectItem T="Planet" Value="@planet">@planet.GetFriendlyName()</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudText Class="mt-4">@((MarkupString)InfoMessage())</MudText>
+            @if (GameAccount?.OwnerAppAccount?.Crew != null)
+            {
+                <MudCheckBox T="bool" Color="Color.Primary" @bind-Value="IsForCrew" Label="Building is for the crew"/>                
+            }
+            
+        </MudForm>
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_isFormValid)">Ok</MudButton>
+    </DialogActions>
+    
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public BuildingEntity Building { get; set; }
+    [Parameter] public GameAccountEntity GameAccount { get; set; }
+    
+    [Parameter] public CharacterEntity Character { get; set; }
+    [Parameter] public bool IsForCrew { get; set; }
+    [Parameter] public Planet Planet { get; set; }
+
+    private int _requiredLotAmount;
+    private bool _isFormValid;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        _requiredLotAmount = Building.GetBuildingLotRequirement();
+    }
+
+    private IEnumerable<string> OnValidateCharacter(CharacterEntity character)
+    {
+        var errors = new List<string>();
+        if (character == null)
+        {
+            errors.Add("A character must be selected.");
+        }
+        else
+        {
+            var freeLots = 10 - character.PutDownBuildings.Sum(b => b.GetBuildingLotRequirement());
+            if (freeLots < _requiredLotAmount)
+            {
+                errors.Add($"There's not enough free lots to put down the building, you have {freeLots} but {_requiredLotAmount} are required.");
+            }
+            
+            if (IsForCrew)
+            {
+                if (DataAccessService.GetAppAccount().Crew == null)
+                {
+                    errors.Add("Your account is not part of a crew.");
+                }
+                else
+                {
+                    var crewLotTaken = character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => b.GetBuildingLotRequirement());
+                }
+            }
+        }
+        return errors;
+    }
+    
+    private string InfoMessage()
+    {
+        var info = $"The building is taking {_requiredLotAmount} lots";
+        if (Character != null)
+        {
+            var freeLots = 10 - Character.PutDownBuildings.Sum(b => b.GetBuildingLotRequirement());
+            info += $", {Character.Name} have {freeLots} free lots.";
+            if (IsForCrew)
+            {
+                var crewLotTaken = Character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => b.GetBuildingLotRequirement());
+                info += $"<br/>A total of {Character.MaxLotsForCrew} is dedicated to he crew, {Character.MaxLotsForCrew - crewLotTaken} are available.";
+            }
+        }
+        else
+        {
+            info += ".";
+        }
+        return info;
+    }
+}

@@ -14,8 +14,9 @@ public class DataScopeService
     
     public DataScope GetCrewScope()
     {
-        var crew = _dataAccessService.GetAppAccount().Crew;
-        return crew == null ? null : DataScope.FromCrew(crew);
+        var appAccount = _dataAccessService.GetAppAccount();
+        var crew = appAccount.Crew;
+        return crew == null ? null : DataScope.FromCrew(crew, crew.CrewLeader == appAccount);
     }
     
     public DataScope GetAppAccountScope()
@@ -34,9 +35,9 @@ public class DataScopeService
 [PublicAPI]
 public class DataScope
 {
-    public static DataScope FromCrew(CrewEntity crew) => new(crew);
-    public static DataScope FromAppAccount(AppAccountEntity appAccount) => new(appAccount);
-    public static DataScope FromGameAccount(GameAccountEntity account) => new(account);
+    internal static DataScope FromCrew(CrewEntity crew, bool isCrewLeader) => new(crew, isCrewLeader);
+    internal static DataScope FromAppAccount(AppAccountEntity appAccount) => new(appAccount);
+    internal static DataScope FromGameAccount(GameAccountEntity account) => new(account);
     
     public override string ToString()
     {
@@ -58,6 +59,7 @@ public class DataScope
     public bool IsGameAccount => GameAccount != null;
 
     public CrewEntity Crew { get; }
+    public bool IsLeader { get; set; }
     public AppAccountEntity AppAccount { get; }
     public GameAccountEntity GameAccount { get; }
 
@@ -66,8 +68,9 @@ public class DataScope
         GameAccount = account ?? throw new ArgumentNullException(nameof(account));
     }
 
-    private DataScope(CrewEntity crew)
+    private DataScope(CrewEntity crew, bool isCrewLeader)
     {
+        IsLeader = isCrewLeader;
         Crew = crew ?? throw new ArgumentNullException(nameof(crew));
     }
 

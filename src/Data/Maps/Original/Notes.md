@@ -1,0 +1,1 @@
+# Maps taken from https://github.com/Geit/swg-map-viewer

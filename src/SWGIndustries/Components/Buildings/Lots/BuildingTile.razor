@@ -1,0 +1,86 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Components.Misc
+
+<MudPaper Elevation="@_elevation" Class="mud-width-full" Height="@GetTileHeight()"
+          @onmouseover="OnMouseOver" @onmouseout="OnMouseOut">
+    
+    <MudStack Justify="Justify.FlexStart" StretchItems="StretchItems.End" AlignItems="AlignItems.Start" Spacing="0" 
+              Style="height: 100%">
+        <MudStack Row="true" Spacing="0" Justify="Justify.FlexStart" StretchItems="StretchItems.Start"
+                  AlignItems="AlignItems.Start" Style="height: 24px; width: 100%">
+            
+            <MudText Typo="Typo.caption" Align="Align.Left" Class="my-1 ml-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ">@Building?.Name</MudText>
+            
+            @if (_mouseOver)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small"/>
+            }
+            
+        </MudStack>
+        
+        <MudStack Row="true" Style="height: 100%; width: 100%;">
+
+            <MudProgressLinear Color="Color.Info" Size="Size.Large" Value="25" Class="my-7" Style="width: 10rem">
+                <MudText Typo="Typo.subtitle1" Color="Color.Dark">
+                    <b>25%</b>
+                </MudText>
+            </MudProgressLinear>
+        </MudStack>
+
+        <MudStack Row="true" Spacing="1" Justify="Justify.FlexStart" StretchItems="StretchItems.None" AlignItems="AlignItems.Center"
+                  Style="height: 30px; width: 100%; ">
+            
+            @if (Building != null && Building.PutDownPlanet != Planet.Undefined)
+            {
+                <MudTooltip Text=@Building.PutDownPlanet.GetFriendlyName() openDelay="500" Placement="Placement.Top" Arrow="true">
+                    <PlanetIcon Planet="@Building.PutDownPlanet" Size="PlanetIcon.IconSize.Medium" Class="ma-1"/>
+                </MudTooltip>
+            }
+            <MudText Typo="Typo.caption" Class="mt-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">@($"{Building.PutDownBy.Name}, {Building.SubType.GetName()}")</MudText>
+
+            @if (Building?.BuildingForCrew ?? false)
+            {
+                <MudTooltip Text="Building is for crew" openDelay="500" Placement="Placement.Top" Arrow="true">
+                    <MudAvatar Size="Size.Small" Class="ml-1 mt-1" Color="Color.Info">
+                        <MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Groups"></MudIcon>
+                    </MudAvatar>
+                </MudTooltip>
+            }
+
+            @if (Building?.Cluster != null)
+            {
+                <MudTooltip Text="Building is part of cluster [TODO]" openDelay="500" Placement="Placement.Top" Arrow="true">
+                    <MudAvatar Size="Size.Small" Class="ml-0 mr-1 mt-1" Color="Color.Secondary">
+                        <MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Hive"></MudIcon>
+                    </MudAvatar>
+                </MudTooltip>
+            }
+
+        </MudStack>
+
+    </MudStack>
+    
+</MudPaper>
+
+@code {
+    [Parameter] public BuildingEntity Building { get; set; }
+    [Parameter] public TileSize TileSize { get; set; }
+    
+    private int _elevation = 4;
+    private bool _mouseOver;
+
+    private string GetTileHeight() => TileSize == TileSize.Large ? "20rem" : "10rem";
+
+    private void OnMouseOver()
+    {
+        _mouseOver = true;
+        _elevation = 10;
+    }
+
+    private void OnMouseOut()
+    {
+        _mouseOver = false;
+        _elevation = 4;
+    }
+
+}

@@ -578,8 +578,9 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     }
 
     public async Task<List<BuildingEntity>> GetBuildings(DataScope scope, BuildingType filterBy=BuildingType.Undefined, 
-        BuildingSubType filterBySubType=BuildingSubType.Undefined)
+        BuildingSubType filterBySubType=BuildingSubType.Undefined, bool? putDown = null)
     {
+        // Return everything, shouldn't be used in the WebApp
         if (scope == null)
         {
             IQueryable<BuildingEntity> q = DbContext.Buildings
@@ -588,6 +589,11 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
             {
                 q = q.Where(b => filterBy == b.Type);
             }
+
+            if (putDown != null)
+            {
+                q = q.Where(b => putDown == (b.PutDownBy!=null));
+            }
             return await q.ToListAsync();
         }
         
@@ -595,11 +601,15 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         {
             IQueryable<BuildingEntity> q = DbContext.Buildings.Include(b => b.Owner)
                 .Include(b => b.PutDownBy).Include(b => b.Cluster)
-                .Where(b => scope.Crew.Members.Contains(b.Owner.OwnerAppAccount));
+                .Where(b => b.BuildingForCrew && scope.Crew.Members.Contains(b.Owner.OwnerAppAccount));
             
             if (filterBy != BuildingType.Undefined)
             {
                 q = q.Where(b => b.Type == filterBy);                
+            }
+            if (putDown != null)
+            {
+                q = q.Where(b => putDown == (b.PutDownBy!=null));
             }
                 
             return await q.ToListAsync();
@@ -607,18 +617,30 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
 
         if (scope.IsAppAccount)
         {
-            return await DbContext.Buildings.Include(b => b.Owner)
+            IQueryable<BuildingEntity> q = DbContext.Buildings.Include(b => b.Owner)
                 .Include(b => b.PutDownBy).Include(b => b.Cluster)
-                .Where(b => b.Owner.OwnerAppAccount == scope.AppAccount)
-                .ToListAsync();
+                .Where(b => b.Owner.OwnerAppAccount == scope.AppAccount);
+                
+            if (putDown != null)
+            {
+                q = q.Where(b => putDown == (b.PutDownBy!=null));
+            }
+            
+            return await q.ToListAsync();
         }
         
         if (scope.IsGameAccount)
         {
-            return await DbContext.Buildings
+            IQueryable<BuildingEntity> q = DbContext.Buildings
                 .Include(b => b.Owner).Include(b => b.PutDownBy).Include(b => b.Cluster)
-                .Where(b => b.Owner == scope.GameAccount)
-                .ToListAsync();
+                .Where(b => b.Owner == scope.GameAccount);
+
+            if (putDown != null)
+            {
+                q = q.Where(b => putDown == (b.PutDownBy!=null));
+            }
+            
+            return await q.ToListAsync();
         }
 
         throw new InvalidOperationException();
@@ -649,5 +671,63 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     public void ReloadBuilding(BuildingEntity building)
     {
         DbContext.Entry(building).Reload();
+    }
+
+    public async Task<ResourceEntity> GetResource(int swgAideId)
+    {
+        return await DbContext.Resources.FirstOrDefaultAsync(r => r.SWGAideId == swgAideId);
+    }
+
+    public async Task<bool> CreateCluster(ClusterEntity cluster)
+    {
+        DbContext.Clusters.Add(cluster);
+        return await DbContext.SaveChangesAsync() > 0;
+    }
+
+    public async Task<ClusterEntity> GetCluster(int id)
+    {
+        return await DbContext.Clusters.Where(c => c.Id == id)
+            .Include(c => c.Resource)
+            .Include(c => c.Crew)
+            .Include(c => c.GameAccount).FirstOrDefaultAsync();
+    }
+
+    public async Task<IList<ClusterEntity>> GetClusters(AppAccountEntity appAccount)
+    {
+        // Return everything, shouldn't be used in the WebApp
+        if (appAccount == null)
+        {
+            return await DbContext.Clusters
+                .Include(c => c.Resource)
+                .Include(c => c.Crew)
+                .Include(c => c.GameAccount)
+                .ToListAsync();
+        }
+        
+        return await DbContext.Clusters
+            .Where(c => 
+                (c.GameAccount!=null && appAccount.GameAccounts.Contains(c.GameAccount)) ||
+                (c.Crew!=null && c.Crew.Members.Contains(appAccount)))
+            .Include(c => c.Resource)
+            .Include(c => c.Crew)
+            .Include(c => c.GameAccount)
+            .ToListAsync();
+    }
+
+    public void UpdateCluster(ClusterEntity cluster)
+    {
+        DbContext.Clusters.Update(cluster);        
+    }
+
+    public async Task<IList<BuildingEntity>> GetAvailableHarvesters(AppAccountEntity appAccount, HarvestingResourceType resourceType)
+    {
+        appAccount ??= await GetAppAccountAsync();
+        
+        return await DbContext.Buildings
+            .Include(b => b.Owner)
+            .Include(b => b.PutDownBy)
+            .Include(b => b.Cluster)
+            .Where(b => b.Owner.OwnerAppAccount == appAccount && b.Type==BuildingType.Harvester && b.Cluster == null && b.PutDownBy == null && b.HarvestingResourceType == resourceType)
+            .ToListAsync();
     }
 }

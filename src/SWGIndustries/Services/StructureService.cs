@@ -28,6 +28,10 @@ public enum HarvestingResourceType
     Gas,
     Flora,
     Water,
+    Wind,
+    Solar,
+    Geothermal,
+    Radioactive
 }
 
 [PublicAPI]
@@ -233,5 +237,5 @@ public class StructuresService : INode
     }
 
     public string Name => "Structures";
-    public IEnumerable<INode> Children => [ Houses, Factories, Harvesters];
+    public IEnumerable<INode> Children => [Houses, Factories, Harvesters];
 }
