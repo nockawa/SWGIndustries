@@ -5,29 +5,29 @@ namespace SWGIndustries.Services;
 
 public class DataScopeService
 {
-    private readonly DataAccessService _dataAccessService;
+    private readonly AdminService _adminService;
 
-    public DataScopeService(DataAccessService dataAccessService)
+    public DataScopeService(AdminService adminService)
     {
-        _dataAccessService = dataAccessService;
+        _adminService = adminService;
     }    
     
     public DataScope GetCrewScope()
     {
-        var appAccount = _dataAccessService.GetAppAccount();
+        var appAccount = _adminService.GetAppAccount();
         var crew = appAccount.Crew;
         return crew == null ? null : DataScope.FromCrew(crew, crew.CrewLeader == appAccount);
     }
     
     public DataScope GetAppAccountScope()
     {
-        var appAccount = _dataAccessService.GetAppAccount();
+        var appAccount = _adminService.GetAppAccount();
         return appAccount == null ? null : DataScope.FromAppAccount(appAccount);
     }
     
     public DataScope GetGameAccountScope(GameAccountEntity account)
     {
-        account ??= _dataAccessService.GetAppAccount().GameAccounts.FirstOrDefault();
+        account ??= _adminService.GetAppAccount().GameAccounts.FirstOrDefault();
         return account == null ? null : DataScope.FromGameAccount(account);
     }
 }

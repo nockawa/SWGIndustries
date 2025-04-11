@@ -5,7 +5,7 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService 
+@inject AdminService AdminService
 
 <MudSelect T="GameAccountEntity" @ref="_selectControl" SelectedValuesChanged="OnSelectedAccountChanged" 
            Variant="Variant.Outlined" Label="Select the SWG Account" Dense="true" Style="width: 10rem" Class="mb-4">
@@ -34,7 +34,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _accounts = await DataAccessService.GetUserGameAccounts();
+        _accounts = await AdminService.GetUserGameAccounts();
         SelectedAccount = _accounts.FirstOrDefault();
     }
 

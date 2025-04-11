@@ -3,7 +3,7 @@
 
 @inject UserService UserService
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudPaper Class="pa-4" Style="width: 50%">
     <MudText Typo="Typo.h6" Class="mb-4">Create a crew</MudText>
@@ -31,7 +31,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _appAccount = await DataAccessService.GetAppAccountAsync();
+        _appAccount = await AdminService.GetAppAccountAsync();
     }
 
     private async Task<string> ValidateCrewName(string text)
@@ -51,7 +51,7 @@
             return $"Crew name length is exceeding the limit of {CrewEntity.CrewNameMaxLength} characters.";
         }
 
-        if (await DataAccessService.GetCrewByName(text, true) != null)
+        if (await AdminService.GetCrewByName(text, true) != null)
         {
             return "A crew with this name already exists.";
         }
@@ -61,7 +61,7 @@
 
     private async Task OnCreateCrew()
     {
-        var (res, info) = await DataAccessService.CreateCrew(_appAccount, _crewName);
+        var (res, info) = await AdminService.CreateCrew(_appAccount, _crewName);
         Snackbar.Add(info, res != null ? Severity.Success : Severity.Error);
 
         OnCrewCreated?.Invoke(res);

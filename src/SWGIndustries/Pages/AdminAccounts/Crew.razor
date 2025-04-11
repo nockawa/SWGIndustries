@@ -1,9 +1,11 @@
-﻿@page "/Crew"
+﻿@page "/Admin/Crew"
+@using MudBlazor
+@using SWGIndustries.Components.Crew
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <!-- Not in crew info: everything to join a crew -->
 @if (_crewType == CrewType.NotInCrew)
@@ -101,16 +103,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _appAccount = await DataAccessService.GetAppAccountAsync();
-        await DataAccessService.DbContext.Entry(_appAccount).Reference(a => a.Crew).LoadAsync();
+        _appAccount = await AdminService.GetAppAccountAsync();
+        //await DataAccessService.DbContext.Entry(_appAccount).Reference(a => a.Crew).LoadAsync(); TODO shouldn't be needed anymore
         _crew = _appAccount.Crew;
         await UpdateCrewState();
     }
 
     private async Task UpdateCrewState()
     {
-        _pendingCrewRequests = await DataAccessService.GetPendingCrewRequests(_appAccount);
-        _answeredCrewRequest = await DataAccessService.GetAnsweredCrewRequest();
+        _pendingCrewRequests = await AdminService.GetPendingCrewRequests(_appAccount);
+        _answeredCrewRequest = await AdminService.GetAnsweredCrewRequest();
         if (_crew == null)
         {
             _crewType = CrewType.NotInCrew;
@@ -129,7 +131,7 @@ else
 
     private async Task DeleteSentInvitationRequest(CrewInvitationEntity invitation)
     {
-        if (await DataAccessService.DeleteCrewInvitation(invitation))
+        if (await AdminService.DeleteCrewInvitation(invitation))
         {
             Snackbar.Add("Request deleted.", Severity.Success);
             await UpdateCrewState();
@@ -142,7 +144,7 @@ else
 
     private async Task ProcessRequestToJoinCrew(CrewInvitationEntity invitation, bool grantOrDeny)
     {
-        var (res, info) = await DataAccessService.ProcessInvitationToJoinCrew(invitation, grantOrDeny);
+        var (res, info) = await AdminService.ProcessInvitationToJoinCrew(invitation, grantOrDeny);
         if (res)
         {
             Snackbar.Add(info, Severity.Success);
@@ -156,7 +158,7 @@ else
 
     private async Task CloseAnsweredCrewRequest()
     {
-        await DataAccessService.CloseCrewInvitation(_answeredCrewRequest);
+        await AdminService.CloseCrewInvitation(_answeredCrewRequest);
         await UpdateCrewState();
     }
 

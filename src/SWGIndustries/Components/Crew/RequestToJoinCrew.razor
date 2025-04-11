@@ -3,7 +3,7 @@
 
 @inject UserService UserService
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudText Typo="Typo.h6" >Send a request to join an existing crew</MudText>
 <MudText Typo="Typo.caption" Class="my-6">You must either type the name of the SWG Industries account of the crew leader, or the name of the crew.</MudText>
@@ -48,13 +48,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _appAccount = await DataAccessService.GetAppAccountAsync();
+        _appAccount = await AdminService.GetAppAccountAsync();
     }
 
 
     private async Task SendRequestToJoinCrew()
     {
-        var (crewInvitation, info) = await DataAccessService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _appAccount);
+        var (crewInvitation, info) = await AdminService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _appAccount);
         Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
         
         OnRequestToJoinCrew?.Invoke(crewInvitation);
@@ -63,7 +63,7 @@
 
     private async Task<string> ValidateCrewName(string crewName)
     {
-        var crew = await DataAccessService.GetCrewByName(crewName, true);
+        var crew = await AdminService.GetCrewByName(crewName, true);
         if (crew != null)
         {
             _crewToJoin = crew;
@@ -73,7 +73,7 @@
 
     private async Task<string> ValidateAccountNane(string accountName)
     {
-        var crew = await DataAccessService.GetCrewByLeaderAccountName(accountName, true);
+        var crew = await AdminService.GetCrewByLeaderAccountName(accountName, true);
         if (crew != null)
         {
             _crewToJoin = crew;

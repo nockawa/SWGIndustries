@@ -7,7 +7,7 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudDialog>
     <DialogContent>
@@ -88,7 +88,7 @@
             
             if (IsForCrew)
             {
-                if (DataAccessService.GetAppAccount().Crew == null)
+                if (AdminService.GetAppAccount().Crew == null)
                 {
                     errors.Add("Your account is not part of a crew.");
                 }

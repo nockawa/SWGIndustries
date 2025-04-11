@@ -1,6 +1,6 @@
 ﻿@using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject DataScopeService DataScopeService
 
 <MudSelect T="DataScope" @ref="_selectControl" SelectedValuesChanged="OnSelectionChanged" Variant="Variant.Outlined" Dense="true" Style="width: 10rem"
@@ -34,7 +34,7 @@
     {
         _scopes.Clear();
         
-        var appAccount = DataAccessService.GetAppAccount();
+        var appAccount = AdminService.GetAppAccount();
         var isCrewLeader = appAccount.IsCrewLeader;
 
         // Crew item

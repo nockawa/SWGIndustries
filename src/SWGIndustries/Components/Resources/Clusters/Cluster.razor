@@ -4,6 +4,7 @@
 @using SWGIndustries.Services
 
 @inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 
@@ -354,7 +355,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var appAccount = await DataAccessService.GetAppAccountAsync();
+        var appAccount = await AdminService.GetAppAccountAsync();
         var cluster = await DataAccessService.GetCluster(Id);
         
         // Check if the cluster belongs to the app account (it's easy to navigate with a tampered URL)

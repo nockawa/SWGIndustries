@@ -7,6 +7,7 @@
 @inject ISnackbar Snackbar
 @inject DataAccessService DataAccessService
 @inject DataScopeService DataScopeService
+@inject AdminService AdminService
 
 <!--suppress CssUnresolvedCustomProperty -->
 <style>
@@ -66,7 +67,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var appAcount = await DataAccessService.GetAppAccountAsync();
+        var appAcount = await AdminService.GetAppAccountAsync();
         _clusters = await DataAccessService.GetClusters(appAcount);
     }
     

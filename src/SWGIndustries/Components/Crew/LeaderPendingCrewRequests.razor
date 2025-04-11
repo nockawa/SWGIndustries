@@ -1,7 +1,7 @@
 ﻿@using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudPaper Class="ma-4 pa-4" Elevation="16">
     <MudText Typo="Typo.h6" Class="mb-4">Invitations to join your crew</MudText>
@@ -45,6 +45,6 @@
     private IList<CrewInvitationEntity> _crewRequestsForLeader;
     protected override async Task OnInitializedAsync()
     {
-        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(CrewLeader);
+        _crewRequestsForLeader = await AdminService.GetCrewRequestForLeader(CrewLeader);
     }
 }

@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject ResourceManagerService ResourceManagerService
 @inject IDialogService DialogService
 
@@ -380,7 +381,7 @@
             return;
         }
 
-        var user = await DataAccessService.GetAppAccountAsync();
+        var user = await AdminService.GetAppAccountAsync();
         var dialog = (CreateClusterDialog)dialogRef.Dialog!;
         
         var clusterName = dialog.Name;

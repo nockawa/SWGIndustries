@@ -6,8 +6,10 @@
 <AuthorizeView>
     <MudNavMenu Class="mud-width-full" Color="Color.Info" Bordered="true">
         <MudNavLink Href="/" Icon="@Icons.Material.Filled.Warehouse" IconColor="Color.Inherit">Home</MudNavLink>
-        <MudNavLink Href="GameAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">Game Accounts</MudNavLink>
-        <MudNavLink Href="Crew" Icon="@Icons.Material.Filled.People" IconColor="Color.Inherit">Crew</MudNavLink>
+        <MudNavGroup Title="Admin accounts" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Inherit">
+            <MudNavLink Href="Admin/GameAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">Game Accounts</MudNavLink>
+            <MudNavLink Href="Admin/Crew" Icon="@Icons.Material.Filled.People" IconColor="Color.Inherit">Crew</MudNavLink>
+        </MudNavGroup>
         <MudNavGroup Title="Buildings" Icon="@Icons.Material.Filled.Home" IconColor="Color.Inherit">
             <MudNavLink Href="Buildings/Inventory" Icon="@Icons.Material.Filled.Inventory" IconColor="Color.Inherit">Inventory</MudNavLink>
             <MudNavLink Href="Buildings/Lots" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Inherit">Lots</MudNavLink>

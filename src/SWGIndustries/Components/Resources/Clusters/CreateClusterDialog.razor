@@ -6,7 +6,7 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudDialog Style="min-width: 80vmin">
     <DialogContent>
@@ -106,7 +106,7 @@
 
     protected override void OnInitialized()
     {
-        _appAccount = DataAccessService.GetAppAccount();
+        _appAccount = AdminService.GetAppAccount();
         //_waypointString = "/way tatooine 3528 -4804 yellow Somewhere";
     }
 

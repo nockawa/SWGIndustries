@@ -1,7 +1,7 @@
 ﻿@using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject ISnackbar Snackbar
 
 <MudPaper Class="pa-4" Style="width: 50%" MinWidth="50%">
@@ -47,7 +47,7 @@
 
     private async Task CreateCharacter(GameAccountEntity account)
     {
-        if (await DataAccessService.AddCharacter(account, _newCharacter, true))
+        if (await AdminService.AddCharacter(account, _newCharacter, true))
         {
             Snackbar.Add($"Character '{_newCharacter.Name}' added successfully.", Severity.Success);
         }
