@@ -2,7 +2,7 @@
 @using SWGIndustries.Services
 
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject IDialogService DialogService;
 
 <!--suppress CssUnresolvedCustomProperty -->
@@ -63,7 +63,7 @@
     
     public async Task RefreshCrewList()
     {
-        _characters = await DataAccessService.GetCrewCharacters(Crew);
+        _characters = await AdminService.GetCrewCharacters(Crew);
         StateHasChanged();
     }
     
@@ -79,18 +79,18 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        _characters = await DataAccessService.GetCrewCharacters(Crew);
+        _characters = await AdminService.GetCrewCharacters(Crew);
     }
     
     private async Task RefreshCharacters()
     {
-        _characters = await DataAccessService.GetCrewCharacters(Crew);
+        _characters = await AdminService.GetCrewCharacters(Crew);
         StateHasChanged();
     }
 
     private async Task<bool> CanRemoveCharacter(CharacterEntity character)
     {
-        return await DataAccessService.CanRemoveCharacterFromCrew(character);
+        return await AdminService.CanRemoveCharacterFromCrew(character);
     }
 
     private async Task<bool> RemoveCharacterFromCrew(CharacterEntity character)
@@ -101,7 +101,7 @@
             return false;
         }
         
-        var (res, info) = await DataAccessService.RemoveCharacterFromCrew(character);
+        var (res, info) = await AdminService.RemoveCharacterFromCrew(character);
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
         await RefreshCharacters();
         OnCrewListChanged?.Invoke();

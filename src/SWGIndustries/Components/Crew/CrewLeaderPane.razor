@@ -1,7 +1,7 @@
 ﻿@using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject ISnackbar Snackbar
 
 @if (_answeredCrewInvitations != null && _answeredCrewInvitations.Count > 0)
@@ -50,15 +50,15 @@
     protected override async Task OnInitializedAsync()
     {
         _crewLeader = Crew.CrewLeader;
-        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(_crewLeader);
-        _answeredCrewInvitations = await DataAccessService.GetAnsweredCrewInvitations();
+        _crewRequestsForLeader = await AdminService.GetCrewRequestForLeader(_crewLeader);
+        _answeredCrewInvitations = await AdminService.GetAnsweredCrewInvitations();
     }
     
     private async Task ActionOnInvitationRequest(CrewInvitationEntity invitation, bool grant)
     {
-        var (res, info) = await DataAccessService.ProcessRequestToJoinCrew(invitation, grant);
+        var (res, info) = await AdminService.ProcessRequestToJoinCrew(invitation, grant);
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
-        _crewRequestsForLeader = await DataAccessService.GetCrewRequestForLeader(_crewLeader);
+        _crewRequestsForLeader = await AdminService.GetCrewRequestForLeader(_crewLeader);
         StateHasChanged();
     }
 
@@ -70,7 +70,7 @@
 
     private async Task<CrewInvitationEntity> SendNewMemberInvitation(AppAccountEntity invitedAccount)
     {
-        var (crewInvitation, info) = await DataAccessService.CreateInvitationToJoinCrew(_crewLeader, invitedAccount);
+        var (crewInvitation, info) = await AdminService.CreateInvitationToJoinCrew(_crewLeader, invitedAccount);
         Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
 
         return crewInvitation;
@@ -78,7 +78,7 @@
 
     private async Task CloseAnsweredCrewInvitation(CrewInvitationEntity invitation)
     {
-        await DataAccessService.CloseCrewInvitation(invitation);
+        await AdminService.CloseCrewInvitation(invitation);
         _answeredCrewInvitations.Remove(invitation);
         StateHasChanged();
     }

@@ -3,7 +3,7 @@
 
 @inject UserService UserService
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <MudPaper Class="pa-4 mt-4" Style="width: 50%">
     <MudText Typo="Typo.h6" Class="mb-4">Invite a user to join your crew</MudText>
@@ -36,7 +36,7 @@
 
     private async Task<IEnumerable<AppAccountEntity>> SearchFunc(string text, CancellationToken ct)
     {
-        return await DataAccessService.GetAppAccountsByName(text, true, ct);
+        return await AdminService.GetAppAccountsByName(text, true, ct);
     }
 
 }

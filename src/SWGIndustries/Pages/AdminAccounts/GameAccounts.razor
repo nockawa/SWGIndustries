@@ -1,10 +1,12 @@
-﻿@page "/GameAccounts"
+﻿@page "/Admin/GameAccounts"
+@using MudBlazor
 @using SWGIndustries.Data
 @using SWGIndustries.Services
+@using SWGIndustries.Components.GameAccounts
 
 @inject UserService UserService
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 
 <h3>Star Wars Galaxies Restoration - Game Accounts & Characters</h3>
 <br/>
@@ -97,7 +99,7 @@
     protected override async Task OnInitializedAsync()
     {
         _user = await UserService.GetUserInfo();
-        _gameAccounts = await DataAccessService.GetUserGameAccounts();
+        _gameAccounts = await AdminService.GetUserGameAccounts();
     }
     
     private void ToggleAccountForm()
@@ -112,7 +114,7 @@
             return;
         }
         
-        if (await DataAccessService.RemoveGameAccount(account, true))
+        if (await AdminService.RemoveGameAccount(account, true))
         {
             Snackbar.Add($"SWG Account '{account.Name}' deleted successfully.", Severity.Success);
         }
@@ -129,7 +131,7 @@
             return;
         }
         
-        if (await DataAccessService.RemoveCharacter(character, true))
+        if (await AdminService.RemoveCharacter(character, true))
         {
             Snackbar.Add($"SWG Character '{character.Name}' deleted successfully.", Severity.Success);
         }

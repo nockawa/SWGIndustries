@@ -2,7 +2,7 @@
 @using SWGIndustries.Services
 
 @inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
+@inject AdminService AdminService
 @inject IDialogService DialogService
 
 <!--suppress CssUnresolvedCustomProperty -->
@@ -99,7 +99,7 @@
     
     public async Task RefreshCharacters()
     {
-        _characters = await DataAccessService.GetUserCharacters(AppAccount);
+        _characters = await AdminService.GetUserCharacters(AppAccount);
         StateHasChanged();
     }
 
@@ -117,7 +117,7 @@
             return false;
         }
 
-        var (res, info) = await DataAccessService.RemoveCharacterFromCrew(character);
+        var (res, info) = await AdminService.RemoveCharacterFromCrew(character);
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
         await RefreshCharacters();
         OnCrewListChanged?.Invoke();
@@ -144,8 +144,8 @@
         
         var lotToLend = ((AddCharacterToCrewDialog)dialog.Dialog)!.LendLotCount;
         var (res, info) = addOrChangeLot ? 
-            await DataAccessService.AddCharacterToCrew(character, lotToLend) : 
-            await DataAccessService.SetCharacterMaxLotToLend(character, lotToLend);
+            await AdminService.AddCharacterToCrew(character, lotToLend) : 
+            await AdminService.SetCharacterMaxLotToLend(character, lotToLend);
         
         Snackbar.Add(info, res ? Severity.Success : Severity.Error);
         await RefreshCharacters();

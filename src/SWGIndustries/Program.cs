@@ -40,6 +40,7 @@ public class Program
         
         services.AddSingleton<UserService>();
         services.AddScoped<DataAccessService>();
+        services.AddScoped<AdminService>();
         services.AddSingleton<StructuresService>();
         services.AddScoped<NamedSeriesService>();
         services.AddScoped<DataScopeService>();
