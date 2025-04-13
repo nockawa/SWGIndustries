@@ -2,35 +2,29 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Components.GameAccounts
 
-<MudDialog Style="min-width: 40rem">
+<MudDialog Style="min-width: 70vmin; min-height: 70vmin">
     <DialogContent>
         <AccountSelectionControl @bind-SelectedAccount="SelectedAccount"/>
         <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Start" StretchItems="StretchItems.End">
             <StructuresTreeControl @bind-Selection="SelectedTemplate" @bind-Selection:after="OnTemplateChanged"/>
 
             <MudForm @bind-IsValid="@_success" @bind-Errors="_errors" Class="ma-2">
-                @if (SelectedTemplate is House or Factory or Harvester)
+                @if (SelectedTemplate is House or Factory or Harvester or EnergyHarvester)
                 {
                     if (SelectedTemplate is Harvester harvester)
                     {
-                        if (harvester.IsEnergy == false)
-                        {
-                            <MudSelect T="HarvestingResourceType" @bind-value="HarvesterCreationProperties.HarvestingResourceType" Variant="Variant.Filled"
-                                       Label="Harvested resource type" Dense="true" Clearable="false">
-
-                                @foreach (HarvestingResourceType subType in Enum.GetValues(typeof(HarvestingResourceType)))
-                                {
-                                    <MudSelectItem Value="subType">@subType.ToString()</MudSelectItem>
-                                }
-                            </MudSelect>
-
-                            <MudCheckBox T="bool" Label="Is self powered" @bind-Value="HarvesterCreationProperties.SelfPowered"/>
-                        }
+                        <MudCheckBox T="bool" Label="Is self powered" @bind-Value="HarvesterCreationProperties.SelfPowered"/>
 
                         <MudNumericField T="int" Label="BER" @bind-Value="@HarvesterCreationProperties.BER" Required="true" Immediate="true"
                                          Min="@harvester.MinBER" Max="@harvester.MaxBER" Class="ma-2"/>
                         <MudNumericField T="int" Label="Hopper size (in K)" @bind-Value="@HarvesterCreationProperties.HopperSizeK" Required="true" Immediate="true"
                                          Min="@harvester.MinHopperSizeK" Max="@harvester.MaxHopperSizeK" Class="ma-2"/>
+                    } else if (SelectedTemplate is EnergyHarvester energyHarvester)
+                    {
+                        <MudNumericField T="int" Label="BER" @bind-Value="@HarvesterCreationProperties.BER" Required="true" Immediate="true"
+                                         Min="@energyHarvester.MinBER" Max="@energyHarvester.MaxBER" Class="ma-2"/>
+                        <MudNumericField T="int" Label="Hopper size (in K)" @bind-Value="@HarvesterCreationProperties.HopperSizeK" Required="true" Immediate="true"
+                                         Min="@energyHarvester.MinHopperSizeK" Max="@energyHarvester.MaxHopperSizeK" Class="ma-2"/>
                     }
 
                     <MudTooltip Text="Will create multiple instance of the same structure in the inventory"
@@ -55,7 +49,7 @@
     private bool _success;
     private string[] _errors;
 
-    public INode SelectedTemplate { get; private set; }
+    public BaseNode SelectedTemplate { get; private set; }
     public int StructureCount { get; private set; }
 
     public HarvesterCreationProperties HarvesterCreationProperties { get; } = new();
@@ -73,10 +67,15 @@
 
     private void OnTemplateChanged()
     {
-        if (SelectedTemplate is IHarvester harvester)
+        if (SelectedTemplate is Harvester harvester)
         {
             HarvesterCreationProperties.BER = harvester.MaxBER;
             HarvesterCreationProperties.HopperSizeK = harvester.MinHopperSizeK;
+        } 
+        else if (SelectedTemplate is EnergyHarvester energyHarvester)
+        {
+            HarvesterCreationProperties.BER = energyHarvester.MaxBER;
+            HarvesterCreationProperties.HopperSizeK = energyHarvester.MinHopperSizeK;
         }
         _success = true;
         StateHasChanged();

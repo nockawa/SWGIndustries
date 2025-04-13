@@ -4,41 +4,6 @@ namespace SWGIndustries;
 
 public static class EnumsExtensions
 {
-    public static string GetName(this BuildingType type)
-    {
-        return type switch
-        {
-            BuildingType.House => "House",
-            BuildingType.Factory => "Factory",
-            BuildingType.Harvester => "Harvester",
-            _ => "Unknown"
-        };
-    }
-
-    public static string GetName(this BuildingSubType type)
-    {
-        return type switch
-        {
-            BuildingSubType.HouseMerchantTent => "Merchant Tent",
-            BuildingSubType.HouseNabooSmallHouse => "Naboo Small House (type 2)",
-            BuildingSubType.HouseSmallHouse => "Small House",
-            BuildingSubType.HouseMediumHouse => "Medium House",
-            BuildingSubType.HouseLargeHouse => "Large House",
-            BuildingSubType.FactoryEquipment => "Equipment Factory",
-            BuildingSubType.FactoryFood => "Food Factory",
-            BuildingSubType.FactoryStructure => "Structure Factory",
-            BuildingSubType.FactoryWearables => "Wearables Factory",
-            BuildingSubType.HarvesterPersonal => "Personal Harvester",
-            BuildingSubType.HarvesterMedium => "Medium Harvester",
-            BuildingSubType.HarvesterHeavy => "Heavy Harvester",
-            BuildingSubType.HarvesterElite => "Elite Harvester",
-            BuildingSubType.HarvesterWind => "Wind Harvester",
-            BuildingSubType.HarvesterSolar => "Solar Harvester",
-            BuildingSubType.HarvesterRadioactive => "Radioactive Harvester",
-            BuildingSubType.HarvesterGeothermal => "Geothermal Harvester",
-            _ => "Unknown"
-        };
-    }
     public static void AllPlanets(this ref Planet planet) =>
         planet = Planet.Corellia | Planet.Dantooine | Planet.Dathomir | Planet.Endor |
                  Planet.Kashyyyk | Planet.Lok | Planet.Mustafar | Planet.Naboo |

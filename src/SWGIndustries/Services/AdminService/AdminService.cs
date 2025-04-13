@@ -5,19 +5,14 @@ namespace SWGIndustries.Services;
 
 public class AdminService
 {
-    private readonly IWebHostEnvironment _env;
     private readonly ApplicationDbContext _dbContext;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly UserService _userService;
     private readonly ILogger<AdminService> _logger;
 
     private readonly Task<AppAccountEntity> _appAccountTask;
 
-    public AdminService(IWebHostEnvironment env, ApplicationDbContext dbContext, UserService userService, ILogger<AdminService> logger)
+    public AdminService(ApplicationDbContext dbContext, UserService userService, ILogger<AdminService> logger)
     {
-        _env = env;
         _dbContext = dbContext;
-        _userService = userService;
         _logger = logger;
 
         _appAccountTask = userService.BuildAppAccount(_dbContext);

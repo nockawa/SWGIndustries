@@ -79,6 +79,7 @@ public class ApplicationDbContext : DbContext
         
         // Building Entity
         modelBuilder.Entity<BuildingEntity>().ToTable("Buildings");
+        modelBuilder.Entity<BuildingEntity>().HasIndex(b => b.FullClass);
         
         // Cluster Entity
         modelBuilder.Entity<ClusterEntity>().ToTable("Clusters");

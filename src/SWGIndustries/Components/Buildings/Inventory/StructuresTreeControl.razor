@@ -1,42 +1,42 @@
 ﻿@using SWGIndustries.Services
-@inject StructuresService Structures
+@inject DefinitionService DefinitionService
 @inherits MudComponentBase
 
 <div>
     <MudTextField T="string" Label="Search" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                   TextChanged="OnTextChanged" Immediate="true" Clearable="true"/>
-    <MudTreeView T="INode" @ref="_treeView" Items="@_items" Hover="true" Dense="true" ExpandOnClick="true" 
+    <MudTreeView T="BaseNode" @ref="_treeView" Items="@_items" Hover="true" Dense="true" ExpandOnClick="true" 
                  FilterFunc="OnFilter" SelectedValue="@Selection" SelectedValueChanged="@SelectionChanged">
         <ItemTemplate>
-            <MudTreeViewItem Items="@context.Children" Value="@context.Value" Text="@context.Value?.Name" Visible="@context.Visible"/>
+            <MudTreeViewItem Items="@context.Children" Value="@context.Value" Text="@context.Value?.Class" Visible="@context.Visible"/>
         </ItemTemplate>
     </MudTreeView>
 </div>
 
 @code {
-    [Parameter] public INode Selection { get; set; }
-    [Parameter] public EventCallback<INode> SelectionChanged { get; set; }
+    [Parameter] public BaseNode Selection { get; set; }
+    [Parameter] public EventCallback<BaseNode> SelectionChanged { get; set; }
     
-    private MudTreeView<INode> _treeView;
+    private MudTreeView<BaseNode> _treeView;
     private List<TreeItemPresenter> _items;
     private string _searchPhrase;
 
-    public sealed class TreeItemPresenter : TreeItemData<INode>
+    public sealed class TreeItemPresenter : TreeItemData<BaseNode>
     {
-        public TreeItemPresenter(INode node) : base(node)
+        public TreeItemPresenter(BaseNode node) : base(node)
         {
-            Name = node.Name;
+            Name = node.Class;
             Children = [];
             Children!.AddRange(node.Children.Select(n => new TreeItemPresenter(n)));
         }
 
-        public override List<TreeItemData<INode>> Children { get; set; }
+        public override List<TreeItemData<BaseNode>> Children { get; set; }
         public string Name { get; }
     }
 
     protected override void OnInitialized()
     {
-        _items =  Structures.Children.Select(n => new TreeItemPresenter(n)).ToList();
+        _items =  DefinitionService.StructureRoot.Children.Select(n => new TreeItemPresenter(n)).ToList();
     }
 
     private async void OnTextChanged(string searchPhrase)
@@ -45,7 +45,7 @@
         await _treeView.FilterAsync();
     }
 
-    private Task<bool> OnFilter(TreeItemData<INode> item) => 
-        Task.FromResult(!string.IsNullOrEmpty(item.Value?.Name) && item.Value.Name.Contains(_searchPhrase, StringComparison.OrdinalIgnoreCase));
+    private Task<bool> OnFilter(TreeItemData<BaseNode> item) => 
+        Task.FromResult(!string.IsNullOrEmpty(item.Value?.Class) && item.Value.Class.Contains(_searchPhrase, StringComparison.OrdinalIgnoreCase));
 
 }

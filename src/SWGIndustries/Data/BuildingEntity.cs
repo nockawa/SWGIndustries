@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Drawing;
+using System.ComponentModel.DataAnnotations.Schema;
 using JetBrains.Annotations;
 using SWGIndustries.Services;
 
@@ -19,11 +19,11 @@ public class BuildingEntity
     /// </summary>
     public GameAccountEntity Owner { get; set; }
 
-    public BuildingType Type { get; set; }
-
-    public BuildingSubType SubType { get; set; }
+    [MaxLength(128)]
+    public string FullClass { get; set; }
 
     public CharacterEntity PutDownBy { get; set; }
+    public DateTime? PutDownDateTime { get; set; }
     public bool BuildingForCrew { get; set; }
     public Planet PutDownPlanet { get; set; }
     
