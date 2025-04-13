@@ -1,5 +1,8 @@
 ﻿@using SWGIndustries.Data
 @using SWGIndustries.Components.Misc
+@using SWGIndustries.Services
+
+@inject DefinitionService DefinitionService
 
 <MudPaper Elevation="@_elevation" Class="mud-width-full" Height="@GetTileHeight()"
           @onmouseover="OnMouseOver" @onmouseout="OnMouseOut">
@@ -36,7 +39,7 @@
                     <PlanetIcon Planet="@Building.PutDownPlanet" Size="PlanetIcon.IconSize.Medium" Class="ma-1"/>
                 </MudTooltip>
             }
-            <MudText Typo="Typo.caption" Class="mt-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">@($"{Building.PutDownBy.Name}, {Building.SubType.GetName()}")</MudText>
+            <MudText Typo="Typo.caption" Class="mt-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">@($"{Building.PutDownBy.Name}, {DefinitionService.GetNodeByClass(Building.FullClass).Class}")</MudText>
 
             @if (Building?.BuildingForCrew ?? false)
             {
@@ -82,5 +85,4 @@
         _mouseOver = false;
         _elevation = 4;
     }
-
 }

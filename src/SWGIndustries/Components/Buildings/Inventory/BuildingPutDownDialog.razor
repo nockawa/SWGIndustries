@@ -8,6 +8,7 @@
 @using SWGIndustries.Services
 
 @inject AdminService AdminService
+@inject DefinitionService DefinitionService
 
 <MudDialog>
     <DialogContent>
@@ -68,7 +69,8 @@
 
     protected override void OnParametersSet()
     {
-        _requiredLotAmount = Building.GetBuildingLotRequirement();
+        var structure = DefinitionService.GetNodeByClass<StructureNode>(Building.FullClass);
+        _requiredLotAmount = structure.LotTaken;
     }
 
     private IEnumerable<string> OnValidateCharacter(CharacterEntity character)
@@ -80,7 +82,7 @@
         }
         else
         {
-            var freeLots = 10 - character.PutDownBuildings.Sum(b => b.GetBuildingLotRequirement());
+            var freeLots = 10 - character.PutDownBuildings.Sum(b => DefinitionService.GetNodeByClass<StructureNode>(b.FullClass).LotTaken);
             if (freeLots < _requiredLotAmount)
             {
                 errors.Add($"There's not enough free lots to put down the building, you have {freeLots} but {_requiredLotAmount} are required.");
@@ -94,7 +96,7 @@
                 }
                 else
                 {
-                    var crewLotTaken = character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => b.GetBuildingLotRequirement());
+                    var crewLotTaken = character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => DefinitionService.GetNodeByClass<StructureNode>(b.FullClass).LotTaken);
                 }
             }
         }
@@ -106,11 +108,11 @@
         var info = $"The building is taking {_requiredLotAmount} lots";
         if (Character != null)
         {
-            var freeLots = 10 - Character.PutDownBuildings.Sum(b => b.GetBuildingLotRequirement());
+            var freeLots = 10 - Character.PutDownBuildings.Sum(b => DefinitionService.GetNodeByClass<StructureNode>(b.FullClass).LotTaken);
             info += $", {Character.Name} have {freeLots} free lots.";
             if (IsForCrew)
             {
-                var crewLotTaken = Character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => b.GetBuildingLotRequirement());
+                var crewLotTaken = Character.PutDownBuildings.Where(b => b.BuildingForCrew).Sum(b => DefinitionService.GetNodeByClass<StructureNode>(b.FullClass).LotTaken);
                 info += $"<br/>A total of {Character.MaxLotsForCrew} is dedicated to he crew, {Character.MaxLotsForCrew - crewLotTaken} are available.";
             }
         }

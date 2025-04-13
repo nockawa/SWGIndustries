@@ -1,9 +1,13 @@
 ﻿@page "/Buildings/Lots"
+
+@using SWGIndustries.Components.Buildings
 @using SWGIndustries.Components.Misc
 @using SWGIndustries.Data
 @using SWGIndustries.Services
+@using SWGIndustries.Components.Buildings.Lots
 
 @inject DataAccessService DataAccessService
+@inject DefinitionService DefinitionService
 
 <MudGrid Style="height: calc(100vh - 5rem);" Class="d-flex align-content-start">
     <MudItem md="12" Class="pt-4">
@@ -12,11 +16,11 @@
                 <ScopeSelectionControl SelectedScopeChanged="DataScopeChanged"/>
             </div>
             <div style="width: 10rem">
-                <MudSelect @bind-value="@_buildingType" SelectedValuesChanged="OnBuildingTypeChanged" T="BuildingType" Dense="true" Label="Building type" Class="mt-2 mr-4" Variant="Variant.Outlined">
-                    <MudSelectItem T="BuildingType" Value="BuildingType.Undefined" >All</MudSelectItem>
-                    <MudSelectItem T="BuildingType" Value="BuildingType.House" >House</MudSelectItem>
-                    <MudSelectItem T="BuildingType" Value="BuildingType.Factory">Factory</MudSelectItem>
-                    <MudSelectItem T="BuildingType" Value="BuildingType.Harvester">Harvester</MudSelectItem>
+                <MudSelect @bind-value="@_buildingClassFilter" SelectedValuesChanged="OnBuildingTypeChanged" T="string" Dense="true" Label="Building type" Class="mt-2 mr-4" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@null">All</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.House">House</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.Factory">Factory</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.Harvester">Harvester</MudSelectItem>
                 </MudSelect>
             </div>
             <div style="width: 10rem">
@@ -34,7 +38,8 @@
             <MudGrid Justify="Justify.FlexStart" Style="height: 100%; align-items: flex-start; align-content: flex-start" Spacing="4">
                 @foreach (var building in _buildings)
                 {
-                    var width = _normalizedSize ? 2 : building.GetBuildingLotRequirement();
+                    var structure = DefinitionService.GetNodeByClass<StructureNode>(building.FullClass);
+                    var width = _normalizedSize ? 2 : structure.LotTaken;
                     if (_tileSize is TileSize.Medium or TileSize.Large)
                     {
                         width = (int)MathF.Ceiling(width * 1.5f);
@@ -64,12 +69,12 @@
     private DataScope _buildingsScope;
     private TileSize _tileSize = TileSize.Small;
     private bool _normalizedSize;
-    private BuildingType _buildingType;
+    private string _buildingClassFilter;
     private BuildingEntity _mouseOverBuilding;
 
     protected override async Task OnInitializedAsync()
     {
-        _buildings = await DataAccessService.GetBuildings(null, BuildingType.Undefined, BuildingSubType.Undefined, true);
+        _buildings = await DataAccessService.GetBuildings(null, null, true);
     }
 
     private async Task DataScopeChanged(DataScope scope)
@@ -80,13 +85,13 @@
 
     private async Task RefreshData()
     {
-        _buildings = await DataAccessService.GetBuildings(_buildingsScope, _buildingType, BuildingSubType.Undefined, true);
+        _buildings = await DataAccessService.GetBuildings(_buildingsScope, _buildingClassFilter, true);
         StateHasChanged();
     }
 
-    private async Task OnBuildingTypeChanged(IEnumerable<BuildingType> buildingType)
+    private async Task OnBuildingTypeChanged(IEnumerable<string> buildingType)
     {
-        _buildingType = buildingType.First();
+        _buildingClassFilter = buildingType.First();
         await RefreshData();
     }
 

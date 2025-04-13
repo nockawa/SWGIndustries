@@ -60,6 +60,10 @@ namespace SWGIndustries.data.migrations
                         .HasMaxLength(1024)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("FullClass")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("HarvesterBER")
                         .HasColumnType("INTEGER");
 
@@ -103,21 +107,20 @@ namespace SWGIndustries.data.migrations
                     b.Property<int?>("PutDownById")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("PutDownDateTime")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PutDownPlanet")
                         .HasColumnType("INTEGER");
 
                     b.Property<float>("ResourceConcentration")
                         .HasColumnType("REAL");
 
-                    b.Property<int>("SubType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClusterId");
+
+                    b.HasIndex("FullClass");
 
                     b.HasIndex("OwnerId");
 

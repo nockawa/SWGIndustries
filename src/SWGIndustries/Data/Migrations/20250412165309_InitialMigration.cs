@@ -209,9 +209,9 @@ namespace SWGIndustries.data.migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     OwnerId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Type = table.Column<int>(type: "INTEGER", nullable: false),
-                    SubType = table.Column<int>(type: "INTEGER", nullable: false),
+                    FullClass = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
                     PutDownById = table.Column<int>(type: "INTEGER", nullable: true),
+                    PutDownDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     BuildingForCrew = table.Column<bool>(type: "INTEGER", nullable: false),
                     PutDownPlanet = table.Column<int>(type: "INTEGER", nullable: false),
                     ClusterId = table.Column<int>(type: "INTEGER", nullable: true),
@@ -260,6 +260,11 @@ namespace SWGIndustries.data.migrations
                 name: "IX_Buildings_ClusterId",
                 table: "Buildings",
                 column: "ClusterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Buildings_FullClass",
+                table: "Buildings",
+                column: "FullClass");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Buildings_OwnerId",

@@ -3,11 +3,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using MudBlazor.Services;
-using SWGIndustries.Components;
 using SWGIndustries.Components.Account;
 using SWGIndustries.Data;
+using SWGIndustries.Pages;
 using SWGIndustries.Services;
-
 
 namespace SWGIndustries;
 
@@ -41,7 +40,7 @@ public class Program
         services.AddSingleton<UserService>();
         services.AddScoped<DataAccessService>();
         services.AddScoped<AdminService>();
-        services.AddSingleton<StructuresService>();
+        services.AddSingleton<DefinitionService>();
         services.AddScoped<NamedSeriesService>();
         services.AddScoped<DataScopeService>();
 

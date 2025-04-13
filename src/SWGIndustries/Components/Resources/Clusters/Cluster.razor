@@ -227,7 +227,7 @@
             
             <HeaderContent>
                 <MudTh Style="color: var(--mud-palette-primary-text)">
-                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.SubType)">Class</MudTableSortLabel>
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.FullClass)">Class</MudTableSortLabel>
                 </MudTh>
                 <MudTh Style="color: var(--mud-palette-primary-text)">
                     <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => b.Owner.Name)">Owner</MudTableSortLabel>
@@ -251,7 +251,7 @@
             </HeaderContent>
             
             <RowTemplate>
-                <MudTd DataLabel="Class">@context.SubType.GetName()</MudTd>
+                <MudTd DataLabel="Class">@context.FullClass</MudTd>
                 <MudTd DataLabel="Owner">@context.Owner.Name</MudTd>
                 <MudTd DataLabel="Name">@context.Name</MudTd>
                 <MudTd DataLabel="BER">@context.HarvesterBER</MudTd>

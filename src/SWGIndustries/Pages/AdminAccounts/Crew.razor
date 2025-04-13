@@ -1,5 +1,4 @@
 ﻿@page "/Admin/Crew"
-@using MudBlazor
 @using SWGIndustries.Components.Crew
 @using SWGIndustries.Data
 @using SWGIndustries.Services
@@ -104,7 +103,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         _appAccount = await AdminService.GetAppAccountAsync();
-        //await DataAccessService.DbContext.Entry(_appAccount).Reference(a => a.Crew).LoadAsync(); TODO shouldn't be needed anymore
         _crew = _appAccount.Crew;
         await UpdateCrewState();
     }

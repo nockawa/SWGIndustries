@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://swgindustries.com/swgstructures" elementFormDefault="qualified" targetNamespace="http://swgindustries.com/swgstructures" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Node" nillable="true" type="tns:BaseNode" />
+  <xs:complexType name="BaseNode">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="Children" type="tns:ArrayOfChoice1" />
+    </xs:sequence>
+    <xs:attribute name="Class" type="xs:string" />
+  </xs:complexType>
+  <xs:complexType name="ArrayOfChoice1">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element minOccurs="1" maxOccurs="1" name="Node" nillable="true" type="tns:BaseNode" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Structure" nillable="true" type="tns:StructureNode" />
+      <xs:element minOccurs="1" maxOccurs="1" name="House" nillable="true" type="tns:House" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Factory" nillable="true" type="tns:Factory" />
+      <xs:element minOccurs="1" maxOccurs="1" name="HarvesterClass" nillable="true" type="tns:HarvesterClassNode" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Harvester" nillable="true" type="tns:Harvester" />
+      <xs:element minOccurs="1" maxOccurs="1" name="EnergyHarvester" nillable="true" type="tns:EnergyHarvester" />
+    </xs:choice>
+  </xs:complexType>
+  <xs:complexType name="StructureNode" abstract="true">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:BaseNode">
+        <xs:attribute name="LotTaken" type="xs:int" />
+        <xs:attribute name="MaintenanceCost" type="xs:int" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="EnergyHarvester">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:StructureNode">
+        <xs:attribute name="ResourceType" type="tns:HarvestingResourceType" use="required" />
+        <xs:attribute name="MinBER" type="xs:int" use="required" />
+        <xs:attribute name="MaxBER" type="xs:int" use="required" />
+        <xs:attribute name="MinHopperSizeK" type="xs:int" use="required" />
+        <xs:attribute name="MaxHopperSizeK" type="xs:int" use="required" />
+        <xs:attribute name="ReDeedCost" type="xs:int" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="HarvestingResourceType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Mineral" />
+      <xs:enumeration value="Chemical" />
+      <xs:enumeration value="Gas" />
+      <xs:enumeration value="Flora" />
+      <xs:enumeration value="Water" />
+      <xs:enumeration value="Wind" />
+      <xs:enumeration value="Solar" />
+      <xs:enumeration value="Geothermal" />
+      <xs:enumeration value="Radioactive" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Harvester">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:StructureNode">
+        <xs:attribute name="ResourceType" type="tns:HarvestingResourceType" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="HarvesterClassNode">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:StructureNode">
+        <xs:attribute name="PowerConsumption" type="xs:int" use="required" />
+        <xs:attribute name="MinBER" type="xs:int" use="required" />
+        <xs:attribute name="MaxBER" type="xs:int" use="required" />
+        <xs:attribute name="MinHopperSizeK" type="xs:int" use="required" />
+        <xs:attribute name="MaxHopperSizeK" type="xs:int" use="required" />
+        <xs:attribute name="ReDeedCost" type="xs:int" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Factory">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:StructureNode">
+        <xs:attribute name="PowerConsumption" type="xs:int" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="House">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:StructureNode" />
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>

@@ -34,9 +34,11 @@
       <None Remove="Data\swgi.db" />
       <None Remove="Data\swgi.db-shm" />
       <None Remove="Data\swgi.db-wal" />
+      <None Include="wwwroot\Resources\StructureDefinition.xsd" />
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Components\Pages\" />
       <Folder Include="wwwroot\Resources\Maps\" />
     </ItemGroup>
 

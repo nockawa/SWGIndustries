@@ -1,8 +1,8 @@
-﻿@using SWGIndustries.Components.Pages
+﻿@using SWGIndustries.Components.Layout
 
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" >
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" >
             <!--The NotAuthorized tag is optional but is currently configured to use the RedirectToLogin page in order to automatically attempt to log a user in if they access an authorized page without logging in.-->
             <NotAuthorized>
                 <RedirectToLogin />
@@ -11,14 +11,14 @@
     </Found>
     <NotFound>
         <CascadingAuthenticationState>
-            <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <LayoutView Layout="@typeof(MainLayout)">
                 <p>Sorry, there's nothing at this address.</p>
             </LayoutView>
         </CascadingAuthenticationState>
     </NotFound>
 
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>
