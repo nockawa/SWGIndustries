@@ -1,6 +1,10 @@
 ﻿namespace SWGIndustries.Services;
 
-public class House : StructureNode
+public interface IHouse
+{
+}
+
+public class House : StructureNode, IHouse
 {
     
 }

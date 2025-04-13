@@ -2,7 +2,17 @@
 
 namespace SWGIndustries.Services;
 
-public class HarvesterClassNode : StructureNode
+public interface IHarvesterClassNode
+{
+    int PowerConsumption { get; }
+    int MinBER { get; }
+    int MaxBER { get; }
+    int MinHopperSizeK { get; }
+    int MaxHopperSizeK { get; }
+    int ReDeedCost { get; }
+}
+
+public class HarvesterClassNode : StructureNode, IHarvesterClassNode
 {
     [XmlAttribute("PowerConsumption")]
     public int PowerConsumption { get; set; }

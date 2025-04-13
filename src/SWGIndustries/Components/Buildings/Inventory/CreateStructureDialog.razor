@@ -49,7 +49,7 @@
     private bool _success;
     private string[] _errors;
 
-    public BaseNode SelectedTemplate { get; private set; }
+    public IBaseNode SelectedTemplate { get; private set; }
     public int StructureCount { get; private set; }
 
     public HarvesterCreationProperties HarvesterCreationProperties { get; } = new();

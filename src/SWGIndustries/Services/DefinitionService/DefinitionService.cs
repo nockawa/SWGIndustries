@@ -20,7 +20,7 @@ public class DefinitionService
 {
     private readonly IWebHostEnvironment _env;
     private readonly Dictionary<string, BaseNode> _nodesByFullClassName = new();
-    public BaseNode StructureRoot { get; }
+    public IBaseNode StructureRoot { get; }
     public ServerDefinition ServerDefinition { get; }
 
     public DefinitionService(IWebHostEnvironment env)
@@ -74,7 +74,7 @@ public class DefinitionService
         return (T)o;
     }
     
-    public BaseNode GetNodeByClass(string className)
+    public IBaseNode GetNodeByClass(string className)
     {
         if (_nodesByFullClassName.TryGetValue(className, out var node))
             return node;
@@ -82,7 +82,7 @@ public class DefinitionService
         throw new KeyNotFoundException($"Class {className} not found in the structure referential.");
     }
 
-    public T GetNodeByClass<T>(string className) where T : BaseNode => (T)GetNodeByClass(className);
+    public T GetNodeByClass<T>(string className) where T : IBaseNode => (T)GetNodeByClass(className);
 
     private void PostImport(BaseNode node)
     {
@@ -93,8 +93,8 @@ public class DefinitionService
         }
         foreach (var child in node.Children)
         {
-            child.Parent = node;
-            PostImport(child);
+            ((BaseNode)child).Parent = node;
+            PostImport((BaseNode)child);
         }
     }
 }
