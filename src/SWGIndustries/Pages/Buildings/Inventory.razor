@@ -136,13 +136,13 @@
             @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == null)
             {
                 <MudTh Style="color: var(--mud-palette-primary-text)">
-                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => DefinitionService.GetNodeByClass<BaseNode>(b.FullClass).GetClass(0))">Type</MudTableSortLabel>
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => DefinitionService.GetNodeByClass<IBaseNode>(b.FullClass).GetClass(0))">Type</MudTableSortLabel>
                 </MudTh>
             }
             @if (IsGroupByTypeAndSubType == false)
             {
                 <MudTh Style="color: var(--mud-palette-primary-text)">
-                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => DefinitionService.GetNodeByClass<BaseNode>(b.FullClass).GetClass(1))">Subtype</MudTableSortLabel>
+                    <MudTableSortLabel SortBy="new Func<BuildingEntity, object>(b => DefinitionService.GetNodeByClass<IBaseNode>(b.FullClass).GetClass(1))">Subtype</MudTableSortLabel>
                 </MudTh>
             }
             <MudTh Style="color: var(--mud-palette-primary-text)">
@@ -171,12 +171,12 @@
             
             @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == null)
             {
-                <MudTd DataLabel="Type">@(DefinitionService.GetNodeByClass<BaseNode>(context.FullClass).GetClass(0))</MudTd>
+                <MudTd DataLabel="Type">@(DefinitionService.GetNodeByClass<IBaseNode>(context.FullClass).GetClass(0))</MudTd>
             }
             
             @if (IsGroupByTypeAndSubType == false)
             {
-                <MudTd DataLabel="Subtype">@(DefinitionService.GetNodeByClass<BaseNode>(context.FullClass).GetClass(1))</MudTd>
+                <MudTd DataLabel="Subtype">@(DefinitionService.GetNodeByClass<IBaseNode>(context.FullClass).GetClass(1))</MudTd>
             }
             
             <MudTd DataLabel="Comments">@context.Comments</MudTd>
@@ -211,12 +211,12 @@
 
             @if (IsGroupByType == false && IsGroupByTypeAndSubType == false && _buildingTypeFilter == null)
             {
-                <MudTd DataLabel="Type">@(DefinitionService.GetNodeByClass<BaseNode>(context.FullClass).GetClass(0))</MudTd>
+                <MudTd DataLabel="Type">@(DefinitionService.GetNodeByClass<IBaseNode>(context.FullClass).GetClass(0))</MudTd>
             }
 
             @if (IsGroupByTypeAndSubType == false)
             {
-                <MudTd DataLabel="Subtype">@(DefinitionService.GetNodeByClass<BaseNode>(context.FullClass).GetClass(1))</MudTd>
+                <MudTd DataLabel="Subtype">@(DefinitionService.GetNodeByClass<IBaseNode>(context.FullClass).GetClass(1))</MudTd>
             }
 
             <MudTd DataLabel="Comments">
@@ -276,7 +276,7 @@
                     GroupName = "Type",
                     Indentation = true,
                     Expandable = true,
-                    Selector = e => DefinitionService.GetNodeByClass<BaseNode>(e.FullClass).GetClass(0),
+                    Selector = e => DefinitionService.GetNodeByClass<IBaseNode>(e.FullClass).GetClass(0),
                 };
                 break;
             case GroupBy.TypeAndSubType:
@@ -285,13 +285,13 @@
                     GroupName = "Type / Subtype",
                     Indentation = true,
                     Expandable = true,
-                    Selector = e => DefinitionService.GetNodeByClass<BaseNode>(e.FullClass).GetClass(0),
+                    Selector = e => DefinitionService.GetNodeByClass<IBaseNode>(e.FullClass).GetClass(0),
                     InnerGroup = new TableGroupDefinition<BuildingEntity>
                     {
                         GroupName = "Subtype",
                         Indentation = true,
                         Expandable = true,
-                        Selector = e => DefinitionService.GetNodeByClass<BaseNode>(e.FullClass).GetClass(1),
+                        Selector = e => DefinitionService.GetNodeByClass<IBaseNode>(e.FullClass).GetClass(1),
                     }
                 };
                 break;

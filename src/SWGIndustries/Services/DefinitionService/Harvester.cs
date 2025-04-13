@@ -2,7 +2,12 @@
 
 namespace SWGIndustries.Services;
 
-public class Harvester : StructureNode
+public interface IHarvester
+{
+    HarvestingResourceType ResourceType { get; }
+}
+
+public class Harvester : StructureNode, IHarvester
 {
     [XmlIgnore] public override int LotTaken => ((HarvesterClassNode)Parent).LotTaken;
     [XmlIgnore] public override int MaintenanceCost => ((HarvesterClassNode)Parent).MaintenanceCost;

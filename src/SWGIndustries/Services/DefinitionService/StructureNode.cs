@@ -2,7 +2,13 @@
 
 namespace SWGIndustries.Services;
 
-public abstract class StructureNode : BaseNode
+public interface IStructureNode
+{
+    int LotTaken { get; }
+    int MaintenanceCost { get; }
+}
+
+public abstract class StructureNode : BaseNode, IStructureNode
 {
     [XmlAttribute("LotTaken")]
     public virtual int LotTaken { get; set; }

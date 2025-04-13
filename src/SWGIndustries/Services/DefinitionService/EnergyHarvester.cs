@@ -2,7 +2,17 @@
 
 namespace SWGIndustries.Services;
 
-public class EnergyHarvester : StructureNode
+public interface IEnergyHarvester
+{
+    HarvestingResourceType ResourceType { get; }
+    int MinBER { get; }
+    int MaxBER { get; }
+    int MinHopperSizeK { get; }
+    int MaxHopperSizeK { get; }
+    int ReDeedCost { get; }
+}
+
+public class EnergyHarvester : StructureNode, IEnergyHarvester
 {
     [XmlAttribute("ResourceType")]
     public HarvestingResourceType ResourceType { get; set; }
