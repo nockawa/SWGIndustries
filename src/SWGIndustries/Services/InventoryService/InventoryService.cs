@@ -9,7 +9,6 @@ namespace SWGIndustries.Services;
 public class InventoryService : IDisposable, IAsyncDisposable
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserService _userService;
     private readonly AdminService _adminService;
     private readonly NamedSeriesService _namedSeriesService;
     private readonly ILogger<InventoryService> _logger;
@@ -20,7 +19,6 @@ public class InventoryService : IDisposable, IAsyncDisposable
         ILogger<InventoryService> logger)
     {
         _context = context;
-        _userService = userService;
         _adminService = adminService;
         _namedSeriesService = namedSeriesService;
         _logger = logger;
@@ -59,7 +57,7 @@ public class InventoryService : IDisposable, IAsyncDisposable
         {
             var building = new BuildingEntity()
             {
-                Name = $"{house.Class} #{await _namedSeriesService.GetNextValueAsync(house.Class)}",
+                Name = $"{house.Class} #{await _namedSeriesService.GetNextValueAsync($"{(await _adminService.GetAppAccountAsync()).Name}-{house.FullClass}")}",
                 Owner = owner,
                 FullClass = house.FullClass,
             };
@@ -76,7 +74,7 @@ public class InventoryService : IDisposable, IAsyncDisposable
         {
             var building = new BuildingEntity()
             {
-                Name = $"{factory.Class} #{await _namedSeriesService.GetNextValueAsync(factory.Class)}",
+                Name = $"{factory.Class} #{await _namedSeriesService.GetNextValueAsync($"{(await _adminService.GetAppAccountAsync()).Name}-{factory.FullClass}")}",
                 Owner = owner,
                 FullClass = factory.FullClass,
             };
@@ -94,7 +92,7 @@ public class InventoryService : IDisposable, IAsyncDisposable
         {
             var building = new BuildingEntity()
             {
-                Name = $"{harvester.Class} {hrt} #{await _namedSeriesService.GetNextValueAsync($"{harvester.Class}-{hrt}")}",
+                Name = $"{harvester.Class} #{await _namedSeriesService.GetNextValueAsync($"{(await _adminService.GetAppAccountAsync()).Name}-{harvester.FullClass}")}",
                 Owner = owner,
                 FullClass = harvester.FullClass,
                 HarvesterHopperSize = properties.HopperSizeK,
@@ -114,9 +112,9 @@ public class InventoryService : IDisposable, IAsyncDisposable
         var hrt = properties.HarvestingResourceType.ToString();
         for (var i = 0; i < count; i++)
         {
-            var building = new BuildingEntity()
+            var building = new BuildingEntity
             {
-                Name = $"{harvester.Class} {hrt} #{await _namedSeriesService.GetNextValueAsync($"{harvester.Class}-{hrt}")}",
+                Name = $"{harvester.Class} #{await _namedSeriesService.GetNextValueAsync($"{(await _adminService.GetAppAccountAsync()).Name}-{harvester.FullClass}")}",
                 Owner = owner,
                 FullClass = harvester.FullClass,
                 HarvesterHopperSize = properties.HopperSizeK,
