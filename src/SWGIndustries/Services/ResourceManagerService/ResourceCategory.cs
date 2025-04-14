@@ -7,12 +7,15 @@ namespace SWGIndustries.Services;
 [DebuggerDisplay("{Name} ({Index}) Total Resources: {Resources.Count}")]
 public class ResourceCategory
 {
-    public ResourceCategory(ResourceCategory parent, XmlResourceCategory xmlCategory)
+    private HarvestingResourceType? _harvestingResourceType;
+
+    public ResourceCategory(ResourceCategory parent, XmlResourceCategory xmlCategory, HarvestingResourceType? harvestingResourceType)
     {
         Parent = parent;
         Name = xmlCategory.Name;
         Index = xmlCategory.Index;
         CategoryIndices = new ushort[8];
+        _harvestingResourceType = harvestingResourceType;
         
         if (parent != null)
         {
@@ -46,6 +49,8 @@ public class ResourceCategory
     public ushort Index { get; set; }
     public List<ResourceCategory> SubCategories { get; } = new();
     public List<Resource> Resources { get; } = new();
+
+    public HarvestingResourceType HarvestingResourceType => _harvestingResourceType ?? Parent.HarvestingResourceType;
 
     public void AddResource(Resource resource)
     {

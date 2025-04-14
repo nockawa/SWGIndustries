@@ -51,6 +51,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI5);
         modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI6);
         modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI7);
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.SWGAideId).IsUnique();
         modelBuilder.Entity<ResourceEntity>().Property(r => r.Name).IsRequired();
         
         // Game Account Entity

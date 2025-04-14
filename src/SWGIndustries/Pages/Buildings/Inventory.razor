@@ -8,7 +8,7 @@
 
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@inject DataAccessService DataAccessService
+@inject InventoryService InventoryService
 @inject DefinitionService DefinitionService
 
 <!--suppress CssUnresolvedCustomProperty -->
@@ -326,19 +326,19 @@
         switch (template)
         {
             case House house:
-                (res, info) = await DataAccessService.CreateHouse(dialog.SelectedAccount, house, count);
+                (res, info) = await InventoryService.CreateHouse(dialog.SelectedAccount, house, count);
                 break;
                 
             case Factory factory:
-                (res, info) = await DataAccessService.CreateFactory(dialog.SelectedAccount, factory, count);
+                (res, info) = await InventoryService.CreateFactory(dialog.SelectedAccount, factory, count);
                 break;
                 
             case Harvester harvester:
-                (res, info) = await DataAccessService.CreateHarvester(dialog.SelectedAccount, harvester, dialog.HarvesterCreationProperties, count);
+                (res, info) = await InventoryService.CreateHarvester(dialog.SelectedAccount, harvester, dialog.HarvesterCreationProperties, count);
                 break;
                 
             case EnergyHarvester energyHarvester:
-                (res, info) = await DataAccessService.CreateEnergyHarvester(dialog.SelectedAccount, energyHarvester, dialog.HarvesterCreationProperties, count);
+                (res, info) = await InventoryService.CreateEnergyHarvester(dialog.SelectedAccount, energyHarvester, dialog.HarvesterCreationProperties, count);
                 break;
         }
 
@@ -358,14 +358,14 @@
     private async Task DataScopeChanged(DataScope scope)
     {
         _buildingsScope = scope;
-        _buildings = await DataAccessService.GetBuildings(scope);
+        _buildings = await InventoryService.GetBuildings(scope);
         StateHasChanged();
     }
 
     private async Task OnFilterByChanged(string buildingType)
     {
         _buildingTypeFilter = buildingType;
-        _buildings = await DataAccessService.GetBuildings(_buildingsScope, _buildingTypeFilter);
+        _buildings = await InventoryService.GetBuildings(_buildingsScope, _buildingTypeFilter);
         StateHasChanged();
     }
     
@@ -378,8 +378,8 @@
 
     private void SaveRowChanges()
     {
-        DataAccessService.UpdateBuilding(_editingBuilding);
-        var res = DataAccessService.SaveChanges(_editTransaction);        
+        InventoryService.UpdateBuilding(_editingBuilding);
+        var res = InventoryService.SaveChanges(_editTransaction);        
         _editingBuilding = null;
         if (res)
         {
@@ -393,13 +393,13 @@
 
     private void RowEditPreview(object obj)
     {
-        _editTransaction = DataAccessService.BeginTransaction();
+        _editTransaction = InventoryService.BeginTransaction();
         _editingBuilding = (BuildingEntity)obj;
     }
 
     private void RowEditCancel(object obj)
     {
-        DataAccessService.ReloadBuilding(_editingBuilding);
+        InventoryService.ReloadBuilding(_editingBuilding);
         Snackbar.Add("Changes cancelled", Severity.Warning);
         _editingBuilding = null;
         _editTransaction.Rollback();
@@ -432,21 +432,9 @@
         var character = dialog.Character;
         var isForCrew = dialog.IsForCrew;
 
-        building.PutDownBy = character;
-        building.BuildingForCrew = isForCrew;
-        building.PutDownPlanet = dialog.Planet;
-        
-        DataAccessService.UpdateBuilding(building);
-        var r = DataAccessService.SaveChanges(null);
-        if (r)
-        {
-            Snackbar.Add($"Successfully put down the building '{building.Name}' for account {building.Owner.Name} on character {character.Name}", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add($"Failed to put down the building '{building.Name}' for account {building.Owner.Name} on character {character.Name}", Severity.Error);
-        }
-        
+        var (r, info) = await InventoryService.PutDownBuilding(building, character, isForCrew, dialog.Planet, null);
+        Snackbar.Add(info, r ? Severity.Success : Severity.Error);
+
         return true;
     }
 

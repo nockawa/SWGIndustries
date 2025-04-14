@@ -6,7 +6,7 @@
 @using SWGIndustries.Services
 @using SWGIndustries.Components.Buildings.Lots
 
-@inject DataAccessService DataAccessService
+@inject InventoryService InventoryService
 @inject DefinitionService DefinitionService
 
 <MudGrid Style="height: calc(100vh - 5rem);" Class="d-flex align-content-start">
@@ -74,7 +74,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _buildings = await DataAccessService.GetBuildings(null, null, true);
+        _buildings = await InventoryService.GetBuildings(null, null, true);
     }
 
     private async Task DataScopeChanged(DataScope scope)
@@ -85,7 +85,7 @@
 
     private async Task RefreshData()
     {
-        _buildings = await DataAccessService.GetBuildings(_buildingsScope, _buildingClassFilter, true);
+        _buildings = await InventoryService.GetBuildings(_buildingsScope, _buildingClassFilter, true);
         StateHasChanged();
     }
 

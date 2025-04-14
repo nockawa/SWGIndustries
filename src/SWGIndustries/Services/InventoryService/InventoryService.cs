@@ -6,50 +6,52 @@ using SWGIndustries.Data;
 namespace SWGIndustries.Services;
 
 [PublicAPI]
-public class HarvesterCreationProperties
+public class InventoryService : IDisposable, IAsyncDisposable
 {
-    public HarvesterCreationProperties(int hopperSizeK, int ber, bool selfPowered, HarvestingResourceType harvestingResourceType)
-    {
-        HopperSizeK = hopperSizeK;
-        BER = ber;
-        SelfPowered = selfPowered;
-        HarvestingResourceType = harvestingResourceType;
-    }
-
-    public HarvesterCreationProperties()
-    {
-    }
-
-    public int HopperSizeK { get; set; }
-    public int BER { get; set; }
-    public bool SelfPowered { get; set; }
-    public HarvestingResourceType HarvestingResourceType { get; set; }
-}
-
-[PublicAPI]
-public sealed class DataAccessService : IDisposable, IAsyncDisposable
-{
+    private readonly ApplicationDbContext _context;
+    private readonly UserService _userService;
     private readonly AdminService _adminService;
     private readonly NamedSeriesService _namedSeriesService;
+    private readonly ILogger<InventoryService> _logger;
+    
+    public ApplicationDbContext DbContext => _context;
 
-    /// <summary>
-    /// Should be used for read-only operations, or very carefully...
-    /// </summary>
-    public ApplicationDbContext DbContext { get; }
-
-    public DataAccessService(ApplicationDbContext dbContext, UserService userService, AdminService adminService, NamedSeriesService namedSeriesService)
+    public InventoryService(ApplicationDbContext context, UserService userService, AdminService adminService, NamedSeriesService namedSeriesService, 
+        ILogger<InventoryService> logger)
     {
-        DbContext = dbContext;
+        _context = context;
+        _userService = userService;
         _adminService = adminService;
         _namedSeriesService = namedSeriesService;
+        _logger = logger;
     }
 
     public void Dispose()
     {
-        DbContext.Dispose();
+        _context?.Dispose();
     }
 
-    public async ValueTask DisposeAsync() => await DbContext.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        if (_context != null) await _context.DisposeAsync();
+    }
+    
+    public IDbContextTransaction BeginTransaction()
+    {
+        return DbContext.Database.BeginTransaction();
+    }
+
+    public bool SaveChanges(IDbContextTransaction transaction) 
+    {
+        var res = DbContext.SaveChanges() > 0;
+        if (transaction != null)
+        {
+            transaction.Commit();
+            transaction.Dispose();
+        }
+
+        return res;
+    }
 
     public async Task<(bool, string)> CreateHouse(GameAccountEntity owner, House house, int count)
     {
@@ -128,6 +130,37 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         return await DbContext.SaveChangesAsync() > 0 ? (true, $"{count} {harvester.Class} {hrt} created.") : (false, "error creating the factory objects");
     }
 
+    public async Task<(bool res, string info)> PutDownBuilding(BuildingEntity building, CharacterEntity character, bool isForCrew, Planet planet, ClusterEntity cluster)
+    {
+        building.PutDownBy = character;
+        building.BuildingForCrew = isForCrew;
+        building.PutDownPlanet = planet;
+        building.PutDownDateTime = DateTime.UtcNow;
+        building.Cluster = cluster;
+
+        DbContext.Buildings.Update(building);
+        var res = await DbContext.SaveChangesAsync() > 0;
+        if (!res)
+        {
+            return (false, $"Failed to put down building {building} by {character}");
+        }
+        
+        return (true, $"Building {building} put down by {character}");
+    }
+    
+    public bool StartHarvester(BuildingEntity harvester, DateTime? startTime = null)
+    {
+        if (harvester.IsRunning)
+        {
+            return false;
+        }
+        
+        harvester.IsRunning = true;
+        harvester.LastRunningDateTime = startTime ?? DateTime.UtcNow;
+        DbContext.Buildings.Update(harvester);
+        return true;
+    }
+    
     public async Task<List<BuildingEntity>> GetBuildings(DataScope scope, string classFilter=null, bool? putDown = null)
     {
         // Return everything, shouldn't be used in the WebApp
@@ -196,33 +229,42 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
         throw new InvalidOperationException();
     }
 
-    public IDbContextTransaction BeginTransaction()
-    {
-        return DbContext.Database.BeginTransaction();
-    }
-
     public void UpdateBuilding(BuildingEntity editingBuilding)
     {
         DbContext.Buildings.Update(editingBuilding);
     }
     
-    public bool SaveChanges(IDbContextTransaction transaction) 
-    {
-        var res = DbContext.SaveChanges() > 0;
-        if (transaction != null)
-        {
-            transaction.Commit();
-            transaction.Dispose();
-        }
-
-        return res;
-    }
-
     public void ReloadBuilding(BuildingEntity building)
     {
         DbContext.Entry(building).Reload();
     }
-
+    
+    public async Task<IList<BuildingEntity>> GetAvailableHarvesters(GameAccountEntity gameAccount, HarvestingResourceType resourceType)
+    {
+        if (gameAccount == null)
+        {
+            var appAccount = await _adminService.GetAppAccountAsync();
+        
+            return await DbContext.Buildings
+                .Include(b => b.Owner)
+                .Include(b => b.PutDownBy)
+                .Include(b => b.Cluster)
+                .Where(b => b.Owner.OwnerAppAccount == appAccount && b.FullClass.StartsWith(StructureClasses.Harvester) && b.Cluster == null && 
+                            b.PutDownBy == null && b.HarvestingResourceType == resourceType)
+                .ToListAsync();
+        }
+        else
+        {
+            return await DbContext.Buildings
+                .Include(b => b.Owner)
+                .Include(b => b.PutDownBy)
+                .Include(b => b.Cluster)
+                .Where(b => b.Owner == gameAccount && b.FullClass.StartsWith(StructureClasses.Harvester) && b.Cluster == null && 
+                            b.PutDownBy == null && b.HarvestingResourceType == resourceType)
+                .ToListAsync();
+        }
+    }
+    
     public async Task<ResourceEntity> GetResource(int swgAideId)
     {
         return await DbContext.Resources.FirstOrDefaultAsync(r => r.SWGAideId == swgAideId);
@@ -267,17 +309,5 @@ public sealed class DataAccessService : IDisposable, IAsyncDisposable
     public void UpdateCluster(ClusterEntity cluster)
     {
         DbContext.Clusters.Update(cluster);        
-    }
-
-    public async Task<IList<BuildingEntity>> GetAvailableHarvesters(AppAccountEntity appAccount, HarvestingResourceType resourceType)
-    {
-        appAccount ??= await _adminService.GetAppAccountAsync();
-        
-        return await DbContext.Buildings
-            .Include(b => b.Owner)
-            .Include(b => b.PutDownBy)
-            .Include(b => b.Cluster)
-            .Where(b => b.Owner.OwnerAppAccount == appAccount && b.FullClass.StartsWith(StructureClasses.Harvester) && b.Cluster == null && b.PutDownBy == null && b.HarvestingResourceType == resourceType)
-            .ToListAsync();
     }
 }

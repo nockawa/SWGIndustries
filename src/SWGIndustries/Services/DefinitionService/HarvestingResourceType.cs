@@ -16,5 +16,7 @@ public enum HarvestingResourceType
     Wind,
     Solar,
     Geothermal,
-    Radioactive
+    Radioactive,
+    Creature,
+    Unknown,
 }

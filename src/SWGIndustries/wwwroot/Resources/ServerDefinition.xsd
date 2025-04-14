@@ -3,10 +3,11 @@
   <xs:element name="Server" nillable="true" type="tns:ServerDefinition" />
   <xs:complexType name="ServerDefinition">
     <xs:sequence>
-      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />
-      <xs:element minOccurs="1" maxOccurs="1" name="SWGAideResourceFileURL" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="Name" type="xs:string" />
+      <xs:element minOccurs="0" maxOccurs="1" name="SWGAideResourceFileURL" type="xs:string" />
       <xs:element minOccurs="1" maxOccurs="1" name="LotCountPerCharacter" type="xs:int" />
       <xs:element minOccurs="1" maxOccurs="1" name="MaxCharacterCountPerAccount" type="xs:int" />
+      <xs:element minOccurs="1" maxOccurs="1" name="HarvesterExtractionFactor" type="xs:float" />
     </xs:sequence>
   </xs:complexType>
 </xs:schema>

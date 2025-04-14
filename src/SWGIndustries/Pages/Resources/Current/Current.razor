@@ -1,15 +1,15 @@
 ﻿@page "/Resources/Current"
 @using System.Drawing
 @using System.Text
-@using SWGIndustries.Components.Resources.Clusters
+@using SWGIndustries.Components.Resources
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 @using Size = MudBlazor.Size
 
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@inject DataAccessService DataAccessService
 @inject AdminService AdminService
+@inject InventoryService InventoryService
 @inject ResourceManagerService ResourceManagerService
 @inject IDialogService DialogService
 
@@ -397,7 +397,7 @@
             Comments = clusterComments,
             Waypoint = clusterWaypoint?.ToString(),
             Planet = clusterPlanet,
-            Resource = await DataAccessService.GetResource(_contextRow.SWGAideId),
+            Resource = await InventoryService.GetResource(_contextRow.SWGAideId),
         };
         if (isForCrew)
         {
@@ -408,7 +408,7 @@
             cluster.GameAccount = gameAccount;
         }
 
-        if (await DataAccessService.CreateCluster(cluster) == false)
+        if (await InventoryService.CreateCluster(cluster) == false)
         {
             Snackbar.Add($"Failed to create cluster {cluster.Name}", Severity.Error);
             return;

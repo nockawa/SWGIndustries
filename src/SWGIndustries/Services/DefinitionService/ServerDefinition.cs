@@ -18,4 +18,7 @@ public class ServerDefinition
     
     [XmlElement(IsNullable = false)]
     public int MaxCharacterCountPerAccount { get; set; }
+    
+    [XmlElement(IsNullable = false)]
+    public float HarvesterExtractionFactor { get; set; }
 }

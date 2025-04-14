@@ -6,4 +6,5 @@
     <SWGAideResourceFileURL>https://swgaide.com/Resources/SWGRestorationIII.xml</SWGAideResourceFileURL>
     <LotCountPerCharacter>10</LotCountPerCharacter>
     <MaxCharacterCountPerAccount>4</MaxCharacterCountPerAccount>
+    <HarvesterExtractionFactor>1.5</HarvesterExtractionFactor>
 </Server>

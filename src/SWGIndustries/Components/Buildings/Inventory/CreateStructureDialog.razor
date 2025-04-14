@@ -71,11 +71,13 @@
         {
             HarvesterCreationProperties.BER = harvester.MaxBER;
             HarvesterCreationProperties.HopperSizeK = harvester.MinHopperSizeK;
+            HarvesterCreationProperties.HarvestingResourceType = harvester.ResourceType;
         } 
         else if (SelectedTemplate is EnergyHarvester energyHarvester)
         {
             HarvesterCreationProperties.BER = energyHarvester.MaxBER;
             HarvesterCreationProperties.HopperSizeK = energyHarvester.MinHopperSizeK;
+            HarvesterCreationProperties.HarvestingResourceType = energyHarvester.ResourceType;
         }
         _success = true;
         StateHasChanged();

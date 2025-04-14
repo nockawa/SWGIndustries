@@ -19,13 +19,15 @@ namespace SWGIndustries.Services;
 public class DefinitionService
 {
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<DefinitionService> _logger;
     private readonly Dictionary<string, BaseNode> _nodesByFullClassName = new();
     public IBaseNode StructureRoot { get; }
     public ServerDefinition ServerDefinition { get; }
 
-    public DefinitionService(IWebHostEnvironment env)
+    public DefinitionService(IWebHostEnvironment env, ILogger<DefinitionService> logger)
     {
         _env = env;
+        _logger = logger;
 
         // Uncomment to generate the XSD files
         /*
