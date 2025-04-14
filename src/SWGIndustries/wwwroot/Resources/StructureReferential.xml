@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+For a reason I gave up trying to understand, if I don't set the Class attribute with a value, the whole file is not
+ imported and null is returned. So the root node has a "Root" class, but it is not used anywhere else. 
+ Class and FullClass of other nodes consider the root as null.
+-->
 <Node Class="Root"
       xmlns="http://swgindustries.com/swgstructures"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

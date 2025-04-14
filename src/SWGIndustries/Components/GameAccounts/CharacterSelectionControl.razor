@@ -5,22 +5,30 @@
 
 @implements MudBlazor.Interfaces.IFormComponent
 
-<AccountSelectionControl SelectedAccountChanged="GameAccountChanged"/>
+<div class="@Class" style="@Style">
+    <AccountSelectionControl SelectedAccountChanged="GameAccountChanged"/>
 
-<MudSelect T="CharacterEntity" @ref="_characterSelectionControl" SelectedValuesChanged="OnSelectedCharacterChanged"
-           Variant="Variant.Outlined" Label="Select the SWG Account" Dense="true" Style="width: 10rem" Class="mb-4">
-    
-    @if (_gameAccount != null && _gameAccount.Characters.Any())
-    {
-        @foreach(var character in _gameAccount.Characters)
+    <MudSelect T="CharacterEntity" @ref="_characterSelectionControl" SelectedValuesChanged="OnSelectedCharacterChanged"
+               Variant="Variant.Outlined" Label="Select the SWG Account" Dense="true" Style="width: 10rem" Class="mb-4">
+
+        @if (_gameAccount != null && _gameAccount.Characters.Any())
         {
-            <MudSelectItem T="CharacterEntity" Value="@character">@character.Name</MudSelectItem>
+            @foreach(var character in _gameAccount.Characters)
+            {
+                <MudSelectItem T="CharacterEntity" Value="@character">@character.Name</MudSelectItem>
+            }
         }
-    }
-    
-</MudSelect>
+
+    </MudSelect>
+</div>
 
 @code {
+    
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Style { get; set; } = "";
+    
+    [Parameter] public GameAccountEntity SelectedGameAccount { get; set; }
+    [Parameter] public EventCallback<GameAccountEntity> SelectedGameAccountChanged { get; set; }
     
     [Parameter] public CharacterEntity SelectedCharacter { get; set; }
     [Parameter] public EventCallback<CharacterEntity> SelectedCharacterChanged { get; set; }
@@ -30,7 +38,10 @@
 
     private void GameAccountChanged(GameAccountEntity gameAccount)
     {
+        SelectedGameAccount = gameAccount;
         _gameAccount = gameAccount;
+
+        SelectedGameAccountChanged.InvokeAsync(SelectedGameAccount);
         StateHasChanged();
     }
 

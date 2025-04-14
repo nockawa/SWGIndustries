@@ -1,0 +1,116 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject DefinitionService DefinitionService
+@implements IDisposable
+
+<div style="display: flex; flex-direction: column; width: 100%;">
+    <MudTooltip Text="@_maintenanceInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudProgressLinear Color="@_maintenanceColor" Style="margin-bottom: 1px" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_maintenanceMax" Value="_maintenanceCur"/>
+    </MudTooltip>
+    @if (_isEnergyHarvester == false)
+    {
+        <MudTooltip Text="@_powerInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
+            <MudProgressLinear Color="@_powerColor" Style="margin-bottom: 1px" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_powerMax" Value="_powerCur"/>
+        </MudTooltip>
+    }
+    <MudTooltip Text="@_hopperInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudProgressLinear Color="@_hopperColor" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_hopperMax" Value="_hopperCur"/>
+    </MudTooltip>
+</div>
+
+@code {
+    [Parameter] public BuildingEntity Harvester { get; set; }
+
+    private Timer _timer;
+
+    private bool _isPutDown;
+    private bool _isRunning;
+    private bool _isEnergyHarvester;
+    private IHarvesterBase _definition;
+    private Color _maintenanceColor;
+    private double _maintenanceMax;
+    private double _maintenanceCur;
+    private string _maintenanceInfo;
+    private double _powerMax;
+    private double _powerCur;
+    private string _powerInfo;
+    private Color _powerColor;
+    private double _hopperMax;
+    private double _hopperCur;
+    private string _hopperInfo;
+    private Color _hopperColor;
+
+    private static string FriendlyTime(TimeSpan timeSpan)
+    {
+        if (timeSpan.TotalDays > 0)
+        {
+            return $"{(int)timeSpan.TotalDays} days {timeSpan.Hours} hours";
+        }
+        
+        if (timeSpan.TotalHours > 0)
+        {
+            return $"{timeSpan.Hours} hours {timeSpan.Minutes} minutes";
+        }
+        return $"{timeSpan.Minutes} minutes {timeSpan.Seconds} seconds";
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Harvester == null)
+        {
+            return;
+        }
+
+        _isPutDown = Harvester.PutDownBy != null;
+        _isRunning = Harvester.IsRunning;
+        _isEnergyHarvester = Harvester.FullClass.StartsWith(StructureClasses.HarvesterEnergy);
+
+        _definition = DefinitionService.GetNodeByClass<IHarvesterBase>(Harvester.FullClass);
+        
+        Update();
+    }
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer((o) =>
+        {
+            Update();
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+    }
+
+    private void Update()
+    {
+        if (Harvester == null || _definition == null)
+        {
+            return;
+        }
+        var maintenanceCost = _definition.MaintenanceCost;
+        var now = DateTime.UtcNow;
+        _maintenanceMax = (double)Harvester.MaintenanceAmount / maintenanceCost;
+        var elapsed = now - Harvester.MaintenanceLastUpdate!.Value;
+        _maintenanceCur = _maintenanceMax - elapsed.TotalHours;
+        _maintenanceInfo = $"Maintenance left: {FriendlyTime(TimeSpan.FromHours(_maintenanceCur))}";
+        _maintenanceColor = (_maintenanceCur < 24) ? Color.Error : Color.Primary;
+
+        if (_isEnergyHarvester == false)
+        {
+            var definition = (IHarvester)_definition;
+            _powerMax = (double)Harvester.PowerAmount / definition.PowerConsumption;
+            _powerCur = _powerMax - elapsed.TotalHours;
+            _powerInfo = $"Power left: {FriendlyTime(TimeSpan.FromHours(_powerCur))}";
+            _powerColor = (_powerCur < 24) ? Color.Error : Color.Success;
+        }
+        
+        _hopperMax = _definition.MaxHopperSizeK;
+        _hopperCur = Harvester.HarvesterBER * DefinitionService.ServerDefinition.HarvesterExtractionFactor * (Harvester.ResourceConcentration / 100.0) * elapsed.TotalMinutes / 1000.0;
+        _hopperInfo = $"Harvested: {(int)_hopperCur}K";
+        _hopperColor = (_hopperCur/_hopperMax > 0.9) ? Color.Error : Color.Warning;
+    }
+}

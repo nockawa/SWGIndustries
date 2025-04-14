@@ -38,9 +38,9 @@ public class Program
         services.AddHttpContextAccessor();
         
         services.AddSingleton<UserService>();
-        services.AddScoped<DataAccessService>();
         services.AddScoped<AdminService>();
         services.AddSingleton<DefinitionService>();
+        services.AddScoped<InventoryService>();
         services.AddScoped<NamedSeriesService>();
         services.AddScoped<DataScopeService>();
 

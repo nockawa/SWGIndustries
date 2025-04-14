@@ -3,9 +3,8 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
-@inject ISnackbar Snackbar
-@inject DataAccessService DataAccessService
-@inject DataScopeService DataScopeService
+@inject InventoryService InventoryService
+@inject ResourceManagerService ResourceManagerService
 @inject AdminService AdminService
 
 <!--suppress CssUnresolvedCustomProperty -->
@@ -27,7 +26,7 @@
     <MudTable T="ClusterEntity" @ref="_table" Items="@_clusters" Dense="true" Striped="true" Hover="true">
         <ColGroup>
             <col />
-            <col style="width: 16rem"/>
+            <col style="width: 24rem"/>
             <col style="width: 10rem"/>
             <col style="width: 10rem"/>
         </ColGroup>
@@ -50,7 +49,7 @@
             <MudTd DataLabel="Name">
                 <MudLink Href=@($"/Resources/Cluster?id={context.Id}")>@context.Name</MudLink>
             </MudTd>
-            <MudTd DataLabel="Name">@context.Resource.Name</MudTd>
+            <MudTd DataLabel="Name">@GetResourceInfo(context.Resource)</MudTd>
             <MudTd DataLabel="Name">@context.Planet.GetFriendlyName()</MudTd>
             <MudTd DataLabel="Owned by Crew">
                 <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Secondary" Style="@(context.Crew==null ? "display: none" : "")"/>
@@ -67,7 +66,14 @@
     protected override async Task OnInitializedAsync()
     {
         var appAcount = await AdminService.GetAppAccountAsync();
-        _clusters = await DataAccessService.GetClusters(appAcount);
+        _clusters = await InventoryService.GetClusters(appAcount);
     }
-    
+
+    private string GetResourceInfo(ResourceEntity resourceName)
+    {
+        var rss = ResourceManagerService.GetResourceByName(resourceName.Name);
+        var cat = rss.Category;
+        return $"{rss.Name} ({cat.HarvestingResourceType}, {cat.Name})";
+    }
+
 }

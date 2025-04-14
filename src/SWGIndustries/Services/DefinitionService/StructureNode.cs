@@ -2,7 +2,7 @@
 
 namespace SWGIndustries.Services;
 
-public interface IStructureNode
+public interface IStructureNode : IBaseNode
 {
     int LotTaken { get; }
     int MaintenanceCost { get; }

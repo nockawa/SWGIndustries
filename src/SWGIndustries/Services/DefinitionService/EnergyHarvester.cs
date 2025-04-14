@@ -2,14 +2,8 @@
 
 namespace SWGIndustries.Services;
 
-public interface IEnergyHarvester
+public interface IEnergyHarvester : IHarvesterBase
 {
-    HarvestingResourceType ResourceType { get; }
-    int MinBER { get; }
-    int MaxBER { get; }
-    int MinHopperSizeK { get; }
-    int MaxHopperSizeK { get; }
-    int ReDeedCost { get; }
 }
 
 public class EnergyHarvester : StructureNode, IEnergyHarvester

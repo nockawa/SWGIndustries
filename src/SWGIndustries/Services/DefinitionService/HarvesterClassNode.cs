@@ -2,7 +2,7 @@
 
 namespace SWGIndustries.Services;
 
-public interface IHarvesterClassNode
+public interface IHarvesterClassNode : IStructureNode
 {
     int PowerConsumption { get; }
     int MinBER { get; }

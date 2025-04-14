@@ -1,11 +1,13 @@
 ﻿using System.IO.Compression;
 using System.Xml;
 using System.Xml.Serialization;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using SWGIndustries.Data;
 
 namespace SWGIndustries.Services;
 
+[PublicAPI]
 public class ResourceManagerService
 {
     private const string SWGAideResourceFileUrl = "https://swgaide.com/pub/exports/currentresources_162.xml.gz";
@@ -19,8 +21,13 @@ public class ResourceManagerService
     private readonly Dictionary<string, ResourceCategory> _resourceCategoryByName;
     private readonly Dictionary<ushort, ResourceCategory> _resourceCategoryById;
     private readonly Dictionary<string, Resource> _resourceByName;
-
     public ResourceCategory RootCategory { get; private set; }
+
+    public Resource GetResourceByName(string name)
+    {
+        _resourceByName.TryGetValue(name, out Resource resource);
+        return resource;
+    }
 
     public ResourceManagerService(IWebHostEnvironment env, IServiceProvider serviceProvider, ILogger<ResourceManagerService> logger)
     {
@@ -88,10 +95,31 @@ public class ResourceManagerService
             _locker.Release();
         }
     }
+
+    // Dictionary to map the resource category ID to their matching harvesting resource type
+    private readonly Dictionary<int, HarvestingResourceType> _harvestingTypeFromCategoryId = new()
+    {
+        { 1, HarvestingResourceType.Unknown       },
+        { 3, HarvestingResourceType.Creature      },
+        { 228, HarvestingResourceType.Flora       },
+        { 439, HarvestingResourceType.Chemical    },
+        { 453, HarvestingResourceType.Water       },
+        { 464, HarvestingResourceType.Mineral     },
+        { 475, HarvestingResourceType.Radioactive },
+        { 591, HarvestingResourceType.Gas         },
+        { 1104, HarvestingResourceType.Geothermal },
+        { 903, HarvestingResourceType.Wind        },
+        { 904, HarvestingResourceType.Solar       }
+    };
     
     private ResourceCategory BuildResourceCategories(ResourceCategory parent, XmlResourceCategory xmlCategory)
     {
-        var cat = new ResourceCategory(parent, xmlCategory);
+        HarvestingResourceType? hrt = null;
+        if (_harvestingTypeFromCategoryId.TryGetValue(xmlCategory.Index, out var tps))
+        {
+            hrt = tps;
+        }
+        var cat = new ResourceCategory(parent, xmlCategory, hrt);
         _resourceCategoryByName.Add(cat.Name, cat);
         _resourceCategoryById.Add(cat.Index, cat);
 
