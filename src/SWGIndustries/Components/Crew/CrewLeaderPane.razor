@@ -1,0 +1,85 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject AdminService AdminService
+@inject ISnackbar Snackbar
+
+@if (_answeredCrewInvitations != null && _answeredCrewInvitations.Count > 0)
+{
+    <MudPaper Class="ma-4 pa-4" Elevation="16">
+        @foreach (var invitation in _answeredCrewInvitations)
+        {
+            <MudAlert Class="ma-4 pa-4" Severity="@(invitation.Status == InvitationStatus.Accepted ? Severity.Success : Severity.Error)"
+                      ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="true"
+                      CloseIconClicked="@(async () => await CloseAnsweredCrewInvitation(invitation))">
+                @($"Your invitation to {invitation.ToAccount.Name} to join the crew {invitation.FromAccount.Crew.Name} was " + 
+                  ((invitation.Status == InvitationStatus.Accepted) ? "accepted": "rejected"))
+            </MudAlert>
+        }
+    </MudPaper>
+}
+
+<MudPaper Elevation="2" Class="ma-4 pa-4">
+    <MudTooltip Text="Invite a user to join your crew" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" 
+                   OnClick="() => ToggleForm()">Invite a user</MudButton>
+    </MudTooltip>
+    
+    @if (_displayInviteForm)
+    {
+        <InviteNewCrewMember CrewLeader="_crewLeader" 
+                             OnCrewInvitationSent="async void (user) => await SendNewMemberInvitation(user)"/>
+    }
+    
+</MudPaper>
+    
+@if (_crewRequestsForLeader is { Count: > 0 })
+{
+    <LeaderPendingCrewRequests CrewLeader="_crewLeader" OnRequestToJoinCrew="async void (invitation, grant) => await ActionOnInvitationRequest(invitation, grant)"/>
+}
+
+@code {
+    private IList<CrewInvitationEntity> _crewRequestsForLeader;
+
+    [Parameter] public CrewEntity Crew { get; set; }
+    
+    private AppAccountEntity _crewLeader;
+    private bool _displayInviteForm;
+    private IList<CrewInvitationEntity> _answeredCrewInvitations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _crewLeader = Crew.CrewLeader;
+        _crewRequestsForLeader = await AdminService.GetCrewRequestForLeader(_crewLeader);
+        _answeredCrewInvitations = await AdminService.GetAnsweredCrewInvitations();
+    }
+    
+    private async Task ActionOnInvitationRequest(CrewInvitationEntity invitation, bool grant)
+    {
+        var (res, info) = await AdminService.ProcessRequestToJoinCrew(invitation, grant);
+        Snackbar.Add(info, res ? Severity.Success : Severity.Error);
+        _crewRequestsForLeader = await AdminService.GetCrewRequestForLeader(_crewLeader);
+        StateHasChanged();
+    }
+
+    private void ToggleForm()
+    {
+        _displayInviteForm = !_displayInviteForm;
+        StateHasChanged();
+    }
+
+    private async Task<CrewInvitationEntity> SendNewMemberInvitation(AppAccountEntity invitedAccount)
+    {
+        var (crewInvitation, info) = await AdminService.CreateInvitationToJoinCrew(_crewLeader, invitedAccount);
+        Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
+
+        return crewInvitation;
+    }
+
+    private async Task CloseAnsweredCrewInvitation(CrewInvitationEntity invitation)
+    {
+        await AdminService.CloseCrewInvitation(invitation);
+        _answeredCrewInvitations.Remove(invitation);
+        StateHasChanged();
+    }
+}

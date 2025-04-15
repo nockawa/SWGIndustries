@@ -1,21 +1,51 @@
 ﻿@page "/Account/Manage"
+
 @using SWGIndustries.Services
 
-@inject UserManager UserManager
+@inject UserService UserService
+@inject GameServersManager GameServersManager
+@inject DefinitionService DefinitionService
+@inject ISnackbar Snackbar
 
-<h3>Manage Account: @_info.Name</h3>
-<br/>
-<p>
-    <MudAvatar Style="width: 150px; height: 150px;">
-        <MudImage Src="@_info.AvatarUrl"></MudImage>
-    </MudAvatar>
-</p>
+<MudAvatar Style="width: 150px; height: 150px;">
+    <MudImage Src="@_user.AvatarUrl"/>
+</MudAvatar>
+<h3>Manage Account: @_user.Name</h3>
+
+<div style="width: 22rem" class="mt-8">
+    <MudSelect T="GameServerDefinition" @bind-Value="_newGameServer"  Variant="Variant.Outlined" Label="Select the SWG server you're playing on.">
+        @foreach (var server in GameServersManager.GetServerList())
+        {
+            <MudSelectItem T="GameServerDefinition" Value="@server">@(server?.Name)</MudSelectItem>
+        }
+    </MudSelect>
+    <MudButton Class="mt-2" Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_swgGameServer == _newGameServer || _newGameServer==null)" OnClick="OnSaveNewServer">Save</MudButton>
+</div>
 
 @code {
-    private ExternalUserInfo _info;
+
+    private UserInfo _user;
+    private GameServerDefinition _swgGameServer;
+    private GameServerDefinition _newGameServer;
 
     protected override async Task OnInitializedAsync()
     {
-        _info = await UserManager.GetExternalUserInfo();
+        _user = await UserService.GetUserInfo();
+        _swgGameServer = await UserService.GetUserServerInfo();
+        _newGameServer = _swgGameServer;
+    }
+
+    private async Task OnSaveNewServer()
+    {
+        if (await UserService.SetUserServerInfo(_newGameServer) == false)
+        {
+            DefinitionService.ResetServerDefinition();
+            Snackbar.Add("Failed to save the new server.", Severity.Error);
+        }
+        else
+        {
+            _swgGameServer = _newGameServer;
+            Snackbar.Add("Server changed successfully.", Severity.Success);
+        }
     }
 }

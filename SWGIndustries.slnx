@@ -10,5 +10,6 @@
   <Folder Name="/src/tools/">
     <Project Path="src\Tools\ResourceTreeExporter\ResourceTreeExporter.csproj" Type="Classic C#" />
     <Project Path="src\Tools\SendGridEmailTest\SendGridEmailTest.csproj" Type="Classic C#" />
+    <Project Path="src\Tools\SWGAideResourceImport\SWGAideResourceImport.csproj" Type="Classic C#" />
   </Folder>
 </Solution>

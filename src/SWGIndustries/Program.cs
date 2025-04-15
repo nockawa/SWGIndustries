@@ -1,10 +1,11 @@
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor;
 using MudBlazor.Services;
-using SWGIndustries.Components;
 using SWGIndustries.Components.Account;
 using SWGIndustries.Data;
+using SWGIndustries.Pages;
 using SWGIndustries.Services;
 
 namespace SWGIndustries;
@@ -19,7 +20,14 @@ public class Program
         var services = builder.Services;
 
         // MudBlazor services
-        services.AddMudServices();
+        services.AddMudServices(config =>
+        {
+            config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+            config.SnackbarConfiguration.PreventDuplicates = false;
+            config.SnackbarConfiguration.NewestOnTop = true;
+            config.SnackbarConfiguration.ShowCloseIcon = true;
+            config.SnackbarConfiguration.VisibleStateDuration = 5000;
+        });
 
         services.AddRazorComponents()
             .AddInteractiveServerComponents();
@@ -29,7 +37,13 @@ public class Program
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
         
-        services.AddSingleton<UserManager>();
+        services.AddSingleton<GameServersManager>();
+        services.AddScoped<UserService>();
+        services.AddScoped<AdminService>();
+        services.AddScoped<DefinitionService>();
+        services.AddScoped<InventoryService>();
+        services.AddScoped<NamedSeriesService>();
+        services.AddScoped<DataScopeService>();
 
         //Configure authentication for the user using Discord OAuth2
         services.AddAuthentication(opt =>
@@ -68,8 +82,24 @@ public class Program
                                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionString));
+        {
+            options.UseSqlite(connectionString, sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            //options.UseSeeding((context, _) => { GenTestData(context); });
+            //options.EnableSensitiveDataLogging();
+        });
+        
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+        services.AddSingleton<ResourceManagerService>();
+        services.AddHostedService<ResourceUpdateBackgroundService>();
+        
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddLogging(loggingBuilder =>
+            {
+                loggingBuilder.AddSeq(builder.Configuration.GetSection("Seq"));
+            });
+        }
         
         // Build the application
         var app = builder.Build();
@@ -107,4 +137,74 @@ public class Program
         
         app.Run();
     }
+
+    private static readonly string[] AccountTestNames =
+    [
+        "Luke Skywalker", "Darth Vader", "Leia Organa", "Han Solo", "Obi-Wan Kenobi", "Yoda", "Anakin Skywalker", "Padmé Amidala", 
+        "Palpatine", "Chewbacca", "R2-D2", "C-3PO", "Lando Calrissian", "Boba Fett", "Jabba the Hutt", "Qui-Gon Jinn", "Mace Windu", 
+        "Count Dooku", "Rey", "Kylo Ren", "Finn", "Poe Dameron", "Maz Kanata", "Snoke", "Jyn Erso", "Cassian Andor", "K-2SO", 
+        "Chirrut Îmwe", "Baze Malbus", "Orson Krennic", "Saw Gerrera", "Galen Erso", "Bodhi Rook", "Mon Mothma", "Admiral Ackbar", 
+        "Wedge Antilles", "Biggs Darklighter", "Greedo", "Nien Nunb", "Admiral Thrawn", "Ahsoka Tano", "Ezra Bridger", "Kanan Jarrus", 
+        "Hera Syndulla", "Sabine Wren", "Garazeb Orrelios", "Agent Kallus", "Grand Inquisitor", "Asajj Ventress", "Savage Opress", 
+        "Mother Talzin", "Cad Bane", "Hondo Ohnaka", "Bo-Katan Kryze", "Pre Vizsla", "Satine Kryze", "Plo Koon", "Kit Fisto", 
+        "Shaak Ti", "Aayla Secura", "Barriss Offee", "Luminara Unduli", "Ki-Adi-Mundi", "Saesee Tiin", "Eeth Koth", "Adi Gallia", 
+        "Depa Billaba", "Quinlan Vos", "Jocasta Nu", "Bail Organa", "Wicket W. Warrick", "Nute Gunray", "Wat Tambor", "Poggle the Lesser", 
+        "San Hill", "Shmi Skywalker", "Cliegg Lars", "Owen Lars", "Beru Whitesun Lars", "Dexter Jettster", "Zam Wesell", "Jango Fett", 
+        "Bossk", "Dengar", "IG-88", "4-LOM", "Zuckuss", "Embo", "Aurra Sing", "Rex", "Fives", "Echo", "Jesse", "Gregor", "Wolffe", 
+        "Cody", "Fox", "Gree", "Bly"
+    ];
+
+    /*
+    private static void GenTestData(DbContext context)
+    {
+        foreach (var name in AccountTestNames)
+        {
+            var appUser = new AppAccountEntity
+            {
+                CorrelationId = $"{name}TestData",
+                Name = name
+            };
+            context.Set<AppAccountEntity>().Add(appUser);
+        }
+        context.SaveChanges();
+        var testAppUser = context.Set<AppAccountEntity>().FirstOrDefault(a => a.CorrelationId == "This is test data");
+        if (testAppUser != null)
+        {
+            var testAccounts = context.Set<GameAccountEntity>().Where(a => a.OwnerAppAccount == testAppUser).ToList();
+            context.Set<GameAccountEntity>().RemoveRange(testAccounts);
+            context.SaveChanges();
+                    
+            context.Set<AppAccountEntity>().Remove(testAppUser);
+            context.SaveChanges();
+        }
+        foreach (var applicationUser in context.Set<AppAccountEntity>().Where(a => a.CorrelationId == "This is test data").ToList())
+        {
+            context.Set<AppAccountEntity>().Remove(applicationUser);
+        }
+        context.SaveChanges();
+                
+        var appUser = new AppAccountEntity
+        {
+            CorrelationId = "This is test data"
+        };
+        context.Set<AppAccountEntity>().Add(appUser);
+
+        foreach (var name in AccountTestNames)
+        {
+            var account = new GameAccountEntity
+            {
+                Name = name,
+                OwnerAppAccount = appUser
+            };
+            context.Set<GameAccountEntity>().Add (account);
+                    
+            context.Set<CharacterEntity>().Add(new CharacterEntity
+            {
+                Name = name,
+                GameAccount = account,
+            });
+        }
+        context.SaveChanges();
+    }
+*/
 }

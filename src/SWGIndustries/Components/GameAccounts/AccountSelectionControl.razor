@@ -1,0 +1,56 @@
+﻿@*
+    Combo box control to select a SWG account for the current AppAccount
+*@
+
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject AdminService AdminService
+
+<MudSelect T="GameAccountEntity" @ref="_selectControl" SelectedValuesChanged="OnSelectedAccountChanged" 
+           Variant="Variant.Outlined" Label="Select the SWG Account" Dense="true" Style="width: 10rem" Class="mb-4">
+    
+    @foreach(var account in _accounts)
+    {
+        <MudSelectItem T="GameAccountEntity" Value="@account">@account.Name</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+
+    /// <summary>
+    /// Selected account
+    /// </summary>
+    [Parameter]
+    public GameAccountEntity SelectedAccount { get; set; }
+
+    /// <summary>
+    /// Callback when the selected account changes
+    /// </summary>
+    [Parameter] public EventCallback<GameAccountEntity> SelectedAccountChanged { get; set; }
+
+    private IList<GameAccountEntity> _accounts;
+    private MudSelect<GameAccountEntity> _selectControl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = await AdminService.GetUserGameAccounts();
+        SelectedAccount = _accounts.FirstOrDefault();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender || SelectedAccount == null)
+        {
+            return;
+        }
+        _selectControl.Value = _accounts.FirstOrDefault();
+        _selectControl.ForceUpdate();
+    }
+
+    private Task OnSelectedAccountChanged(IEnumerable<GameAccountEntity> arg)
+    {
+        SelectedAccount = arg.FirstOrDefault();
+        return SelectedAccountChanged.InvokeAsync(SelectedAccount);
+    }
+}

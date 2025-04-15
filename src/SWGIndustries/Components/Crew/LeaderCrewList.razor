@@ -1,0 +1,111 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject ISnackbar Snackbar
+@inject AdminService AdminService
+@inject IDialogService DialogService;
+
+<!--suppress CssUnresolvedCustomProperty -->
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+    .mud-table-head .mud-table-cell {
+        background-color: var(--mud-palette-primary);
+    }
+</style>
+
+<MudPaper Elevation="2" Class="ma-4 pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">You can manage your crew here.</MudText>
+    <MudTable T="CharacterEntity" GroupBy="_groupDefinition" Dense="true" Items="_characters" Elevation="0" Hover="true"
+              GroupHeaderStyle="background-color:var(--mud-palette-background-gray);">
+        <ColGroup>
+            <col style="width: 60px;"/>
+            <col/>
+            <col style="width: 4rem;"/>
+            <col style="width: 6rem;"/>
+        </ColGroup>
+        <HeaderContent>
+            <MudTh Style="color: var(--mud-palette-primary-text)">Character</MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">Lots</MudTh>
+            <MudTh Style="color: var(--mud-palette-primary-text)">Actions</MudTh>
+        </HeaderContent>
+        <GroupHeaderTemplate>
+            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="3">@(((GameAccountEntity)context.Key).Name)</MudTh>
+        </GroupHeaderTemplate>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Lots">@($"{context.PutDownBuildings.Count}/{context.MaxLotsForCrew}")</MudTd>
+            <MudTd DataLabel="Is member" Style="text-align: center;">
+                @if (context.IsCrewMember)
+                {
+                    <MudTooltip Text="Remove character from crew, only possible if the character no longer lends slots to the crew" openDelay="500" Placement="Placement.Top" Arrow="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonRemove" Color="Color.Error" Size="Size.Small"
+                                       Disabled="CanRemoveCharacter(context).Result == false"
+                                                 OnClick="@(async ()=> await RemoveCharacterFromCrew(context))"/>
+                    </MudTooltip>
+                }
+            </MudTd>
+        </RowTemplate>
+        <GroupFooterTemplate>
+            <MudTh/>
+            <MudTh Class="mud-table-cell-custom-group pa-2" colspan="2">@($"Total {context.Items.Sum(c => c.PutDownBuildings.Count)}/{context.Items.Sum(c => c.MaxLotsForCrew)}")</MudTh>
+        </GroupFooterTemplate>
+        <FooterContent>
+            <MudTd/>
+            <MudTd Class="mud-table-cell-custom-group pa-2" colspan="2">Grand Total: @($"{_characters.Sum(c => c.PutDownBuildings.Count)}/{_characters.Sum(c => c.MaxLotsForCrew)}")</MudTd>
+        </FooterContent>
+    </MudTable>
+</MudPaper>
+@code {
+    [Parameter] public CrewEntity Crew { get; set; }
+    [Parameter] public Action OnCrewListChanged { get; set; }
+    
+    public async Task RefreshCrewList()
+    {
+        _characters = await AdminService.GetCrewCharacters(Crew);
+        StateHasChanged();
+    }
+    
+    private TableGroupDefinition<CharacterEntity> _groupDefinition = new()
+    {
+        GroupName = "Account",
+        Indentation = true,
+        Expandable = true,
+        Selector = e => e.GameAccount,
+    };
+
+    private IList<CharacterEntity> _characters;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _characters = await AdminService.GetCrewCharacters(Crew);
+    }
+    
+    private async Task RefreshCharacters()
+    {
+        _characters = await AdminService.GetCrewCharacters(Crew);
+        StateHasChanged();
+    }
+
+    private async Task<bool> CanRemoveCharacter(CharacterEntity character)
+    {
+        return await AdminService.CanRemoveCharacterFromCrew(character);
+    }
+
+    private async Task<bool> RemoveCharacterFromCrew(CharacterEntity character)
+    {
+        if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to remove '{character.Name}' from the screw?", 
+                yesText: "Remove", cancelText: "Cancel") != true)
+        {
+            return false;
+        }
+        
+        var (res, info) = await AdminService.RemoveCharacterFromCrew(character);
+        Snackbar.Add(info, res ? Severity.Success : Severity.Error);
+        await RefreshCharacters();
+        OnCrewListChanged?.Invoke();
+        
+        return res;
+    }
+}

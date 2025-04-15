@@ -1,0 +1,59 @@
+﻿@using SWGIndustries.Data
+
+<MudPaper Elevation="4" Class="ma-4 pa-4">
+    <MudText Typo="Typo.body1" Class="mb-4">
+        You can create or join a crew if you are not already part of one.<br/>
+        If there is a pending invitation to join a crew, you must accept or reject it before creating or joining another crew.
+    </MudText>
+
+    <MudTooltip Text=@_createCrewToolTipText openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" Disabled="_canCreateOrJoinCrew==false"
+                   OnClick="() => ToggleForm(true)">Create</MudButton>
+    </MudTooltip>
+    <MudTooltip Text="Join an existing crew" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudButton Class="mb-4" Color="Color.Primary" Variant="Variant.Filled" OnClick="() => ToggleForm(false)"
+                   Disabled="_canCreateOrJoinCrew==false">Join</MudButton>
+    </MudTooltip>
+
+    <!-- Display the form to create a crew -->
+    @if (_createFormState == true)
+    {
+        <CreateCrew OnCrewCreated="@(crew =>
+       {
+           _createFormState = null;
+           OnCrewCreated?.Invoke(crew);
+       })"/>
+    }
+
+    // Display the form to join an existing crew        
+    else if (_createFormState == false)
+    {
+        <RequestToJoinCrew OnRequestToJoinCrew="@(invitation =>
+        {
+            _createFormState = null;
+            HasAnyRequests = invitation != null;
+            OnRequestToJoinCrew?.Invoke(invitation);
+        })"/>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public CrewEntity Crew { get; set; }
+    [Parameter] public bool HasAnyRequests { get; set; }
+    [Parameter] public Action<CrewEntity> OnCrewCreated { get; set; }
+    [Parameter] public Action<CrewInvitationEntity> OnRequestToJoinCrew { get; set; }
+    
+    private string _createCrewToolTipText;
+    private bool? _createFormState;     // null = not shown, true = create crew form, false = join crew form
+    private bool _canCreateOrJoinCrew;
+
+    protected override Task OnParametersSetAsync()
+    {
+        _canCreateOrJoinCrew = Crew == null && HasAnyRequests == false;
+        _createCrewToolTipText = _canCreateOrJoinCrew ? "Create your crew" : "Can't create a crew, one of your account is already part of one";
+        return Task.CompletedTask;
+    }
+
+    private void ToggleForm(bool create) => _createFormState = _createFormState == create ? null : create;
+
+}

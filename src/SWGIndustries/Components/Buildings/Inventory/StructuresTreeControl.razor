@@ -1,0 +1,50 @@
+﻿@using SWGIndustries.Services
+@inject DefinitionService DefinitionService
+@inherits MudComponentBase
+
+<div>
+    <MudTextField T="string" Label="Search" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                  TextChanged="OnTextChanged" Immediate="true" Clearable="true"/>
+    <MudTreeView T="IBaseNode" @ref="_treeView" Items="@_items" Hover="true" Dense="true" ExpandOnClick="true" 
+                 FilterFunc="OnFilter" SelectedValue="@Selection" SelectedValueChanged="@SelectionChanged">
+        <ItemTemplate>
+            <MudTreeViewItem Items="@context.Children" Value="@context.Value" Text="@context.Value?.Class" Visible="@context.Visible"/>
+        </ItemTemplate>
+    </MudTreeView>
+</div>
+
+@code {
+    [Parameter] public IBaseNode Selection { get; set; }
+    [Parameter] public EventCallback<IBaseNode> SelectionChanged { get; set; }
+    
+    private MudTreeView<IBaseNode> _treeView;
+    private List<TreeItemPresenter> _items;
+    private string _searchPhrase;
+
+    public sealed class TreeItemPresenter : TreeItemData<IBaseNode>
+    {
+        public TreeItemPresenter(IBaseNode node) : base(node)
+        {
+            Name = node.Class;
+            Children = [];
+            Children!.AddRange(node.Children.Select(n => new TreeItemPresenter(n)));
+        }
+
+        public override List<TreeItemData<IBaseNode>> Children { get; set; }
+        public string Name { get; }
+    }
+
+    protected override void OnInitialized()
+    {
+        _items =  DefinitionService.StructureRoot.Children.Select(n => new TreeItemPresenter(n)).ToList();
+    }
+
+    private async void OnTextChanged(string searchPhrase)
+    {
+        _searchPhrase = searchPhrase;
+        await _treeView.FilterAsync();
+    }
+
+    private Task<bool> OnFilter(TreeItemData<IBaseNode> item) => 
+        Task.FromResult(!string.IsNullOrEmpty(item.Value?.Class) && item.Value.Class.Contains(_searchPhrase, StringComparison.OrdinalIgnoreCase));
+}

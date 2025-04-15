@@ -1,0 +1,83 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject UserService UserService
+@inject ISnackbar Snackbar
+@inject AdminService AdminService
+
+<MudText Typo="Typo.h6" >Send a request to join an existing crew</MudText>
+<MudText Typo="Typo.caption" Class="my-6">You must either type the name of the SWG Industries account of the crew leader, or the name of the crew.</MudText>
+<div class="d-flex">
+<MudForm Style="width: 45%" Class="mr-4" @bind-IsValid="@_crewNameFormSuccess">
+    <MudTextField T="string" Label="Name of the crew" Variant="Variant.Outlined"
+                  Required="true" Immediate="true" DebounceInterval="200"
+                  Validation="@(async (string t) => await ValidateCrewName(t))"/>
+
+    <div class="d-flex justify-end mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null))">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_crewNameFormSuccess)"
+                   OnClick="(async() => { await SendRequestToJoinCrew(); })">Join</MudButton>
+    </div>
+</MudForm>
+<MudForm Style="width: 45%" @bind-IsValid="@_accountNameFormSuccess">
+    <MudTextField T="string" Label="Name of the crew leader's SWG Industries account" Variant="Variant.Outlined"
+                  Required="true" Immediate="true" DebounceInterval="200"
+                  Validation="@(async (string t) => await ValidateAccountNane(t))"/>
+
+    <div class="d-flex justify-end mt-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                   OnClick="@(() => OnRequestToJoinCrew?.Invoke(null))">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_accountNameFormSuccess)"
+                   OnClick="(async() => { await SendRequestToJoinCrew(); })">Join</MudButton>
+    </div>
+</MudForm>
+</div>
+@code {
+    
+    /// <summary>
+    /// First Account of the Action is the Crew Leader, the second one is the account to join the crew.
+    /// If both are <c>null</c> the request was cancelled.
+    /// </summary>
+    [Parameter] public Action<CrewInvitationEntity> OnRequestToJoinCrew { get; set; }
+
+    private AppAccountEntity _appAccount;
+    private CrewEntity _crewToJoin;
+    private bool _crewNameFormSuccess;
+    private bool _accountNameFormSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _appAccount = await AdminService.GetAppAccountAsync();
+    }
+
+
+    private async Task SendRequestToJoinCrew()
+    {
+        var (crewInvitation, info) = await AdminService.CreateRequestToJoinCrew(_crewToJoin.CrewLeader, _appAccount);
+        Snackbar.Add(info, (crewInvitation!=null) ? Severity.Success : Severity.Error);
+        
+        OnRequestToJoinCrew?.Invoke(crewInvitation);
+        _crewToJoin = null;
+    }
+
+    private async Task<string> ValidateCrewName(string crewName)
+    {
+        var crew = await AdminService.GetCrewByName(crewName, true);
+        if (crew != null)
+        {
+            _crewToJoin = crew;
+        }
+        return crew == null ? "No crew with that name." : null;
+    }
+
+    private async Task<string> ValidateAccountNane(string accountName)
+    {
+        var crew = await AdminService.GetCrewByLeaderAccountName(accountName, true);
+        if (crew != null)
+        {
+            _crewToJoin = crew;
+        }
+        return crew == null ? "No SWG Industries account with that name being leader of a crew." : null;
+    }
+}

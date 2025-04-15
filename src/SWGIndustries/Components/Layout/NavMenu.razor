@@ -1,46 +1,37 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using SWGIndustries.Services
 @inject IHttpContextAccessor HttpContextAccessor
-@inject UserManager UserManager
+@inject UserService UserService
 
-@*<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SWGIndustries</a>
-    </div>
-</div>
-
-<div>
-    <ul class="nav flex-column">
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        <AuthorizeView>
-            <!--Ensure the user can actually access guilds before showing the view-->
-            <Authorized>
-                <li class="nav-item px-1">
-                    <NavLink class="nav-link" href="SWGAccounts">
-                        <span class="bi" aria-hidden="true"></span> SWG Accounts
-                    </NavLink>
-                </li>
-            </Authorized>
-        </AuthorizeView>
-    </ul>
-</div>*@
-
-<MudNavLink Href="SWGAccounts">SWG Accounts</MudNavLink>
-
+<AuthorizeView>
+    <MudNavMenu Class="mud-width-full" Color="Color.Info" Bordered="true">
+        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Warehouse" IconColor="Color.Inherit">Home</MudNavLink>
+        <MudNavGroup Title="Admin accounts" Icon="@Icons.Material.Filled.Settings" IconColor="Color.Inherit">
+            <MudNavLink Href="Admin/GameAccounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Inherit">Game Accounts</MudNavLink>
+            <MudNavLink Href="Admin/Crew" Icon="@Icons.Material.Filled.People" IconColor="Color.Inherit">Crew</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Buildings" Icon="@Icons.Material.Filled.Home" IconColor="Color.Inherit">
+            <MudNavLink Href="Buildings/Inventory" Icon="@Icons.Material.Filled.Inventory" IconColor="Color.Inherit">Inventory</MudNavLink>
+            <MudNavLink Href="Buildings/Lots" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Inherit">Lots</MudNavLink>
+            <MudNavLink Href="Buildings/Factory" Icon="@Icons.Material.Filled.Factory" IconColor="Color.Inherit">Factories</MudNavLink>
+            <MudNavLink Href="Buildings/Harvester" Icon="@Icons.Material.Filled.Volcano" IconColor="Color.Inherit">Harvesters</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Resources" Icon="@Icons.Material.Filled.Storage">
+            <MudNavLink Href="Resources/Current" Icon="@Icons.Material.Filled.Storage" IconColor="Color.Inherit">Current</MudNavLink>
+            <MudNavLink Href="Resources/Clusters" Icon="@Icons.Material.Filled.Hive" IconColor="Color.Inherit">Clusters</MudNavLink>
+        </MudNavGroup>
+    </MudNavMenu>
+</AuthorizeView>
 @code {
 
-    private ExternalUserInfo _info;
+    private UserInfo _info;
 
     protected override async Task OnInitializedAsync()
     {
         //Don't attempt to query if the user isn't authenticated.
         if (HttpContextAccessor.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            _info = await UserManager.GetExternalUserInfo();
+            _info = await UserService.GetUserInfo();
         }
     }
 }

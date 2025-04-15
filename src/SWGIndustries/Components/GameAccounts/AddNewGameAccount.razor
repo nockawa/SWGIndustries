@@ -1,0 +1,59 @@
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject AdminService AdminService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Style="width: 50%">
+    <MudText Typo="Typo.h6">Add a new Game Account</MudText>
+    <MudForm @ref="_accountForm" @bind-IsValid="@_formSuccess" Model="@_newAccount">
+        <MudTextField T="string" Label="Name" Required="true" AutoFocus="true" Immediate="true" DebounceInterval="100"
+                      Validation="@(async (string t) => await ValidateAccountName(t))" @bind-Value="@_newAccount.Name"></MudTextField>
+        <div class="d-flex justify-end mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mr-2"
+                       OnClick="@(() => OnAccountAdded?.Invoke(null))">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_formSuccess)"
+                       OnClick="CreateGameAccount">Create</MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+@code {
+    
+    [Parameter] 
+    public Action<GameAccountEntity> OnAccountAdded { get; set; }
+    
+    private GameAccountEntity _newAccount = new();
+    private MudForm _accountForm;
+    private bool _formSuccess;
+    
+    private async Task CreateGameAccount()
+    {
+        if (await AdminService.AddGameAccount(_newAccount, true))
+        {
+            Snackbar.Add($"Game Account '{_newAccount.Name}' added successfully.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to add Game Account.", Severity.Error);
+        }
+        
+        OnAccountAdded?.Invoke(_newAccount);
+        _newAccount = new GameAccountEntity();
+    }
+
+    private async Task<string> ValidateAccountName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Name is required.";
+        }
+
+        if (await AdminService.GetGameAccountByName(name, true) != null)
+        {
+            return "Name already exists.";
+        }
+            
+        return null;
+    }
+}

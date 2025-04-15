@@ -1,11 +1,11 @@
-﻿@using SWGIndustries.Services
+﻿@using SWGIndustries.Data
+@using SWGIndustries.Services
 @inherits LayoutComponentBase
 @inject NavigationManager NavMgr
-@inject UserManager UserManager
-
+@inject UserService UserService
 
 @* Required *@
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" @ref="@_themeProvider"/>
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -25,32 +25,34 @@
                 <MudLink Href="Account/Manage">
                     @context.User.Identity?.Name
                 </MudLink>
-                @if (ExternalUserInfo != null && ExternalUserInfo.AvatarUrl != null)
+                @if (UserInfo != null && UserInfo.AvatarUrl != null)
                 {
-                    <MudLink Href="Account/Manage">
-                        <MudAvatar Href="Account/Manage" Class="ml-3">
-                            <MudImage Src="@ExternalUserInfo.AvatarUrl" referrerPolicy="no-referrer"></MudImage>
+                    <MudLink href="Account/Manage">
+                        <MudAvatar href="Account/Manage" Class="ml-3">
+                            <MudImage Src="@UserInfo.AvatarUrl" referrerPolicy="no-referrer"></MudImage>
                         </MudAvatar>
                     </MudLink>
                 }
-                <MudLink Class="ml-3" Href="Account/Logout">LogOut</MudLink>
+                <MudLink Class="mx-3" Href="Account/Logout">LogOut</MudLink>
             </Authorized>
             <NotAuthorized>
                 <MudLink Href="@($"Account/Login?ReturnUrl={ReturnUrl}")">Login</MudLink>
             </NotAuthorized>
         </AuthorizeView>
 
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@DarkLightModeButtonIcon()" Color="Color.Inherit" OnClick="@ThemeModeCycle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer id="nav-drawer" Variant="DrawerVariant.Persistent" @bind-Open="_drawerOpen" 
+               ClipMode="DrawerClipMode.Always" Elevation="2" Class="py-4">
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mt-16 pa-4">
-        @Body
+        <CascadingValue Value="_themeProvider">
+            @Body
+        </CascadingValue>
     </MudMainContent>
 </MudLayout>
-
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -59,55 +61,83 @@
 </div>
 
 @*
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<!-- 4 rows, taking the whole space -->
+<MudGrid Style="height: calc(100vh - 5rem); background-color: #e685b5">
+    <MudItem md="12">
+        <MudPaper Style="height: 100%; background-color: #ffc107"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+    <MudItem md="12">
+        <MudPaper Style="height: 100%"></MudPaper>
+    </MudItem>
+</MudGrid>
+*@
 
-    <main>
-        <div class="top-row px-1">
-            <a href="https://docs.microsoft.com/en-us/aspnet/" target="_blank">About</a>
-            <AuthorizeView>
-                <Authorized>
-                    <a href="Account/Manage">
-                        @context.User.Identity?.Name
-                        @if (ExternalUserInfo != null && ExternalUserInfo.AvatarUrl != null)
-                        {
-                            <img src="@ExternalUserInfo.AvatarUrl" referrerPolicy="no-referrer" width="40" height="40" alt="Avatar Picture" style="border-radius: 50%; margin-left: 0.5rem"/>
-                        }
-                    </a>
-                    <a href="Account/Logout">LogOut</a>
-                </Authorized>
-                <NotAuthorized>
-                    <a class="nav-link" href="Account/Login?ReturnUrl=@ReturnUrl">Login</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
-        <div class="content px-4">
-            @Body
-        </div>
-    </main>
-</div>
+@*
+<!-- a column taking the whole height, 3/12 wide, then 4 rows, taking the whole space remaining -->
+<MudGrid Style="height: calc(100vh - 5rem); background-color: #e685b5">
+    <MudItem md="3">
+        <MudPaper Style="height: 100%; background-color: #ffc107"></MudPaper>
+    </MudItem>
 
-
+    <MudItem md="9">
+        <MudGrid Style="height: calc(100% + 1.5rem)">
+            <MudItem md="12">
+                <MudPaper Style="height: 100%; background-color: #0dcaf0"></MudPaper>
+            </MudItem>
+            <MudItem md="12">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+            <MudItem md="12">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+            <MudItem md="12" Style="margin-bottom: 0">
+                <MudPaper Style="height: 100%"></MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudItem>
+</MudGrid>
 *@
 
 @code
 {
-    private string ReturnUrl { get; set; }
-    private ExternalUserInfo ExternalUserInfo { get; set; }
-    bool _drawerOpen = true;
-    private bool _isDarkMode = true;
+    private MudThemeProvider _themeProvider;
+    private ThemeMode _themeMode = ThemeMode.Auto;
     private MudTheme _theme = null;
+    private bool _isDarkMode;
+    private bool _systemDarkMode;
+
+    private string ReturnUrl { get; set; }
+    private UserInfo UserInfo { get; set; }
+    bool _drawerOpen = true;
 
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
     
-    private void DarkModeToggle()
+    private void ThemeModeCycle()
     {
-        _isDarkMode = !_isDarkMode;
+        _themeMode = (ThemeMode)(((int)_themeMode + 1) % 3);
+        switch (_themeMode)
+        {
+            case ThemeMode.Auto:
+                _isDarkMode = _systemDarkMode;
+                break;
+            case ThemeMode.Dark:
+                _isDarkMode = true;
+                break;
+            case ThemeMode.Light:
+                _isDarkMode = false;
+                break;
+        }
+
+        UserInfo.ThemeMode = _themeMode;
     }
 
     protected override async Task OnInitializedAsync()
@@ -121,14 +151,35 @@
             LayoutProperties = new LayoutProperties()
         };
         
+        var userInfo = await UserService.GetUserInfo();
+        _themeMode = userInfo.ThemeMode;
+        _isDarkMode = (_themeMode == ThemeMode.Auto) ? _systemDarkMode : _themeMode == ThemeMode.Dark;
+
         ReturnUrl = NavMgr.ToBaseRelativePath(NavMgr.Uri);
         if (ReturnUrl == "") 
         {
             ReturnUrl = "/";
         }
 
-        ExternalUserInfo = await UserManager.GetExternalUserInfo();
+        UserInfo = userInfo;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _systemDarkMode = await _themeProvider.GetSystemPreference();
+            _isDarkMode = (_themeMode == ThemeMode.Auto) ? _systemDarkMode : _themeMode == ThemeMode.Dark;
+            await _themeProvider.WatchSystemPreference(dark =>
+            {
+                _systemDarkMode = dark;
+                StateHasChanged();
+                return Task.CompletedTask;
+            });
+            StateHasChanged();
+        }
+    }
+
     private readonly PaletteLight _lightPalette = new()
     {
         Black = "#110e2d",
@@ -168,9 +219,17 @@
         OverlayLight = "#1e1e2d80",
     };
 
-    public string DarkLightModeButtonIcon => _isDarkMode switch
+    private string DarkLightModeButtonIcon()
     {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
+        switch (_themeMode)
+        {
+            case ThemeMode.Auto:
+                return Icons.Material.Outlined.LightMode;
+            case ThemeMode.Light:
+                return Icons.Material.Outlined.DarkMode;
+            case ThemeMode.Dark:
+                return Icons.Material.Outlined.AutoMode;
+        }
+        return null;
+    }
 }

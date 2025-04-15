@@ -1,0 +1,76 @@
+﻿@*
+    Control to select a Character from a given Game Account
+*@
+@using SWGIndustries.Data
+
+@implements MudBlazor.Interfaces.IFormComponent
+
+<div class="@Class" style="@Style">
+    <AccountSelectionControl SelectedAccountChanged="GameAccountChanged"/>
+
+    <MudSelect T="CharacterEntity" @ref="_characterSelectionControl" SelectedValuesChanged="OnSelectedCharacterChanged"
+               Variant="Variant.Outlined" Label="Select the SWG Character" Dense="true" Style="width: 10rem" Class="mb-4">
+
+        @if (_gameAccount != null && _gameAccount.Characters.Any())
+        {
+            @foreach(var character in _gameAccount.Characters)
+            {
+                <MudSelectItem T="CharacterEntity" Value="@character">@character.Name</MudSelectItem>
+            }
+        }
+
+    </MudSelect>
+</div>
+
+@code {
+    
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Style { get; set; } = "";
+    
+    [Parameter] public GameAccountEntity SelectedGameAccount { get; set; }
+    [Parameter] public EventCallback<GameAccountEntity> SelectedGameAccountChanged { get; set; }
+    
+    [Parameter] public CharacterEntity SelectedCharacter { get; set; }
+    [Parameter] public EventCallback<CharacterEntity> SelectedCharacterChanged { get; set; }
+
+    private GameAccountEntity _gameAccount;
+    private MudSelect<CharacterEntity> _characterSelectionControl;
+
+    private void GameAccountChanged(GameAccountEntity gameAccount)
+    {
+        SelectedGameAccount = gameAccount;
+        _gameAccount = gameAccount;
+
+        SelectedGameAccountChanged.InvokeAsync(SelectedGameAccount);
+        StateHasChanged();
+    }
+
+    private Task OnSelectedCharacterChanged(IEnumerable<CharacterEntity> arg)
+    {
+        SelectedCharacter = arg.FirstOrDefault();
+        return SelectedCharacterChanged.InvokeAsync(SelectedCharacter);
+    }
+
+    public Task Validate()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task ResetAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ResetValidation()
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool Required { get; set; }
+    public bool Error { get; set; }
+    public bool HasErrors { get; }
+    public bool Touched { get; }
+    public object Validation { get; set; }
+    public bool IsForNull { get; }
+    public List<string> ValidationErrors { get; set; }
+}

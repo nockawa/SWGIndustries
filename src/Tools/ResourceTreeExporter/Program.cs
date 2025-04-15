@@ -1,10 +1,19 @@
-﻿using System.Dynamic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Xml.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 
 namespace ResourceTreeExporter;
+
+
+// Note the "index" column in the CSV file should have unique values, I think, but it's not the case with energy_renewable_unlimited_solar_yavin4 which is
+//  identical to fiberplast, so I've remapped energy_renewable_unlimited_solar_yavin4 to 1671...
+
+//671	fiberplast				Fiberplast					13	13					res_decay_resist	res_quality	res_malleability	res_toughness	res_shock_resistance							1	1000	1	1000	1	1000	1	1000	1	1000														
+//671	energy_renewable_unlimited_solar_yavin4						Yavinian Solar Renewable Energy			1	1	1	1			res_quality	res_potential_energy										500	500	200	600																			object/resource_container/energy_liquid.iff	energy_resource
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public class ResourceCategory
@@ -84,15 +93,24 @@ static class Program
 
             XElement previousNode = null;
             var depthStack = new Stack<XElement>();
-            
+
+            var allocatedIds = new HashSet<int>();
             while (csv.Read())
             {
                 var record = csv.GetRecord<ResourceCategory>();
 
                 var node = new XElement("ResourceCategory");
-                node.Add(new XAttribute("Name", record.ClassName));
+                
+                // Trim the double space char between names (e.g. "Dathomirian  Domesticated Milk") otherwise we crash later on during the SWGAide import...
+                var recordClassName = record.ClassName.Replace("  ", " ");
+                node.Add(new XAttribute("Name", recordClassName));
                 
                 var nodeLevel = record.ClassLevel;
+
+                if (allocatedIds.Add(record.Index) == false)
+                {
+                    throw new InvalidOperationException($"Duplicated ID {record.Index} detected in resource tree, they must be unique"); 
+                }
                 
                 node.Add(new XAttribute("Index", record.Index));
                 
@@ -134,6 +152,7 @@ static class Program
             xmlDoc.Save("resource_tree.xml");
         }
 
+        Console.WriteLine("Resource tree exported to resource_tree.xml, press a key to exit");
         Console.ReadKey();
     }
 }

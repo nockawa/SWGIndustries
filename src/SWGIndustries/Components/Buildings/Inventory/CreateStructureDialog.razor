@@ -1,0 +1,85 @@
+﻿@using SWGIndustries.Services
+@using SWGIndustries.Data
+@using SWGIndustries.Components.GameAccounts
+
+<MudDialog Style="min-width: 70vmin; min-height: 70vmin">
+    <DialogContent>
+        <AccountSelectionControl @bind-SelectedAccount="SelectedAccount"/>
+        <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Start" StretchItems="StretchItems.End">
+            <StructuresTreeControl @bind-Selection="SelectedTemplate" @bind-Selection:after="OnTemplateChanged"/>
+
+            <MudForm @bind-IsValid="@_success" @bind-Errors="_errors" Class="ma-2">
+                @if (SelectedTemplate is House or Factory or Harvester or EnergyHarvester)
+                {
+                    if (SelectedTemplate is Harvester harvester)
+                    {
+                        <MudCheckBox T="bool" Label="Is self powered" @bind-Value="HarvesterCreationProperties.SelfPowered"/>
+
+                        <MudNumericField T="int" Label="BER" @bind-Value="@HarvesterCreationProperties.BER" Required="true" Immediate="true"
+                                         Min="@harvester.MinBER" Max="@harvester.MaxBER" Class="ma-2"/>
+                        <MudNumericField T="int" Label="Hopper size (in K)" @bind-Value="@HarvesterCreationProperties.HopperSizeK" Required="true" Immediate="true"
+                                         Min="@harvester.MinHopperSizeK" Max="@harvester.MaxHopperSizeK" Class="ma-2"/>
+                    } else if (SelectedTemplate is EnergyHarvester energyHarvester)
+                    {
+                        <MudNumericField T="int" Label="BER" @bind-Value="@HarvesterCreationProperties.BER" Required="true" Immediate="true"
+                                         Min="@energyHarvester.MinBER" Max="@energyHarvester.MaxBER" Class="ma-2"/>
+                        <MudNumericField T="int" Label="Hopper size (in K)" @bind-Value="@HarvesterCreationProperties.HopperSizeK" Required="true" Immediate="true"
+                                         Min="@energyHarvester.MinHopperSizeK" Max="@energyHarvester.MaxHopperSizeK" Class="ma-2"/>
+                    }
+
+                    <MudTooltip Text="Will create multiple instance of the same structure in the inventory"
+                                openDelay="200" Placement="Placement.Top" Arrow="true">
+                        <MudNumericField T="int" Label="Count" @bind-Value="@StructureCount" Required="true" Immediate="true"
+                                         Min="1" Max="100" Class="ma-2"/>
+                    </MudTooltip>
+                }
+            </MudForm>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    
+    private bool _success;
+    private string[] _errors;
+
+    public IBaseNode SelectedTemplate { get; private set; }
+    public int StructureCount { get; private set; }
+
+    public HarvesterCreationProperties HarvesterCreationProperties { get; } = new();
+
+    public GameAccountEntity SelectedAccount { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+    
+    protected override void OnInitialized()
+    {
+        StructureCount = 1;
+        _success = true;
+    }
+
+    private void OnTemplateChanged()
+    {
+        if (SelectedTemplate is Harvester harvester)
+        {
+            HarvesterCreationProperties.BER = harvester.MaxBER;
+            HarvesterCreationProperties.HopperSizeK = harvester.MinHopperSizeK;
+            HarvesterCreationProperties.HarvestingResourceType = harvester.ResourceType;
+        } 
+        else if (SelectedTemplate is EnergyHarvester energyHarvester)
+        {
+            HarvesterCreationProperties.BER = energyHarvester.MaxBER;
+            HarvesterCreationProperties.HopperSizeK = energyHarvester.MinHopperSizeK;
+            HarvesterCreationProperties.HarvestingResourceType = energyHarvester.ResourceType;
+        }
+        _success = true;
+        StateHasChanged();
+    }
+}
