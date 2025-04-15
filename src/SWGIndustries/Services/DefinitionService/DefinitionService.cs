@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Diagnostics;
+using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using JetBrains.Annotations;
@@ -19,30 +20,72 @@ namespace SWGIndustries.Services;
 public class DefinitionService
 {
     private readonly IWebHostEnvironment _env;
+    private readonly GameServersManager _gameServersManager;
+    private readonly UserService _userService;
     private readonly ILogger<DefinitionService> _logger;
     private readonly Dictionary<string, BaseNode> _nodesByFullClassName = new();
+    private GameServerDefinition _gameServerDefinition;
+    private int? _gameServerId;
     public IBaseNode StructureRoot { get; }
-    public ServerDefinition ServerDefinition { get; }
 
-    public DefinitionService(IWebHostEnvironment env, ILogger<DefinitionService> logger)
+    public int GameServerId
+    {
+        get
+        {
+            if (_gameServerId.HasValue == false)
+            {
+                _ = GameServerDefinition;
+                Debug.Assert(_gameServerId != null, nameof(_gameServerId) + " != null");
+            }
+
+            return _gameServerId.Value;
+        }
+    }
+
+    public GameServerDefinition GameServerDefinition
+    {
+        get
+        {
+            if (_gameServerDefinition == null)
+            {
+                var user = _userService.GetUserInfo().Result;
+                var serverDefinition = _gameServersManager.GetServer(user.SWGServerName);
+                if (serverDefinition == null)
+                {
+                    _logger.LogWarning($"No SWG Server configured for user {user.Name}, taking SWG Restoration as default.");
+                    serverDefinition = _gameServersManager.GetServer(GameServersManager.DefaultServerName);
+                }
+
+                _gameServerId = serverDefinition.Id;
+                _gameServerDefinition = serverDefinition;
+            }
+
+            return _gameServerDefinition;
+        }
+    }
+
+    public DefinitionService(IWebHostEnvironment env, GameServersManager gameServersManager, UserService userService, ILogger<DefinitionService> logger)
     {
         _env = env;
+        _gameServersManager = gameServersManager;
+        _userService = userService;
         _logger = logger;
 
         // Uncomment to generate the XSD files
-        /*
         {
-            ExportXSD(typeof(BaseNode), "StructuresDefinition.xsd");
-            ExportXSD(typeof(ServerDefinition), "ServerDefinition.xsd");
+            // ExportXSD(typeof(BaseNode), "StructuresDefinition.xsd");
+            // ExportXSD(typeof(GameServerDefinition), "ServerDefinitions/ServerDefinition.xsd");
         }
-        */
         
-        var structureRoot = LoadXML<BaseNode>(Path.Combine(_env.WebRootPath, "Resources", "StructureReferential.xml"), null);
+        var structureRoot = XMLHelper.LoadXML<BaseNode>(Path.Combine(_env.WebRootPath, "Resources", "StructureReferential.xml"));
         PostImport(structureRoot);
         StructureRoot = structureRoot;
-        
-        ServerDefinition = LoadXML<ServerDefinition>(Path.Combine(_env.WebRootPath, "Resources", "SWGRestorationIII.xml"), "http://swgindustries.com/server");
+    }
 
+    internal void ResetServerDefinition()
+    {
+        _gameServerDefinition = null;
+        _gameServerId = null;
     }
 
     private void ExportXSD(Type type, string xsdName)
@@ -63,19 +106,6 @@ public class DefinitionService
         }
     }
 
-
-    private static T LoadXML<T>(string fileName, string xmlNamespace)
-    {
-        var serializer = new XmlSerializer(typeof(T));
-        using var fileStream = new FileStream(fileName, FileMode.Open);
-        serializer.UnknownNode += (sender, e) => Console.WriteLine($"Unknown Node: {e.Name} - {e.Text}");
-        serializer.UnknownAttribute += (sender, e) => Console.WriteLine($"Unknown Attribute: {e.Attr.Name}='{e.Attr.Value}'");
-        serializer.UnknownElement += (sender, e) => Console.WriteLine($"Unknown Element: {e.Element.Name}");
-        serializer.UnreferencedObject += (sender, e) => Console.WriteLine($"Unreferenced Object: {e.UnreferencedId}");
-        var o = serializer.Deserialize(fileStream);
-        return (T)o;
-    }
-    
     public IBaseNode GetNodeByClass(string className)
     {
         if (_nodesByFullClassName.TryGetValue(className, out var node))

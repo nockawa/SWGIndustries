@@ -35,8 +35,10 @@ public static class AccountExtensions
             string returnUrl) =>
         {
             
-            await userManager.UserLoggedIn(context);
-            return Results.Redirect(returnUrl);
+            var userInfo = await userManager.UserLoggedIn(context);
+            
+            // If the user is created for the first time, redirect to the account management page for the user to finish account setup.
+            return Results.Redirect(userInfo.IsAccountJustCreated ? "/Account/Manage" : returnUrl);
         });
 
         return accountGroup;

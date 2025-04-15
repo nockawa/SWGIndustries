@@ -37,21 +37,22 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AppAccountEntity>()
             .HasMany(e => e.GameAccounts).WithOne(e => e.OwnerAppAccount);
         modelBuilder.Entity<AppAccountEntity>().Navigation(a => a.GameAccounts).AutoInclude();
+        modelBuilder.Entity<AppAccountEntity>().HasIndex(a => a.CorrelationId).IsUnique();
 
         // Resource Entity
         modelBuilder.Entity<ResourceEntity>().ToTable("Resources");
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.Name).IsUnique();
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.DepletedSince);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CategoryIndex);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI0);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI1);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI2);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI3);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI4);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI5);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI6);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.CI7);
-        modelBuilder.Entity<ResourceEntity>().HasIndex(r => r.SWGAideId).IsUnique();
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.Name }).IsUnique();
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.DepletedSince });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CategoryIndex });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI0 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI1 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI2 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI3 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI4 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI5 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI6 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.CI7 });
+        modelBuilder.Entity<ResourceEntity>().HasIndex(r => new { r.GameServerId, r.SWGAideId }).IsUnique();
         modelBuilder.Entity<ResourceEntity>().Property(r => r.Name).IsRequired();
         
         // Game Account Entity
@@ -80,11 +81,13 @@ public class ApplicationDbContext : DbContext
         
         // Building Entity
         modelBuilder.Entity<BuildingEntity>().ToTable("Buildings");
+        modelBuilder.Entity<BuildingEntity>().Navigation(b => b.HarvestingResource).AutoInclude();
         modelBuilder.Entity<BuildingEntity>().HasIndex(b => b.FullClass);
         
         // Cluster Entity
         modelBuilder.Entity<ClusterEntity>().ToTable("Clusters");
         modelBuilder.Entity<ClusterEntity>().Property(p => p.CreationDateTime).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder.Entity<ClusterEntity>().Navigation(c => c.Resource).AutoInclude();
         modelBuilder.Entity<ClusterEntity>()
             .HasMany(c => c.Buildings)
             .WithOne(b => b.Cluster)

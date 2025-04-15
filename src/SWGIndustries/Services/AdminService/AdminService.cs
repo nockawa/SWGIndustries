@@ -6,23 +6,38 @@ namespace SWGIndustries.Services;
 public class AdminService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly UserService _userService;
     private readonly ILogger<AdminService> _logger;
 
-    private readonly Task<AppAccountEntity> _appAccountTask;
+    private AppAccountEntity _appAccount;
 
     public AdminService(ApplicationDbContext dbContext, UserService userService, ILogger<AdminService> logger)
     {
         _dbContext = dbContext;
+        _userService = userService;
         _logger = logger;
-
-        _appAccountTask = userService.BuildAppAccount(_dbContext);
     }
 
     #region AppAccount operations
 
-    public async Task<AppAccountEntity> GetAppAccountAsync() => await _appAccountTask;
-    public AppAccountEntity GetAppAccount() => _appAccountTask.Result;
-    
+    public async Task<AppAccountEntity> GetAppAccountAsync()
+    {
+        if (_appAccount == null)
+        {
+            _appAccount = await _userService.BuildAppAccount(_dbContext);
+        }
+        return _appAccount;
+    }
+
+    public AppAccountEntity GetAppAccount()
+    {
+        if (_appAccount == null)
+        {
+            _appAccount = GetAppAccountAsync().GetAwaiter().GetResult();
+        }
+        return _appAccount;
+    }
+
     public async Task<AppAccountEntity> GetAppAccountByName(string name, bool caseInsensitive)
     {
         if (string.IsNullOrWhiteSpace(name))

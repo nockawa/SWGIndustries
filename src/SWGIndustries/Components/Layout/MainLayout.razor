@@ -161,7 +161,7 @@
             ReturnUrl = "/";
         }
 
-        UserInfo = await UserService.GetUserInfo();
+        UserInfo = userInfo;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

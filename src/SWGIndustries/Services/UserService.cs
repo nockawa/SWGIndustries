@@ -11,12 +11,16 @@ public class UserService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly GameServersManager _gameServersManager;
+    private readonly ILogger<UserService> _logger;
     private UserInfo _userInfo;
 
-    public UserService(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor)
+    public UserService(IServiceProvider serviceProvider, IHttpContextAccessor httpContextAccessor, GameServersManager gameServersManager, ILogger<UserService> logger)
     {
         _serviceProvider = serviceProvider;
         _httpContextAccessor = httpContextAccessor;
+        _gameServersManager = gameServersManager;
+        _logger = logger;
     }
 
     internal async Task<UserInfo> UserLoggedIn(HttpContext httpContext)
@@ -43,6 +47,31 @@ public class UserService
         }
         return _userInfo ?? UserInfo.GetUnauthenticated(_serviceProvider);
     }
+    public async Task<GameServerDefinition> GetUserServerInfo()
+    {
+        var user = await GetUserInfo();
+        return _gameServersManager.GetServer(user.SWGServerName);
+    }
+    
+    public async Task<bool> SetUserServerInfo(GameServerDefinition gameServerDefinition)
+    {
+        try
+        {
+            var userInfo = await GetUserInfo();
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var appAccountEntity = await context.AppAccounts.FirstOrDefaultAsync(a => a.CorrelationId==userInfo.UserExternalId);
+            appAccountEntity.SWGServerName = gameServerDefinition.Name;
+            context.AppAccounts.Update(appAccountEntity);
+            return await context.SaveChangesAsync() > 0;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error setting user server info");
+            return false;
+        }
+    }
+
 
     public async Task<AppAccountEntity> BuildAppAccount(ApplicationDbContext dbContext) => (await GetUserInfo()).BuildAppAccount(dbContext);
 }
@@ -78,6 +107,25 @@ public class UserInfo
         Name = claims.First(c => c.Type == ClaimTypes.Name).Value;
         Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
 
+        // Create a new user in database if it doesn't exist, or load its settings
+        using var scope = _serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var user = await context.AppAccounts.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
+        if (user == null)
+        {
+            IsAccountJustCreated = true;
+            user = new AppAccountEntity
+            {
+                CorrelationId = UserExternalId,
+                Name = Name
+            };
+            context.AppAccounts.Add(user);
+            await context.SaveChangesAsync();
+        }
+
+        SWGServerName = user.SWGServerName;
+
+        // Get the avatar URL
         switch (httpContextUser.Identity.AuthenticationType)
         {
             case "Discord":
@@ -107,26 +155,12 @@ public class UserInfo
                 break;
             }
         }
-        
-        // Create a new user in database if it doesn't exist, or load its settings
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var user = await context.AppAccounts.FirstOrDefaultAsync(x => x.CorrelationId == UserExternalId);
-        if (user == null)
-        {
-            user = new AppAccountEntity
-            {
-                CorrelationId = UserExternalId,
-                Name = Name
-            };
-            context.AppAccounts.Add(user);
-            await context.SaveChangesAsync();
-        }
     }
 
     public bool IsAuthenticatedUser => UserExternalId != null;
     public bool IsGuest => UserExternalId == null;
-
+    public bool IsAccountJustCreated { get; set; }
+    
     internal AppAccountEntity BuildAppAccount(ApplicationDbContext context)
     {
         return IsGuest ? AppAccountEntity.Guest : context.AppAccounts.Where(x => x.CorrelationId == UserExternalId)
@@ -177,6 +211,8 @@ public class UserInfo
     public string UserExternalId { get; private set; }
     public string Name { get; private set; }
     public string AvatarUrl { get; private set; }
+    public string SWGServerName { get; private set; }
+    
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public string Email { get; private set; }
 

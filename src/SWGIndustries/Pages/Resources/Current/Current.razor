@@ -8,6 +8,7 @@
 
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject DefinitionService DefinitionService
 @inject AdminService AdminService
 @inject InventoryService InventoryService
 @inject ResourceManagerService ResourceManagerService
@@ -172,7 +173,7 @@
     protected override void OnInitialized()
     {
         var rootList = new List<TreeItemData<ResourceCategory>>();
-        var rootItem = new TreeItemData<ResourceCategory> { Value = ResourceManagerService.RootCategory };
+        var rootItem = new TreeItemData<ResourceCategory> { Value = ResourceManagerService.GetRootCategory(DefinitionService.GameServerId) };
         LoadSubCategories(rootItem);
         rootItem.Expanded = true;
         rootList.Add(rootItem);

@@ -9,7 +9,7 @@
     <AccountSelectionControl SelectedAccountChanged="GameAccountChanged"/>
 
     <MudSelect T="CharacterEntity" @ref="_characterSelectionControl" SelectedValuesChanged="OnSelectedCharacterChanged"
-               Variant="Variant.Outlined" Label="Select the SWG Account" Dense="true" Style="width: 10rem" Class="mb-4">
+               Variant="Variant.Outlined" Label="Select the SWG Character" Dense="true" Style="width: 10rem" Class="mb-4">
 
         @if (_gameAccount != null && _gameAccount.Characters.Any())
         {

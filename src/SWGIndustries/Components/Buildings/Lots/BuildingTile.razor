@@ -1,6 +1,9 @@
-﻿@using SWGIndustries.Data
+﻿@using System.Text
+@using Microsoft.Extensions.Primitives
+@using SWGIndustries.Data
 @using SWGIndustries.Components.Misc
 @using SWGIndustries.Services
+@using SWGIndustries.Components.Buildings.Inventory
 
 @inject DefinitionService DefinitionService
 
@@ -12,7 +15,7 @@
         <MudStack Row="true" Spacing="0" Justify="Justify.FlexStart" StretchItems="StretchItems.Start"
                   AlignItems="AlignItems.Start" Style="height: 24px; width: 100%">
             
-            <MudText Typo="Typo.caption" Align="Align.Left" Class="my-1 ml-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ">@Building?.Name</MudText>
+            <MudText Typo="Typo.caption" Align="Align.Left" Class="my-1 ml-1" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@Building?.Name</MudText>
             
             @if (_mouseOver)
             {
@@ -21,16 +24,22 @@
             
         </MudStack>
         
-        <MudStack Row="true" Style="height: 100%; width: 100%;">
-
-            <MudProgressLinear Color="Color.Info" Size="Size.Large" Value="25" Class="my-7" Style="width: 10rem">
-                <MudText Typo="Typo.subtitle1" Color="Color.Dark">
-                    <b>25%</b>
-                </MudText>
-            </MudProgressLinear>
+        <MudStack Spacing="0" Style="height: 100%; width: calc(100% - 16px);" Class="ma-2">
+            @if (Building.FullClass.StartsWith(StructureClasses.Harvester))
+            {
+                if (_resource != null)
+                {
+                    <MudText Typo="Typo.caption" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        @(Building.IsRunning ? "Harvesting" : "Idle")
+                        <MudLink Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                 Typo="Typo.caption" Href="@($"/Resources/Resource?id={_resource.Id}")">@(_resource.Name)</MudLink>
+                    </MudText>
+                }
+                <HarvesterStatus Harvester="@Building" Size="Size.Large" DisplayInfoInBar="true" />
+            }
         </MudStack>
 
-        <MudStack Row="true" Spacing="1" Justify="Justify.FlexStart" StretchItems="StretchItems.None" AlignItems="AlignItems.Center"
+        <MudStack Row="true" Spacing="0" Justify="Justify.FlexStart" StretchItems="StretchItems.None" AlignItems="AlignItems.Center"
                   Style="height: 30px; width: 100%; ">
             
             @if (Building != null && Building.PutDownPlanet != Planet.Undefined)
@@ -44,7 +53,7 @@
             @if (Building?.BuildingForCrew ?? false)
             {
                 <MudTooltip Text="Building is for crew" openDelay="500" Placement="Placement.Top" Arrow="true">
-                    <MudAvatar Size="Size.Small" Class="ml-1 mt-1" Color="Color.Info">
+                    <MudAvatar Size="Size.Small" Class="mx-1 mt-1" Color="Color.Info">
                         <MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Groups"></MudIcon>
                     </MudAvatar>
                 </MudTooltip>
@@ -52,10 +61,12 @@
 
             @if (Building?.Cluster != null)
             {
-                <MudTooltip Text="Building is part of cluster [TODO]" openDelay="500" Placement="Placement.Top" Arrow="true">
-                    <MudAvatar Size="Size.Small" Class="ml-0 mr-1 mt-1" Color="Color.Secondary">
-                        <MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Hive"></MudIcon>
-                    </MudAvatar>
+                <MudTooltip Text="@($"Building is part of cluster {Building.Cluster.Name}")" openDelay="500" Placement="Placement.Top" Arrow="true">
+                    <MudLink Href="@($"/Resources/Cluster?id={Building.Cluster.Id}")">
+                        <MudAvatar Size="Size.Small" Class="mr-1 mt-1" Color="Color.Secondary">
+                            <MudIcon Size="Size.Small" Icon="@Icons.Material.Filled.Hive"></MudIcon>
+                        </MudAvatar>
+                    </MudLink>
                 </MudTooltip>
             }
 
@@ -68,11 +79,24 @@
 @code {
     [Parameter] public BuildingEntity Building { get; set; }
     [Parameter] public TileSize TileSize { get; set; }
-    
+
     private int _elevation = 4;
     private bool _mouseOver;
+    private ResourceEntity _resource;
 
     private string GetTileHeight() => TileSize == TileSize.Large ? "20rem" : "10rem";
+
+    protected override void OnInitialized()
+    {
+        if (Building != null)
+        {
+            // Harvester
+            if (Building.FullClass.StartsWith(StructureClasses.Harvester))
+            {
+                _resource = (Building.Cluster != null) ? Building.Cluster.Resource : Building.HarvestingResource;
+            }
+        }
+    }
 
     private void OnMouseOver()
     {

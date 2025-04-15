@@ -165,7 +165,10 @@ public class InventoryService : IDisposable, IAsyncDisposable
         if (scope == null)
         {
             IQueryable<BuildingEntity> q = DbContext.Buildings
-                .Include(b => b.Owner).Include(b => b.PutDownBy).Include(b => b.Cluster);
+                .Include(b => b.Owner)
+                .Include(b => b.PutDownBy)
+                .Include(b => b.Cluster)
+                .Include(b => b.HarvestingResource);
             if (classFilter != null)
             {
                 q = q.Where(b => b.FullClass.StartsWith(classFilter));

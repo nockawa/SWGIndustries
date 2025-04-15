@@ -39,7 +39,13 @@ public class AppAccountEntity
     /// </summary>
     [MaxLength(32)]
     public string Name { get; set; }
-    
+
+    /// <summary>
+    /// Name of the server this account is playing on.
+    /// </summary>
+    [MaxLength(64)]
+    public string SWGServerName { get; set; }
+
     /// <summary>
     /// Unique identifier given by the authentication provider.
     /// </summary>
