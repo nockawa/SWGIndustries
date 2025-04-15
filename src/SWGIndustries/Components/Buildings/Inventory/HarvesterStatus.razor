@@ -4,23 +4,54 @@
 @inject DefinitionService DefinitionService
 @implements IDisposable
 
+<style>
+    .mud-progress-linear.horizontal.mud-progress-linear-small {
+        height: 10px
+    }
+
+    .mud-progress-linear.horizontal.mud-progress-linear-medium {
+        height: 14px
+    }
+
+    .mud-progress-linear.horizontal.mud-progress-linear-large {
+        height: 20px
+    }    
+</style>
+
 <div style="display: flex; flex-direction: column; width: 100%;">
     <MudTooltip Text="@_maintenanceInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
-        <MudProgressLinear Color="@_maintenanceColor" Style="margin-bottom: 1px" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_maintenanceMax" Value="_maintenanceCur"/>
+        <MudProgressLinear Color="@_maintenanceColor" Style="margin-bottom: 1px" Size="@Size" Striped="@_isRunning" Min="0" Max="@_maintenanceMax" Value="_maintenanceCur">
+            @if (DisplayInfoInBar)
+            {
+                <MudText Typo="Typo.caption" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; color: white; text-shadow: 1px 1px 6px black">@_maintenanceInfo</MudText>
+            }
+        </MudProgressLinear>
     </MudTooltip>
     @if (_isEnergyHarvester == false)
     {
         <MudTooltip Text="@_powerInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
-            <MudProgressLinear Color="@_powerColor" Style="margin-bottom: 1px" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_powerMax" Value="_powerCur"/>
+            <MudProgressLinear Color="@_powerColor" Style="margin-bottom: 1px" Size="@Size" Striped="@_isRunning" Min="0" Max="@_powerMax" Value="_powerCur">
+                @if (DisplayInfoInBar)
+                {
+                    <MudText Typo="Typo.caption" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; color: white; text-shadow: 1px 1px 6px black">@_powerInfo</MudText>
+                }
+            </MudProgressLinear>
         </MudTooltip>
     }
     <MudTooltip Text="@_hopperInfo" openDelay="500" Placement="Placement.Top" Arrow="true">
-        <MudProgressLinear Color="@_hopperColor" Size="Size.Medium" Striped="@_isRunning" Min="0" Max="@_hopperMax" Value="_hopperCur"/>
+        <MudProgressLinear Color="@_hopperColor" Size="@Size" Striped="@_isRunning" Min="0" Max="@_hopperMax" Value="_hopperCur">
+            @if (DisplayInfoInBar)
+            {
+                <MudText Typo="Typo.caption" Style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; color: white; text-shadow: 1px 1px 6px black">@_hopperInfo</MudText>
+            }
+        </MudProgressLinear>
     </MudTooltip>
 </div>
 
 @code {
     [Parameter] public BuildingEntity Harvester { get; set; }
+    [Parameter] public Size Size { get; set; } = Size.Medium;
+    [Parameter] public bool DisplayInfoInBar { get; set; }
 
     private Timer _timer;
 
@@ -45,7 +76,7 @@
     {
         if (timeSpan.TotalDays > 0)
         {
-            return $"{(int)timeSpan.TotalDays} days {timeSpan.Hours} hours";
+            return $"{(int)timeSpan.TotalDays}d {timeSpan.Hours}h";
         }
         
         if (timeSpan.TotalHours > 0)
@@ -62,10 +93,7 @@
             return;
         }
 
-        _isPutDown = Harvester.PutDownBy != null;
-        _isRunning = Harvester.IsRunning;
         _isEnergyHarvester = Harvester.FullClass.StartsWith(StructureClasses.HarvesterEnergy);
-
         _definition = DefinitionService.GetNodeByClass<IHarvesterBase>(Harvester.FullClass);
         
         Update();
@@ -91,11 +119,15 @@
         {
             return;
         }
+        
+        _isPutDown = Harvester.PutDownBy != null;
+        _isRunning = Harvester.IsRunning;
+        
         var maintenanceCost = _definition.MaintenanceCost;
         var now = DateTime.UtcNow;
         _maintenanceMax = (double)Harvester.MaintenanceAmount / maintenanceCost;
-        var elapsed = now - Harvester.MaintenanceLastUpdate!.Value;
-        _maintenanceCur = _maintenanceMax - elapsed.TotalHours;
+        var elapsedMaintenance = Harvester.MaintenanceLastUpdate.HasValue ? (now - Harvester.MaintenanceLastUpdate.Value) : TimeSpan.Zero;
+        _maintenanceCur = _maintenanceMax - elapsedMaintenance.TotalHours;
         _maintenanceInfo = $"Maintenance left: {FriendlyTime(TimeSpan.FromHours(_maintenanceCur))}";
         _maintenanceColor = (_maintenanceCur < 24) ? Color.Error : Color.Primary;
 
@@ -103,13 +135,15 @@
         {
             var definition = (IHarvester)_definition;
             _powerMax = (double)Harvester.PowerAmount / definition.PowerConsumption;
-            _powerCur = _powerMax - elapsed.TotalHours;
+            var elapsedPower = Harvester.PowerLastUpdate.HasValue ? (now - Harvester.PowerLastUpdate.Value) : TimeSpan.Zero;
+            _powerCur = _powerMax - elapsedPower.TotalHours;
             _powerInfo = $"Power left: {FriendlyTime(TimeSpan.FromHours(_powerCur))}";
             _powerColor = (_powerCur < 24) ? Color.Error : Color.Success;
         }
         
         _hopperMax = _definition.MaxHopperSizeK;
-        _hopperCur = Harvester.HarvesterBER * DefinitionService.ServerDefinition.HarvesterExtractionFactor * (Harvester.ResourceConcentration / 100.0) * elapsed.TotalMinutes / 1000.0;
+        var elapsedRunning = Harvester.LastRunningDateTime.HasValue ? (now - Harvester.LastRunningDateTime.Value) : TimeSpan.Zero;
+        _hopperCur = Harvester.HarvesterBER * DefinitionService.GameServerDefinition.HarvesterExtractionFactor * (Harvester.ResourceConcentration / 100.0) * elapsedRunning.TotalMinutes / 1000.0;
         _hopperInfo = $"Harvested: {(int)_hopperCur}K";
         _hopperColor = (_hopperCur/_hopperMax > 0.9) ? Color.Error : Color.Warning;
     }

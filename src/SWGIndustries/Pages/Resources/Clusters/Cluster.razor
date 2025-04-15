@@ -43,6 +43,12 @@
     }
 </style>
 
+@if (_cluster == null || _resource == null)
+{
+    <MudText Typo="Typo.body1" Class="ma-4">Loading...</MudText>
+    return;
+}
+
 <MudPaper Elevation="2" Class="ma-2 px-4 pt-0 pb-4">
     <!-- Viewing mode header of the cluster -->
     @if (_editMode == false)
@@ -54,11 +60,8 @@
             </MudTooltip>
         </div>
 
-        var resource = ResourceManagerService.GetResourceByName(_cluster.Resource.Name);
-        var resourceCategory = resource.Category;
-        
         <MudText Typo="Typo.body1" Class="my-4">
-            @($"This cluster is located on planet {_cluster.Planet.GetFriendlyName()}, harvesting resource {_cluster.Resource.Name} ({resourceCategory.HarvestingResourceType}, {resourceCategory.Name}).")
+            @($"This cluster is located on planet {_cluster.Planet.GetFriendlyName()}, harvesting resource {_cluster.Resource.Name} ({_resource.Category.HarvestingResourceType}, {_resource.Category.Name}).")
         </MudText>
         
         <div style="display: flex; align-items: center;" class="mb-4">
@@ -331,6 +334,7 @@
     [Parameter] [SupplyParameterFromQuery(Name = "id")] public int Id { get; set; }
 
     private ClusterEntity _cluster;
+    private Resource _resource;
     private string _headerText;
     
     private MudTextField<string> _nameTextField;
@@ -443,6 +447,9 @@
             {
                 var crew = _cluster.Crew != null ? $" (from crew '{_cluster.Crew.Name}')" : string.Empty;
                 _headerText = $"Cluster {_cluster.Name}{crew}";
+                
+                _resource = ResourceManagerService.GetResourceByName(DefinitionService.GameServerId, _cluster.Resource.Name);
+                
                 EvalCanPutDown();
             }
             else
@@ -517,7 +524,7 @@
 
     private async Task RefreshHarvesterList()
     {
-        var hrt =ResourceManagerService.GetResourceByName(_cluster.Resource.Name).Category.HarvestingResourceType;
+        var hrt = ResourceManagerService.GetResourceByName(DefinitionService.GameServerId, _cluster.Resource.Name).Category.HarvestingResourceType;
         _availableHarvester = await InventoryService.GetAvailableHarvesters(_selectedGameAccount, hrt);
     }
 

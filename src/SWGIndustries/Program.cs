@@ -37,9 +37,10 @@ public class Program
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
         
-        services.AddSingleton<UserService>();
+        services.AddSingleton<GameServersManager>();
+        services.AddScoped<UserService>();
         services.AddScoped<AdminService>();
-        services.AddSingleton<DefinitionService>();
+        services.AddScoped<DefinitionService>();
         services.AddScoped<InventoryService>();
         services.AddScoped<NamedSeriesService>();
         services.AddScoped<DataScopeService>();

@@ -2,8 +2,10 @@
 <Server xmlns="http://swgindustries.com/swgserver"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://swgindustries.com/server ServerDefinition.xsd">
+    <Id>1</Id>
     <Name>SWG Restoration III</Name>
-    <SWGAideResourceFileURL>https://swgaide.com/Resources/SWGRestorationIII.xml</SWGAideResourceFileURL>
+    <ServerWebSiteURL>https://swgr.org/home/</ServerWebSiteURL>
+    <SWGAideResourceFileURL>https://swgaide.com/pub/exports/currentresources_162.xml.gz</SWGAideResourceFileURL>
     <LotCountPerCharacter>10</LotCountPerCharacter>
     <MaxCharacterCountPerAccount>4</MaxCharacterCountPerAccount>
     <HarvesterExtractionFactor>1.5</HarvesterExtractionFactor>

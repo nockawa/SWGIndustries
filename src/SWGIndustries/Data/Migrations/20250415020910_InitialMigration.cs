@@ -31,6 +31,7 @@ namespace SWGIndustries.data.migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    GameServerId = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     CategoryIndex = table.Column<ushort>(type: "INTEGER", nullable: false),
                     SWGAideId = table.Column<int>(type: "INTEGER", nullable: false),
@@ -70,6 +71,7 @@ namespace SWGIndustries.data.migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 32, nullable: true),
+                    SWGServerName = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true),
                     CorrelationId = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
                     ThemeMode = table.Column<int>(type: "INTEGER", nullable: false),
                     CrewId = table.Column<int>(type: "INTEGER", nullable: true)
@@ -228,6 +230,7 @@ namespace SWGIndustries.data.migrations
                     HarvesterBER = table.Column<int>(type: "INTEGER", nullable: false),
                     HarvesterHopperSize = table.Column<int>(type: "INTEGER", nullable: false),
                     HarvestingResourceType = table.Column<int>(type: "INTEGER", nullable: false),
+                    HarvestingResourceId = table.Column<int>(type: "INTEGER", nullable: true),
                     ResourceConcentration = table.Column<float>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
@@ -249,7 +252,18 @@ namespace SWGIndustries.data.migrations
                         principalTable: "GameAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Buildings_Resources_HarvestingResourceId",
+                        column: x => x.HarvestingResourceId,
+                        principalTable: "Resources",
+                        principalColumn: "Id");
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppAccounts_CorrelationId",
+                table: "AppAccounts",
+                column: "CorrelationId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppAccounts_CrewId",
@@ -265,6 +279,11 @@ namespace SWGIndustries.data.migrations
                 name: "IX_Buildings_FullClass",
                 table: "Buildings",
                 column: "FullClass");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Buildings_HarvestingResourceId",
+                table: "Buildings",
+                column: "HarvestingResourceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Buildings_OwnerId",
@@ -329,59 +348,65 @@ namespace SWGIndustries.data.migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CategoryIndex",
+                name: "IX_Resources_GameServerId_CategoryIndex",
                 table: "Resources",
-                column: "CategoryIndex");
+                columns: new[] { "GameServerId", "CategoryIndex" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI0",
+                name: "IX_Resources_GameServerId_CI0",
                 table: "Resources",
-                column: "CI0");
+                columns: new[] { "GameServerId", "CI0" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI1",
+                name: "IX_Resources_GameServerId_CI1",
                 table: "Resources",
-                column: "CI1");
+                columns: new[] { "GameServerId", "CI1" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI2",
+                name: "IX_Resources_GameServerId_CI2",
                 table: "Resources",
-                column: "CI2");
+                columns: new[] { "GameServerId", "CI2" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI3",
+                name: "IX_Resources_GameServerId_CI3",
                 table: "Resources",
-                column: "CI3");
+                columns: new[] { "GameServerId", "CI3" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI4",
+                name: "IX_Resources_GameServerId_CI4",
                 table: "Resources",
-                column: "CI4");
+                columns: new[] { "GameServerId", "CI4" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI5",
+                name: "IX_Resources_GameServerId_CI5",
                 table: "Resources",
-                column: "CI5");
+                columns: new[] { "GameServerId", "CI5" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI6",
+                name: "IX_Resources_GameServerId_CI6",
                 table: "Resources",
-                column: "CI6");
+                columns: new[] { "GameServerId", "CI6" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_CI7",
+                name: "IX_Resources_GameServerId_CI7",
                 table: "Resources",
-                column: "CI7");
+                columns: new[] { "GameServerId", "CI7" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_DepletedSince",
+                name: "IX_Resources_GameServerId_DepletedSince",
                 table: "Resources",
-                column: "DepletedSince");
+                columns: new[] { "GameServerId", "DepletedSince" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Resources_Name",
+                name: "IX_Resources_GameServerId_Name",
                 table: "Resources",
-                column: "Name",
+                columns: new[] { "GameServerId", "Name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Resources_GameServerId_SWGAideId",
+                table: "Resources",
+                columns: new[] { "GameServerId", "SWGAideId" },
                 unique: true);
 
             migrationBuilder.AddForeignKey(

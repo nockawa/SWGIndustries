@@ -34,10 +34,17 @@ namespace SWGIndustries.data.migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("SWGServerName")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ThemeMode")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CorrelationId")
+                        .IsUnique();
 
                     b.HasIndex("CrewId");
 
@@ -71,6 +78,9 @@ namespace SWGIndustries.data.migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("HarvesterSelfPowered")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("HarvestingResourceId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("HarvestingResourceType")
@@ -121,6 +131,8 @@ namespace SWGIndustries.data.migrations
                     b.HasIndex("ClusterId");
 
                     b.HasIndex("FullClass");
+
+                    b.HasIndex("HarvestingResourceId");
 
                     b.HasIndex("OwnerId");
 
@@ -348,6 +360,9 @@ namespace SWGIndustries.data.migrations
                     b.Property<ushort>("FL")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("GameServerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<ushort>("HR")
                         .HasColumnType("INTEGER");
 
@@ -382,27 +397,30 @@ namespace SWGIndustries.data.migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CI0");
+                    b.HasIndex("GameServerId", "CI0");
 
-                    b.HasIndex("CI1");
+                    b.HasIndex("GameServerId", "CI1");
 
-                    b.HasIndex("CI2");
+                    b.HasIndex("GameServerId", "CI2");
 
-                    b.HasIndex("CI3");
+                    b.HasIndex("GameServerId", "CI3");
 
-                    b.HasIndex("CI4");
+                    b.HasIndex("GameServerId", "CI4");
 
-                    b.HasIndex("CI5");
+                    b.HasIndex("GameServerId", "CI5");
 
-                    b.HasIndex("CI6");
+                    b.HasIndex("GameServerId", "CI6");
 
-                    b.HasIndex("CI7");
+                    b.HasIndex("GameServerId", "CI7");
 
-                    b.HasIndex("CategoryIndex");
+                    b.HasIndex("GameServerId", "CategoryIndex");
 
-                    b.HasIndex("DepletedSince");
+                    b.HasIndex("GameServerId", "DepletedSince");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("GameServerId", "Name")
+                        .IsUnique();
+
+                    b.HasIndex("GameServerId", "SWGAideId")
                         .IsUnique();
 
                     b.ToTable("Resources", (string)null);
@@ -424,6 +442,10 @@ namespace SWGIndustries.data.migrations
                         .HasForeignKey("ClusterId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("SWGIndustries.Data.ResourceEntity", "HarvestingResource")
+                        .WithMany()
+                        .HasForeignKey("HarvestingResourceId");
+
                     b.HasOne("SWGIndustries.Data.GameAccountEntity", "Owner")
                         .WithMany("Buildings")
                         .HasForeignKey("OwnerId")
@@ -435,6 +457,8 @@ namespace SWGIndustries.data.migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Cluster");
+
+                    b.Navigation("HarvestingResource");
 
                     b.Navigation("Owner");
 

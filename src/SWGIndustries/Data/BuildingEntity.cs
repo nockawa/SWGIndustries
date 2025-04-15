@@ -49,6 +49,7 @@ public class BuildingEntity
     public int HarvesterBER { get; set; }
     public int HarvesterHopperSize { get; set; }
     public HarvestingResourceType HarvestingResourceType { get; set; }
+    public ResourceEntity HarvestingResource { get; set; }
 
     public float ResourceConcentration { get; set; }
 }

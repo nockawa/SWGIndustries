@@ -3,6 +3,7 @@
 @using SWGIndustries.Data
 @using SWGIndustries.Services
 
+@inject DefinitionService DefinitionService
 @inject InventoryService InventoryService
 @inject ResourceManagerService ResourceManagerService
 @inject AdminService AdminService
@@ -19,11 +20,10 @@
 
 <MudPaper Elevation="4" Class="ma-4 pa-4">
 
-    <MudText Typo="Typo.body1" Class="mb-4">
-        This page lists the Clusters you are part of.
-    </MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">This page lists the Clusters you are part of.</MudText>
+    <MudText Typo="Typo.body2">You can create a new cluster from the <MudLink Typo="Typo.body2" Href="/Resources/Current">Current Resources</MudLink> page by right clicking on a given resource.</MudText>
 
-    <MudTable T="ClusterEntity" @ref="_table" Items="@_clusters" Dense="true" Striped="true" Hover="true">
+    <MudTable Class="mt-4" T="ClusterEntity" @ref="_table" Items="@_clusters" Dense="true" Striped="true" Hover="true">
         <ColGroup>
             <col />
             <col style="width: 24rem"/>
@@ -71,7 +71,7 @@
 
     private string GetResourceInfo(ResourceEntity resourceName)
     {
-        var rss = ResourceManagerService.GetResourceByName(resourceName.Name);
+        var rss = ResourceManagerService.GetResourceByName(DefinitionService.GameServerId, resourceName.Name);
         var cat = rss.Category;
         return $"{rss.Name} ({cat.HarvestingResourceType}, {cat.Name})";
     }

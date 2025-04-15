@@ -8,6 +8,8 @@ public class ResourceEntity
 {
     [Key]
     public int Id { get; set; }
+
+    public int GameServerId { get; set; }
     
     [MaxLength(64)]    
     public string Name { get; set; }

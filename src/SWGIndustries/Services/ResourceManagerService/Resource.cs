@@ -101,11 +101,12 @@ public class Resource
     public string ReportedBy { get; private set; }
     public bool IsNotQualified => (CR + CD + DR + ER + FL + HR + MA + OQ + PE + SR + UT) == 0;
 
-    public Data.ResourceEntity ToModel()
+    public ResourceEntity ToModel(int gameServerId)
     {
-        var model = new Data.ResourceEntity
+        var model = new ResourceEntity
         {
             Id = ModelId,
+            GameServerId = gameServerId,
             Name = Name,
             CategoryIndex = Category.Index,
             SWGAideId = SWGAideId,
