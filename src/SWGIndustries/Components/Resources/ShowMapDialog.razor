@@ -1,0 +1,93 @@
+﻿@using System.Numerics
+
+<MudDialog Style="min-width: 80vmin">
+    <DialogContent>
+        <MudStack AlignItems="AlignItems.Stretch" Justify="Justify.FlexStart" StretchItems="StretchItems.All" Style="width: 100%">
+
+            <MudTextField T="string" Label="Waypoint" @ref="_waypointTextField" @bind-Value="WaypointAsString" Style="width: 100%" 
+                          Immediate="true" Variant="Variant.Outlined" ReadOnly="@(AllowEdit==false)" Validation="@(new Func<string, string>(ValidateWaypoint))"/>
+            
+            @if (true)
+            {
+                var pfn = Planet.Corellia.GetMapFilePathName();
+                var p = Vector2.Zero;
+                var col = "blue";
+                var isValid = false;
+                if (_waypoint != null)
+                {
+                    pfn = _waypoint.Planet.GetMapFilePathName();
+                    p = GetWaypointPosition(_waypoint);
+                    col = _waypoint.Color.ToString().ToLower();
+                    isValid = true;
+                }
+                <svg style="width: 100%; height: 100%;" viewBox="0 0 100 100">
+                    <image href="@pfn" width="100%" height="100%" filter="@( isValid ? "" : "grayscale(100%)")" />
+                    <g transform="translate(@p.X, @p.Y)">
+                        <polygon points="-0.7,-1 0,-3 0.7,-1" fill="@col" id="tri">
+                            <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite"/>
+                        </polygon>
+                        <use href="#tri" transform="rotate(+120)"/>
+                        <use href="#tri" transform="rotate(-120)"/>
+                    </g>
+                </svg>
+            }
+        </MudStack>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_isFormValid)">Ok</MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public string WaypointAsString { get; set; }
+    [Parameter] public bool AllowEdit { get; set; }
+
+    private MudTextField<string> _waypointTextField;
+    private Waypoint _waypoint;
+    private bool _isFormValid;
+
+    private void Submit()
+    {
+        WaypointAsString = _waypoint?.ToString();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override void OnParametersSet()
+    {
+        ValidateWaypoint(WaypointAsString);
+    }
+
+    private string ValidateWaypoint(string waypoint)
+    {
+        if (string.IsNullOrWhiteSpace(waypoint))
+        {
+            _waypoint = null;
+            _isFormValid = true;
+            return null;
+        }
+
+        var res = Waypoint.TryParse(waypoint, out _waypoint) ? null : "Not a valid waypoint format, use the in-game format (e.g. /way tatooine 3513 -4813 yellow Somewhere)";
+        _isFormValid = res == null;
+        return res;
+    }
+    
+    private Vector2 GetWaypointPosition(Waypoint waypoint)
+    {
+        if (waypoint == null)
+            return new Vector2(0, 0);
+        
+        var ms = waypoint.Planet == Planet.Mustafar ? 8192 : 16384;
+        var hs = ms / 2f;
+
+        var x = (waypoint.X+hs) * 100f / ms;
+        var y = 100f - ((waypoint.Y+hs) * 100f / ms);
+        return new Vector2(x, y);
+    }
+}

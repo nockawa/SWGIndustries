@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+For a reason I gave up trying to understand, if I don't set the Class attribute with a value, the whole file is not
+ imported and null is returned. So the root node has a "Root" class, but it is not used anywhere else. 
+ Class and FullClass of other nodes consider the root as null.
+-->
+<Node Class="Root"
+      xmlns="http://swgindustries.com/swgstructures"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://swgindustries.com/server StructuresDefinition.xsd">
+    <Children>
+        <Node Class="House">
+            <Children>
+                <House Class="Merchant tent" LotTaken="1" MaintenanceCost="6" />
+                <House Class="Naboo Small House (type 2)" LotTaken="1" MaintenanceCost="8" />
+                <House Class="Small House" LotTaken="2" MaintenanceCost="8" />
+                <House Class="Medium House" LotTaken="3" MaintenanceCost="18" />
+                <House Class="Large House" LotTaken="5" MaintenanceCost="26" />
+            </Children>
+        </Node>
+
+        <Node Class="Factory">
+            <Children>
+                <Factory Class="Equipment Factory" LotTaken="1" MaintenanceCost="50" PowerConsumption="50" />
+                <Factory Class="Food Factory" LotTaken="1" MaintenanceCost="50" PowerConsumption="50" />
+                <Factory Class="Structure Factory" LotTaken="1" MaintenanceCost="50" PowerConsumption="50" />
+                <Factory Class="Wearables Factory" LotTaken="1" MaintenanceCost="50" PowerConsumption="50" />
+            </Children>
+        </Node>
+
+        <Node Class="Harvester">
+            <Children>
+                <Node Class="Regular">
+                    <Children>
+                        <HarvesterClass Class="Personal" LotTaken="1" MaintenanceCost="16" PowerConsumption="25" MinBER="2" MaxBER="5" MinHopperSizeK="20" MaxHopperSizeK="50" ReDeedCost="1500">
+                            <Children>
+                                <Harvester Class="Personal Mineral Extractor" ResourceType="Mineral"/>
+                                <Harvester Class="Personal Chemical Extractor" ResourceType="Chemical"/>
+                                <Harvester Class="Personal Natural Gas Processor" ResourceType="Gas"/>
+                                <Harvester Class="Micro Flora Farm" ResourceType="Flora"/>
+                                <Harvester Class="Personal Moisture Vaporator" ResourceType="Water"/>
+                            </Children>
+                        </HarvesterClass>
+                        <HarvesterClass Class="Medium" LotTaken="1" MaintenanceCost="30" PowerConsumption="50" MinBER="8" MaxBER="11" MinHopperSizeK="50" MaxHopperSizeK="60" ReDeedCost="3000">
+                            <Children>
+                                <Harvester Class="Mineral Mining Installation" ResourceType="Mineral"/>
+                                <Harvester Class="Chemical Extractor" ResourceType="Chemical"/>
+                                <Harvester Class="Natural Gas Processor" ResourceType="Gas"/>
+                                <Harvester Class="Automated Flora Farm" ResourceType="Flora"/>
+                                <Harvester Class="Moisture Vaporator" ResourceType="Water"/>
+                            </Children>
+                        </HarvesterClass>
+                        <HarvesterClass Class="Heavy" LotTaken="1" MaintenanceCost="90" PowerConsumption="75" MinBER="11" MaxBER="14" MinHopperSizeK="110" MaxHopperSizeK="130" ReDeedCost="4500">
+                            <Children>
+                                <Harvester Class="Heavy Mineral Mining Installation" ResourceType="Mineral"/>
+                                <Harvester Class="Deep Crust Chemical Extractor" ResourceType="Chemical"/>
+                                <Harvester Class="Heavy Natural Gas Processor" ResourceType="Gas"/>
+                                <Harvester Class="High Capacity Flora Farm" ResourceType="Flora"/>
+                                <Harvester Class="High Efficiency Moisture Vaporator" ResourceType="Water"/>
+                            </Children>
+                        </HarvesterClass>
+                        <HarvesterClass Class="Elite" LotTaken="3" MaintenanceCost="126" PowerConsumption="206" MinBER="40" MaxBER="44" MinHopperSizeK="360" MaxHopperSizeK="410" ReDeedCost="12375">
+                            <Children>
+                                <Harvester Class="Elite Mineral Mining Installation" ResourceType="Mineral"/>
+                                <Harvester Class="Elite Deep Crust Chemical Extractor" ResourceType="Chemical"/>
+                                <Harvester Class="Elite Natural Gas Processor" ResourceType="Gas"/>
+                                <Harvester Class="Elite Flora Farm" ResourceType="Flora"/>
+                                <Harvester Class="Elite Efficiency Moisture Vaporator" ResourceType="Water"/>
+                            </Children>
+                        </HarvesterClass>
+                    </Children>
+                </Node>
+                <Node Class="Energy">
+                    <Children>
+                        <EnergyHarvester Class="Wind Power Generator" LotTaken="1" MaintenanceCost="30" ResourceType="Wind" MinBER="6" MaxBER="10" MinHopperSizeK="20" MaxHopperSizeK="50" ReDeedCost="0"/>
+                        <EnergyHarvester Class="Solar Power Generator" LotTaken="1" MaintenanceCost="30" ResourceType="Solar" MinBER="10" MaxBER="15" MinHopperSizeK="50" MaxHopperSizeK="70" ReDeedCost="0"/>
+                        <EnergyHarvester Class="Fusion Power Generator" LotTaken="1" MaintenanceCost="30" ResourceType="Radioactive" MinBER="14" MaxBER="19" MinHopperSizeK="110" MaxHopperSizeK="130" ReDeedCost="4500"/>
+                        <EnergyHarvester Class="Geothermal Power Generator" LotTaken="1" MaintenanceCost="30" ResourceType="Geothermal" MinBER="10" MaxBER="15" MinHopperSizeK="50" MaxHopperSizeK="70" ReDeedCost="0"/>
+                    </Children>
+                </Node>
+            </Children>
+        </Node>
+        
+    </Children>
+
+</Node>

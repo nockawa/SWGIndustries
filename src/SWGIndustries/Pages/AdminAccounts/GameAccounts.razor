@@ -1,0 +1,142 @@
+﻿@page "/Admin/GameAccounts"
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+@using SWGIndustries.Components.GameAccounts
+
+@inject UserService UserService
+@inject ISnackbar Snackbar
+@inject AdminService AdminService
+
+<h3>Star Wars Galaxies Restoration - Game Accounts & Characters</h3>
+<br/>
+
+<div class="ma-4">
+    <MudTooltip Text="Create Game Account" openDelay="500" Placement="Placement.Top" Arrow="true">
+        <MudFab Class="mb-4" Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleAccountForm"/>
+    </MudTooltip>
+
+    @if (_showAccountForm)
+    {
+        // Form to create a new SWG Account
+        <AddNewGameAccount OnAccountAdded="@(_ => { _showAccountForm = false; StateHasChanged(); })"/>
+    }
+
+    @if (_gameAccounts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <br/>
+        @foreach (var account in _gameAccounts)
+        {
+            // One expansion panel for each SWG Account
+            <MudExpansionPanel class="mud-elevation-1">
+                <TitleContent>
+                    <div class="d-flex align-items-center" style="align-items: center;">
+                        <MudMenu Dense="true" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.TwoTone.MoreVert" Class="mr-2">
+                            <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Delete account"
+                                         OnClick="@(async () => await DeleteAccount(account))"/>
+                        </MudMenu>
+                        <MudText>@($"{@account.Name} - {account.Characters.Count} characters")</MudText>
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <div class="px-2">
+                        <MudButtonGroup>
+                            <MudTooltip Text="Add a new character" openDelay="200" Placement="Placement.Top" Arrow="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                                               Disabled="@(_showAccountForm || _addCharacterFor != null || account.Characters.Count == 4)"
+                                               OnClick="() => _addCharacterFor ??= account"/>
+                            </MudTooltip>
+                        </MudButtonGroup>
+                        @if (_addCharacterFor == account)
+                        {
+                            <AddNewSWGCharacter AddCharacterFor="account" OnCharacterAdded="@(_ => { _addCharacterFor = null; StateHasChanged(); })"/>
+                        }
+
+                        @if (account.Characters != null)
+                        {
+                            @foreach (var character in account.Characters)
+                            {
+                                // One expansion panel for each SWG Character
+                                <MudExpansionPanel class="mud-elevation-1 ma-4">
+                                    <TitleContent>
+                                        <div class="d-flex align-items-center" style="align-items: center;">
+                                            <MudMenu Dense="true" Variant="Variant.Text" Size="Size.Small" Icon="@Icons.Material.TwoTone.MoreVert" Class="mr-2">
+                                                <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Delete character"
+                                                             OnClick="@(async () => await DeleteCharacter(character))"/>
+                                            </MudMenu>
+                                            <MudText>@character.Name</MudText>
+                                        </div>
+                                    </TitleContent>
+                                    <ChildContent>
+                                        <p>Character details can go here.</p>
+                                    </ChildContent>
+                                </MudExpansionPanel>
+                            }
+                        }
+                    </div>
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+    }
+</div>
+
+@code 
+{
+    private IList<GameAccountEntity> _gameAccounts;
+    
+    private bool _showAccountForm = false;
+    
+    private UserInfo _user;
+    private GameAccountEntity _addCharacterFor;
+
+    [Inject] 
+    private IDialogService DialogService { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await UserService.GetUserInfo();
+        _gameAccounts = await AdminService.GetUserGameAccounts();
+    }
+    
+    private void ToggleAccountForm()
+    {
+        _showAccountForm = !_showAccountForm;
+    }
+
+    private async Task DeleteAccount(GameAccountEntity account)
+    {
+        if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to delete '{account.Name}'?", yesText: "Delete", cancelText: "Cancel") != true)
+        {
+            return;
+        }
+        
+        if (await AdminService.RemoveGameAccount(account, true))
+        {
+            Snackbar.Add($"SWG Account '{account.Name}' deleted successfully.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to delete SWG Account.", Severity.Error);
+        }
+    }
+    
+    private async Task DeleteCharacter(CharacterEntity character)
+    {
+        if (await DialogService.ShowMessageBox("Warning", $"Are you sure you want to delete '{character.Name}'?", yesText: "Delete", cancelText: "Cancel") != true)
+        {
+            return;
+        }
+        
+        if (await AdminService.RemoveCharacter(character, true))
+        {
+            Snackbar.Add($"SWG Character '{character.Name}' deleted successfully.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Failed to delete SWG Character.", Severity.Error);
+        }
+    }
+}

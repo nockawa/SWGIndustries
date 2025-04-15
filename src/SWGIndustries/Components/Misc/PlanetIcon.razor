@@ -1,0 +1,40 @@
+﻿@using System.Drawing
+
+<MudAvatar Style="@(GetPlanetStyle())" Class="@Class">@Planet.ToString()[..1]</MudAvatar>
+
+@code {
+    public enum IconSize
+    {
+        Small,
+        Medium,
+        Large
+    }
+
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Style { get; set; } = "";
+    [Parameter] public Planet Planet { get; set; }
+    [Parameter] public IconSize Size { get; set; } = IconSize.Small;
+    
+    private string GetPlanetStyle()
+    {
+        int size = 0;
+        string fontSize = "0.0";
+        switch (Size)
+        {
+            case IconSize.Small:
+                size = 18;
+                fontSize = "0.8";
+                break;
+            case IconSize.Medium:
+                size = 22;
+                fontSize = "1.0";
+                break;
+            case IconSize.Large:
+                size = 36;
+                fontSize = "1.6";
+                break;
+        }
+        return $"width: {size}px; height: {size}px; font-size: {fontSize}rem; text-align: center; margin: 0px 0px; " +
+               $"padding: 1px 0 0 0 !important; color: white; background-color: {ColorTranslator.ToHtml(Planet.GetPlanetColor())}; {Style}";
+    }
+}

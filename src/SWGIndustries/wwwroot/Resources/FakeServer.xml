@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Server xmlns="http://swgindustries.com/swgserver"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://swgindustries.com/server ServerDefinition.xsd">
+    <Name>SWG FAKE SERVER</Name>
+    <ServerWebSiteURL>https://swgr.org/home/</ServerWebSiteURL>
+    <SWGAideResourceFileURL>https://swgaide.com/Resources/SWGRestorationIII.xml</SWGAideResourceFileURL>
+    <LotCountPerCharacter>10</LotCountPerCharacter>
+    <MaxCharacterCountPerAccount>4</MaxCharacterCountPerAccount>
+    <HarvesterExtractionFactor>1.5</HarvesterExtractionFactor>
+</Server>

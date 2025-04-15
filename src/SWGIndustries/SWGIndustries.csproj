@@ -7,8 +7,17 @@
       <UserSecretsId>6bdab612-b4c5-4c61-bfe7-8de0c0d79956</UserSecretsId>
   </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <NoWarn>1701;1702;BL0005</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <NoWarn>1701;1702;BL0005</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="AspNet.Security.OAuth.Discord" Version="9.0.0" />
+      <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.3" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.3" />
@@ -17,12 +26,23 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="MudBlazor" Version="8.3.0" />
+      <PackageReference Include="Seq.Extensions.Logging" Version="8.0.0" />
+      <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Data\swgi.db" />
       <None Remove="Data\swgi.db-shm" />
       <None Remove="Data\swgi.db-wal" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Components\Pages\" />
+      <Folder Include="wwwroot\Resources\Maps\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Pages\Resources\Current\Current.razor" />
     </ItemGroup>
 
 </Project>

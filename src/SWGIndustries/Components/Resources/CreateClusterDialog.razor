@@ -1,0 +1,169 @@
+﻿@*
+    A dialog used to create a cluster to harvest a given resource
+*@
+
+@using System.Numerics
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+
+@inject AdminService AdminService
+
+<MudDialog Style="min-width: 90vw">
+    <DialogContent>
+        <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.FlexStart" StretchItems="StretchItems.All" Style="height: 100%">
+            <MudForm @bind-IsValid="@_isFormValid" Style="width: 30rem; min-width: 20rem;">
+                @if (true)
+                {
+                    var isCrewLeader = _appAccount is { IsCrewLeader: true };
+                    var txt = isCrewLeader ? "Create a cluster to harvest a given resource with one/many harvesters, either by yourself or for your crew." : "Create a cluster to harvest a given resource with one/many harvesters";
+                    <MudText Class="mb-2">@txt</MudText>
+                }
+
+                <MudTextField @ref="_nameTextField" T="string" Label="Cluster's name" @bind-value="Name" Variant="Variant.Outlined"
+                              Immediate="true" Class="mt-4" Required="true"/>
+
+                <MudCheckBox T="bool" @bind-value="@IsForCrew" Class="mt-2">Cluster is for crew.</MudCheckBox>
+
+                @if (_appAccount!=null && IsForCrew == false && _appAccount.GameAccounts.Count > 1)
+                {
+                    <MudSelect T="GameAccountEntity" Label="Account that owns the cluster" @bind-Value="GameAccount"
+                               Validation="@(new Func<GameAccountEntity, string>(g => (g == null) ? "Select a game account" : null))"
+                               Immediate="true" Required="true" Variant="Variant.Outlined" Class="mt-4">
+                        @foreach (var gameAccount in _appAccount.GameAccounts)
+                        {
+                            <MudSelectItem T="GameAccountEntity" Value="@gameAccount">@gameAccount.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                
+                <MudSelect @ref="_planetSelect" T="Planet" Label="Planet where the cluster is located" @bind-Value="Planet"
+                           Validation="@(new Func<Planet, string>(ValidatePlanet))"
+                           Immediate="true" Variant="Variant.Outlined" Class="mt-4">
+                    @foreach (var planet in Enum.GetValues<Planet>())
+                    {
+                        <MudSelectItem T="Planet" Value="@planet">@planet.GetFriendlyName()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudTextField T="string" Label="In-game format waypoint" @bind-value="_waypointString" Immediate="true" Variant="Variant.Outlined"
+                              Class="mt-4" Validation="@(new Func<string, string>(ValidateWaypoint))"/>
+
+                <MudTextField T="string" Label="Comments" @bind-value="Comments" Variant="Variant.Outlined"
+                              Class="mt-4" Lines="5"/>
+
+            </MudForm>
+            
+            @if (_waypoint != null && _waypoint.Planet.GetMapFilePathName()!=null)
+            {
+                var p = GetWaypointPosition(_waypoint);
+                var col = _waypoint.Color.ToString().ToLower();
+                <svg style="width: 100%; height: 100%;" viewBox="0 0 100 100">
+                    <image href="@_waypoint.Planet.GetMapFilePathName()" width="100%" height="100%" />
+                    <g transform="translate(@p.X, @p.Y)">
+                        <polygon points="-0.7,-1 0,-3 0.7,-1" fill="@col" id="tri">
+                            <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite"/>
+                        </polygon>
+                        <use href="#tri" transform="rotate(+120)"/>
+                        <use href="#tri" transform="rotate(-120)"/>
+                    </g>
+                </svg>
+            }
+            </MudStack>
+        
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_isFormValid)">Ok</MudButton>
+    </DialogActions>
+    
+</MudDialog>
+
+@code {
+    // /way Tatooine 3528 -4804 mos eisley
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    
+    // Input parameters
+    [Parameter] public Resource Resource { get; set; }
+    
+    //Output parameters
+    [Parameter] public string Name { get; set; }
+    [Parameter] public string Comments { get; set; }
+    [Parameter] public Waypoint Waypoint { get => _waypoint; set => _waypoint = value;}
+    [Parameter] public Planet Planet { get; set; }
+    [Parameter] public bool IsForCrew { get; set; }
+    [Parameter] public GameAccountEntity GameAccount { get; set; }
+
+    private bool _isFormValid;
+    private AppAccountEntity _appAccount;
+    private string _waypointString; // = "/way Tatooine 3528 -4804 mos eisley";
+    private Waypoint _waypoint;
+    private MudSelect<Planet> _planetSelect;
+    private MudTextField<string> _nameTextField;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override void OnInitialized()
+    {
+        _appAccount = AdminService.GetAppAccount();
+        //_waypointString = "/way tatooine 3528 -4804 yellow Somewhere";
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _planetSelect.ForceUpdate();
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    private string ValidateWaypoint(string waypoint)
+    {
+        _planetSelect.ReadOnly = false;
+
+        if (string.IsNullOrWhiteSpace(waypoint))
+            return null;
+
+        if (Waypoint.TryParse(waypoint, out _waypoint))
+        {
+            if (_waypoint.Planet != Planet.Undefined)
+            {
+                _planetSelect.Value = _waypoint.Planet;
+                _planetSelect.ReadOnly = true;
+                _planetSelect.Validate();
+            }
+            return null;
+        }
+        return "Not a valid waypoint format, use the in-game format (e.g. /way tatooine 3513 -4813 yellow Somewhere)";
+    }
+    
+    private Vector2 GetWaypointPosition(Waypoint waypoint)
+    {
+        if (waypoint == null)
+            return new Vector2(0, 0);
+        
+        var ms = waypoint.Planet == Planet.Mustafar ? 8192 : 16384;
+        var hs = ms / 2f;
+
+        var x = (waypoint.X+hs) * 100f / ms;
+        var y = 100f - ((waypoint.Y+hs) * 100f / ms);
+        return new Vector2(x, y);
+    }
+
+    private string ValidatePlanet(Planet planet)
+    {
+        if (planet == Planet.Undefined)
+        {
+            return "Select a planet";
+        }
+
+        if (string.IsNullOrEmpty(Name))
+        {
+            _nameTextField.Value = $"{Resource.Name} - {planet.GetFriendlyName()}";
+            _nameTextField.ForceUpdate();
+        }
+        return null;
+    }
+}

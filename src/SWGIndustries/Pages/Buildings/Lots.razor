@@ -1,0 +1,98 @@
+﻿@page "/Buildings/Lots"
+
+@using SWGIndustries.Components.Buildings
+@using SWGIndustries.Components.Misc
+@using SWGIndustries.Data
+@using SWGIndustries.Services
+@using SWGIndustries.Components.Buildings.Lots
+
+@inject InventoryService InventoryService
+@inject DefinitionService DefinitionService
+
+<MudGrid Style="height: calc(100vh - 5rem);" Class="d-flex align-content-start">
+    <MudItem md="12" Class="pt-4">
+        <div class="d-flex flex-row align-items-start">
+            <div style="width: 20rem;" class="mr-4">
+                <ScopeSelectionControl SelectedScopeChanged="DataScopeChanged"/>
+            </div>
+            <div style="width: 10rem">
+                <MudSelect @bind-value="@_buildingClassFilter" SelectedValuesChanged="OnBuildingTypeChanged" T="string" Dense="true" Label="Building type" Class="mt-2 mr-4" Variant="Variant.Outlined">
+                    <MudSelectItem T="string" Value="@null">All</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.House">House</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.Factory">Factory</MudSelectItem>
+                    <MudSelectItem T="string" Value="@StructureClasses.Harvester">Harvester</MudSelectItem>
+                </MudSelect>
+            </div>
+            <div style="width: 10rem">
+                <MudSelect @bind-value="@_tileSize" T="TileSize" Dense="true" Label="Tile mode" Class="mt-2" Variant="Variant.Outlined">
+                    <MudSelectItem T="TileSize" Value="TileSize.Small" >Small</MudSelectItem>
+                    <MudSelectItem T="TileSize" Value="TileSize.Medium">Medium</MudSelectItem>
+                    <MudSelectItem T="TileSize" Value="TileSize.Large">Large</MudSelectItem>
+                </MudSelect>
+            </div>
+            <MudCheckBox T="bool" @bind-Value="_normalizedSize" Label="Normalized sizes" Class="mt-4"></MudCheckBox>
+        </div>
+    </MudItem>
+    <MudItem md="12" Style="height: calc(100vh - 4rem - 90px)">
+        <MudPaper Style="height: 100%" Elevation="0">
+            <MudGrid Justify="Justify.FlexStart" Style="height: 100%; align-items: flex-start; align-content: flex-start" Spacing="4">
+                @foreach (var building in _buildings)
+                {
+                    var structure = DefinitionService.GetNodeByClass<StructureNode>(building.FullClass);
+                    var width = _normalizedSize ? 2 : structure.LotTaken;
+                    if (_tileSize is TileSize.Medium or TileSize.Large)
+                    {
+                        width = (int)MathF.Ceiling(width * 1.5f);
+                    }
+
+                    if (width < 3 && _mouseOverBuilding == building)
+                    {
+                        width = 3;
+                    }
+                    <MudItem xxl="@((int)Math.Round(width / 3.0f))" xl="@((int)Math.Round(width / 2.0f))"
+                             lg="@(width)" md="@(width * 2)" sm="@(width * 3)"
+                             @onmouseover="() => _mouseOverBuilding = building" @onmouseout="() => _mouseOverBuilding = null"
+                             Class="d-flex align-content-start">
+                        
+                        <BuildingTile Building="@building" TileSize="@_tileSize"/>
+                        
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    
+    private List<BuildingEntity> _buildings;
+    private DataScope _buildingsScope;
+    private TileSize _tileSize = TileSize.Small;
+    private bool _normalizedSize;
+    private string _buildingClassFilter;
+    private BuildingEntity _mouseOverBuilding;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _buildings = await InventoryService.GetBuildings(null, null, true);
+    }
+
+    private async Task DataScopeChanged(DataScope scope)
+    {
+        _buildingsScope = scope;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        _buildings = await InventoryService.GetBuildings(_buildingsScope, _buildingClassFilter, true);
+        StateHasChanged();
+    }
+
+    private async Task OnBuildingTypeChanged(IEnumerable<string> buildingType)
+    {
+        _buildingClassFilter = buildingType.First();
+        await RefreshData();
+    }
+
+}
