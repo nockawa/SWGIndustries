@@ -3,6 +3,7 @@
     <File Path="README.md" />
     <File Path="Design.md" />
     <File Path=".gitignore" />
+    <File Path="Procfile" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src\SWGIndustries\SWGIndustries.csproj" Type="Classic C#" />

@@ -43,7 +43,15 @@ public class UserService
     {
         if ((_userInfo==null) || (_userInfo.IsGuest && _httpContextAccessor.HttpContext is { User.Identity.IsAuthenticated: true }))
         {
-            _userInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
+            try
+            {
+                _userInfo = await UserLoggedIn(_httpContextAccessor.HttpContext);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
+                _userInfo = null;
+            }
         }
         return _userInfo ?? UserInfo.GetUnauthenticated(_serviceProvider);
     }
