@@ -45,4 +45,9 @@
       <AdditionalFiles Include="Pages\Resources\Current\Current.razor" />
     </ItemGroup>
 
+    <Target Name="PostPublishStep" AfterTargets="Publish">
+      <Message Text="Publishing executable database migration bundle" Importance="High" />
+      <Exec Command="dotnet ef migrations bundle --output $(PublishDir)/efbundle --force"  />
+    </Target>
+  
 </Project>
