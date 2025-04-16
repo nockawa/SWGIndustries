@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,10 +16,10 @@ namespace SWGIndustries.data.migrations
                 name: "NamedSeries",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Counter = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,35 +30,35 @@ namespace SWGIndustries.data.migrations
                 name: "Resources",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    GameServerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
-                    CategoryIndex = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    SWGAideId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Planets = table.Column<int>(type: "INTEGER", nullable: false),
-                    CI0 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI1 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI2 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI3 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI4 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI5 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI6 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CI7 = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CR = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    CD = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    DR = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    ER = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    FL = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    HR = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    MA = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    OQ = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    PE = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    SR = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    UT = table.Column<ushort>(type: "INTEGER", nullable: false),
-                    AvailableSince = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    DepletedSince = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ReportedBy = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    GameServerId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    CategoryIndex = table.Column<int>(type: "integer", nullable: false),
+                    SWGAideId = table.Column<int>(type: "integer", nullable: false),
+                    Planets = table.Column<int>(type: "integer", nullable: false),
+                    CI0 = table.Column<int>(type: "integer", nullable: false),
+                    CI1 = table.Column<int>(type: "integer", nullable: false),
+                    CI2 = table.Column<int>(type: "integer", nullable: false),
+                    CI3 = table.Column<int>(type: "integer", nullable: false),
+                    CI4 = table.Column<int>(type: "integer", nullable: false),
+                    CI5 = table.Column<int>(type: "integer", nullable: false),
+                    CI6 = table.Column<int>(type: "integer", nullable: false),
+                    CI7 = table.Column<int>(type: "integer", nullable: false),
+                    CR = table.Column<int>(type: "integer", nullable: false),
+                    CD = table.Column<int>(type: "integer", nullable: false),
+                    DR = table.Column<int>(type: "integer", nullable: false),
+                    ER = table.Column<int>(type: "integer", nullable: false),
+                    FL = table.Column<int>(type: "integer", nullable: false),
+                    HR = table.Column<int>(type: "integer", nullable: false),
+                    MA = table.Column<int>(type: "integer", nullable: false),
+                    OQ = table.Column<int>(type: "integer", nullable: false),
+                    PE = table.Column<int>(type: "integer", nullable: false),
+                    SR = table.Column<int>(type: "integer", nullable: false),
+                    UT = table.Column<int>(type: "integer", nullable: false),
+                    AvailableSince = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DepletedSince = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ReportedBy = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -68,13 +69,13 @@ namespace SWGIndustries.data.migrations
                 name: "AppAccounts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 32, nullable: true),
-                    SWGServerName = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true),
-                    CorrelationId = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    ThemeMode = table.Column<int>(type: "INTEGER", nullable: false),
-                    CrewId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    SWGServerName = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    CorrelationId = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    ThemeMode = table.Column<int>(type: "integer", nullable: false),
+                    CrewId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -85,12 +86,12 @@ namespace SWGIndustries.data.migrations
                 name: "CrewInvitations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    FromAccountId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ToAccountId = table.Column<int>(type: "INTEGER", nullable: true),
-                    InviteOrRequestToJoin = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    FromAccountId = table.Column<int>(type: "integer", nullable: true),
+                    ToAccountId = table.Column<int>(type: "integer", nullable: true),
+                    InviteOrRequestToJoin = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -111,10 +112,10 @@ namespace SWGIndustries.data.migrations
                 name: "Crews",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CrewLeaderId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CrewLeaderId = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -130,10 +131,10 @@ namespace SWGIndustries.data.migrations
                 name: "GameAccounts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerAppAccountId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerAppAccountId = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -149,12 +150,12 @@ namespace SWGIndustries.data.migrations
                 name: "Characters",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    GameAccountId = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsCrewMember = table.Column<bool>(type: "INTEGER", nullable: false),
-                    MaxLotsForCrew = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    GameAccountId = table.Column<int>(type: "integer", nullable: true),
+                    IsCrewMember = table.Column<bool>(type: "boolean", nullable: false),
+                    MaxLotsForCrew = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,16 +172,16 @@ namespace SWGIndustries.data.migrations
                 name: "Clusters",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CreationDateTime = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    CrewId = table.Column<int>(type: "INTEGER", nullable: true),
-                    GameAccountId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ResourceId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Planet = table.Column<int>(type: "INTEGER", nullable: false),
-                    Waypoint = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 32, nullable: true),
-                    Comments = table.Column<string>(type: "TEXT", maxLength: 1024, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CreationDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CrewId = table.Column<int>(type: "integer", nullable: true),
+                    GameAccountId = table.Column<int>(type: "integer", nullable: true),
+                    ResourceId = table.Column<int>(type: "integer", nullable: true),
+                    Planet = table.Column<int>(type: "integer", nullable: false),
+                    Waypoint = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    Name = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    Comments = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -208,30 +209,30 @@ namespace SWGIndustries.data.migrations
                 name: "Buildings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OwnerId = table.Column<int>(type: "INTEGER", nullable: true),
-                    FullClass = table.Column<string>(type: "TEXT", maxLength: 128, nullable: true),
-                    PutDownById = table.Column<int>(type: "INTEGER", nullable: true),
-                    PutDownDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    BuildingForCrew = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PutDownPlanet = table.Column<int>(type: "INTEGER", nullable: false),
-                    ClusterId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true),
-                    Comments = table.Column<string>(type: "TEXT", maxLength: 1024, nullable: true),
-                    MaintenanceAmount = table.Column<int>(type: "INTEGER", nullable: false),
-                    MaintenanceLastUpdate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    PowerAmount = table.Column<int>(type: "INTEGER", nullable: false),
-                    PowerLastUpdate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    IsRunning = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LastRunningDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    LastStoppedDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    HarvesterSelfPowered = table.Column<bool>(type: "INTEGER", nullable: false),
-                    HarvesterBER = table.Column<int>(type: "INTEGER", nullable: false),
-                    HarvesterHopperSize = table.Column<int>(type: "INTEGER", nullable: false),
-                    HarvestingResourceType = table.Column<int>(type: "INTEGER", nullable: false),
-                    HarvestingResourceId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ResourceConcentration = table.Column<float>(type: "REAL", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    OwnerId = table.Column<int>(type: "integer", nullable: true),
+                    FullClass = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    PutDownById = table.Column<int>(type: "integer", nullable: true),
+                    PutDownDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    BuildingForCrew = table.Column<bool>(type: "boolean", nullable: false),
+                    PutDownPlanet = table.Column<int>(type: "integer", nullable: false),
+                    ClusterId = table.Column<int>(type: "integer", nullable: true),
+                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Comments = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    MaintenanceAmount = table.Column<int>(type: "integer", nullable: false),
+                    MaintenanceLastUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    PowerAmount = table.Column<int>(type: "integer", nullable: false),
+                    PowerLastUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsRunning = table.Column<bool>(type: "boolean", nullable: false),
+                    LastRunningDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastStoppedDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    HarvesterSelfPowered = table.Column<bool>(type: "boolean", nullable: false),
+                    HarvesterBER = table.Column<int>(type: "integer", nullable: false),
+                    HarvesterHopperSize = table.Column<int>(type: "integer", nullable: false),
+                    HarvestingResourceType = table.Column<int>(type: "integer", nullable: false),
+                    HarvestingResourceId = table.Column<int>(type: "integer", nullable: true),
+                    ResourceConcentration = table.Column<float>(type: "real", nullable: false)
                 },
                 constraints: table =>
                 {
