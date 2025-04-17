@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
 using MudBlazor.Services;
@@ -46,8 +48,16 @@ public class Program
         services.AddScoped<InventoryService>();
         services.AddScoped<NamedSeriesService>();
         services.AddScoped<DataScopeService>();
+        
+        // Configure HSTS (HTTP Strict Transport Security) for HTTPS redirection
+        services.AddHsts(options =>
+        {
+            options.Preload = true;
+            options.IncludeSubDomains = true;
+            options.MaxAge = TimeSpan.FromDays(365);
+        });
 
-        //Configure authentication for the user using Discord OAuth2
+        // Configure authentication for the user using Discord OAuth2
         services.AddAuthentication(opt =>
             {
                 opt.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -135,8 +145,11 @@ public class Program
             app.UseExceptionHandler("/Error");
         }
 
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
+        
         app.UseHttpsRedirection();
         app.UseRouting();
         
