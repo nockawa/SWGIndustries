@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -54,9 +56,8 @@ public class Program
             })
             .AddDiscord(options =>
             {
-                var section  = builder.Configuration.GetSection("Authentication:Discord");
-                options.ClientId = section["ClientId"]!;
-                options.ClientSecret = section["ClientSecret"]!;
+                options.ClientId = builder.Configuration["Authentication:Discord:ClientId"]!;
+                options.ClientSecret = builder.Configuration["Authentication:Discord:ClientSecret"]!;
                 
                 options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -68,9 +69,8 @@ public class Program
             })
             .AddGoogle(options =>
             {
-                var section  = builder.Configuration.GetSection("Authentication:Google");
-                options.ClientId = section["ClientId"]!;
-                options.ClientSecret = section["ClientSecret"]!;
+                options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
 
                 options.SaveTokens = true;
                 options.Scope.Add("profile");
@@ -78,12 +78,30 @@ public class Program
             .AddCookie();
 
         // Database and EF setup
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                               throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        string connectionString = null;
         
+        // Attempt to get the connection string from the environment variable
+        var dbUrlEnv = Environment.GetEnvironmentVariable("DATABASE_URL");
+        if (string.IsNullOrWhiteSpace(dbUrlEnv) == false)
+        {
+            var match = Regex.Match(dbUrlEnv ?? "", @"postgres://(.*):(.*)@(.*):(.*)/(.*)");
+            if (match.Success)
+            {
+                connectionString = $"Server={match.Groups[3]};Port={match.Groups[4]};User Id={match.Groups[1]};Password={match.Groups[2]};Database={match.Groups[5]};sslmode=Prefer;Trust Server Certificate=true";
+            }
+        }
+
+        // If the connection string is still null, get it from the appsettings.json file
+        if (connectionString == null)
+        {
+            connectionString = builder.Configuration.GetConnectionString("PostgreSQL") ??
+                               throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        }
+        
+        // Configure the database context
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseSqlite(connectionString, sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            options.UseNpgsql(connectionString, postgreSQLOptions => postgreSQLOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             //options.UseSeeding((context, _) => { GenTestData(context); });
             //options.EnableSensitiveDataLogging();
         });
@@ -103,6 +121,7 @@ public class Program
         
         // Build the application
         var app = builder.Build();
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -110,17 +129,15 @@ public class Program
             // app.UseDeveloperExceptionPage();
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
             app.UseMigrationsEndPoint();
-            app.UseHsts();
         }
         else
         {
             app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
         }
 
-        //app.UseHttpsRedirection();
-
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+        app.UseHttpsRedirection();
         app.UseRouting();
         
         app.UseAntiforgery();
@@ -131,7 +148,6 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
-
 
         app.MapAdditionalAccountEndpoints();
         

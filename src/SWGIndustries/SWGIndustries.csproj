@@ -20,12 +20,12 @@
       <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.3" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.3" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="MudBlazor" Version="8.3.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
       <PackageReference Include="Seq.Extensions.Logging" Version="8.0.0" />
       <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     </ItemGroup>
@@ -37,7 +37,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Components\Pages\" />
       <Folder Include="wwwroot\Resources\Maps\" />
     </ItemGroup>
 
@@ -45,4 +44,9 @@
       <AdditionalFiles Include="Pages\Resources\Current\Current.razor" />
     </ItemGroup>
 
+    <Target Name="PostPublishStep" AfterTargets="Publish">
+      <Message Text="Publishing executable database migration bundle" Importance="High" />
+      <Exec Command="dotnet ef migrations bundle --output $(PublishDir)/efbundle --force"  />
+    </Target>
+  
 </Project>
