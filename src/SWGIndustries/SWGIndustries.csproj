@@ -37,7 +37,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Components\Pages\" />
       <Folder Include="wwwroot\Resources\Maps\" />
     </ItemGroup>
 

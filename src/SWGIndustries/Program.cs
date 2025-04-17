@@ -129,15 +129,14 @@ public class Program
             // app.UseDeveloperExceptionPage();
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
             app.UseMigrationsEndPoint();
-            app.UseHsts();
         }
         else
         {
             app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
         }
 
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
         app.UseHttpsRedirection();
         app.UseRouting();
         
@@ -149,7 +148,6 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
-
 
         app.MapAdditionalAccountEndpoints();
         
