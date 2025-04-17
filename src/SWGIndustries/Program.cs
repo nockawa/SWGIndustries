@@ -121,6 +121,7 @@ public class Program
         services.AddSingleton<ResourceManagerService>();
         services.AddHostedService<ResourceUpdateBackgroundService>();
         
+        // Enable SEQ logging in development mode
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddLogging(loggingBuilder =>
@@ -128,7 +129,24 @@ public class Program
                 loggingBuilder.AddSeq(builder.Configuration.GetSection("Seq"));
             });
         }
-        
+
+        // Enable Sentry in production mode
+        if (builder.Environment.IsProduction())
+        {
+            builder.WebHost.UseSentry(o =>
+            {
+                o.Dsn = "https://2f75d6aa075e8c026cb7b8200f1847db@o4509168079405056.ingest.de.sentry.io/4509168080978000";
+                o.ProfilesSampleRate = 0.2;
+                o.TracesSampleRate = 0.8;
+                o.SampleRate = 1.0f;
+                o.CaptureBlockingCalls = true;
+                o.Debug = true;
+                o.DiagnosticLevel = SentryLevel.Info;
+                o.MinimumBreadcrumbLevel = LogLevel.Information;
+                o.MinimumEventLevel = LogLevel.Information;
+            });
+        }
+
         // Build the application
         var app = builder.Build();
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);

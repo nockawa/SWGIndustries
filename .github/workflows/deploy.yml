@@ -1,0 +1,38 @@
+﻿name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main  # Deploy only when changes are pushed to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh 
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0  # Use the version of .NET your app requires
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build the application
+        run: dotnet publish -c Release -o publish
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.14.15
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: swgindustries
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          procfile: true
+          working_dir: publish
