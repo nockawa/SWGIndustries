@@ -22,11 +22,14 @@ jobs:
         with:
           dotnet-version: 9.0  # Use the version of .NET your app requires
 
+      - name: Install tools
+        run: dotnet tool restore
+
       - name: Install dependencies
         run: dotnet restore
 
       - name: Build the application
-        run: dotnet publish -c Release -o publish
+        run: dotnet publish -c Release -p:PublishDir=bin/publish
 
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.14.15
