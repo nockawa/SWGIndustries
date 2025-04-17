@@ -38,4 +38,3 @@ jobs:
           heroku_app_name: swgindustries
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
           procfile: true
-          working_dir: publish
